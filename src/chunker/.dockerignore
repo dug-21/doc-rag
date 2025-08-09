@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Target directory (build artifacts)
+target/
+Cargo.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+docs/
+
+# Test data
+test_data/
+*.tmp
+*.log
+
+# Benchmarks output
+benches/target/
+
+# Coverage data
+tarpaulin-report.html
+cobertura.xml
+
+# Local development
+.env
+.env.local
