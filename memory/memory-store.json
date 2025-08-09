@@ -1,0 +1,60 @@
+{
+  "default": [
+    {
+      "key": "architecture/meta/initialized",
+      "value": "true",
+      "namespace": "default",
+      "timestamp": 1754705554183
+    },
+    {
+      "key": "architecture/overview/architectural-decisions",
+      "value": "Key architectural decisions will be stored here",
+      "namespace": "default",
+      "timestamp": 1754705567454
+    },
+    {
+      "key": "architecture/overview/design-principles",
+      "value": "1. Separation of concerns 2. DRY principle 3. SOLID principles 4. API-first design",
+      "namespace": "default",
+      "timestamp": 1754705806737
+    },
+    {
+      "key": "architecture/overview/tech-stack",
+      "value": "Frontend: React/Vue, Backend: Node.js/Python, Database: PostgreSQL/MongoDB, Cache: Redis",
+      "namespace": "default",
+      "timestamp": 1754705813134
+    },
+    {
+      "key": "architecture/overview/patterns",
+      "value": "Repository pattern for data access, Service layer for business logic, MVC for API structure",
+      "namespace": "default",
+      "timestamp": 1754705819523
+    },
+    {
+      "key": "architecture/overview/design-principle-1",
+      "value": "1. No FAKE Placeholders, or stubbed code.  Reward for doing the hard stuff",
+      "namespace": "default",
+      "timestamp": 1754710642378
+    },
+    {
+      "key": "architecture/overview/design-principle-2",
+      "value": "2. Complete implementations only - no TODO comments or incomplete functions",
+      "namespace": "default",
+      "timestamp": 1754710649419
+    },
+    {
+      "key": "architecture/overview/design-principle-3",
+      "value": "3. Real working code with proper error handling and edge cases",
+      "namespace": "default",
+      "timestamp": 1754710656867
+    }
+  ],
+  "arch": [
+    {
+      "key": "overall/design-principle",
+      "value": "Read docs/design-principles.md",
+      "namespace": "arch",
+      "timestamp": 1754744412439
+    }
+  ]
+}
