@@ -43,11 +43,29 @@ services:
       retries: 3
       start_period: 60s
 
+  mcp-adapter:
+    build:
+      context: .
+      dockerfile: src/mcp-adapter/Dockerfile
+    container_name: doc-rag-mcp-adapter
+    ports:
+      - "8081:8081"
+    environment:
+      - RUST_LOG=info
+      - MCP_ENDPOINT=http://mcp-server:9000
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   chunker:
     build:
       context: .
       dockerfile: src/chunker/Dockerfile
-      target: production
     container_name: doc-rag-chunker
     environment:
       - RUST_LOG=info
@@ -75,6 +93,64 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+  embedder:
+    build:
+      context: .
+      dockerfile: src/embedder/Dockerfile
+    container_name: doc-rag-embedder
+    ports:
+      - "8082:8082"
+    environment:
+      - RUST_LOG=info
+      - MODEL_PATH=/models/all-MiniLM-L6-v2
+      - BATCH_SIZE=64
+      - CACHE_SIZE=10000
+      - GPU_ENABLED=true
+    volumes:
+      - model_cache:/models
+      - embedding_cache:/app/cache
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  storage:
+    build:
+      context: .
+      dockerfile: src/storage/Dockerfile
+    container_name: doc-rag-storage
+    ports:
+      - "8083:8083"
+    environment:
+      - RUST_LOG=info
+      - MONGODB_URI=mongodb://mongodb:27017/docrag
+      - DB_NAME=docrag
+      - COLLECTION_CHUNKS=chunks
+      - COLLECTION_DOCUMENTS=documents
+      - MAX_POOL_SIZE=100
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   retriever:
     build:
@@ -119,6 +195,28 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U docrag -d docrag"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mongodb:
+    image: mongo:7.0
+    container_name: doc-rag-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin_secret
+      - MONGO_INITDB_DATABASE=docrag
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -302,6 +400,12 @@ volumes:
   model_cache:
     driver: local
   doc_storage:
+    driver: local
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  embedding_cache:
     driver: local
   prometheus_data:
     driver: local
