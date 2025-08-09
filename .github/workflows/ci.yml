@@ -1,0 +1,446 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  release:
+    types: [published]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: "-D warnings"
+  CARGO_INCREMENTAL: 0
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Code Quality and Linting
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Setup Rust Cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: "lint"
+        cache-on-failure: true
+
+    - name: Check Formatting
+      run: cargo fmt --all -- --check
+
+    - name: Run Clippy
+      run: |
+        cargo clippy --workspace --all-targets --all-features -- -D warnings
+        cargo clippy --workspace --all-targets --no-default-features -- -D warnings
+
+    - name: Check Documentation
+      run: cargo doc --workspace --all-features --no-deps --document-private-items
+
+  # Security Audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-audit
+      run: cargo install --locked cargo-audit
+
+    - name: Run Security Audit
+      run: cargo audit --deny warnings
+
+    - name: Run cargo-deny
+      uses: EmbarkStudios/cargo-deny-action@v1
+      with:
+        log-level: warn
+        command: check
+        arguments: --all-features
+
+  # Build and Test Matrix
+  test:
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [stable, beta]
+        include:
+          - os: ubuntu-latest
+            rust: stable
+            coverage: true
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: docrag_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust Toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+
+    - name: Setup Rust Cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: "test-${{ matrix.os }}-${{ matrix.rust }}"
+        cache-on-failure: true
+
+    - name: Install System Dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Install System Dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install openssl pkg-config
+
+    - name: Setup Test Environment
+      run: |
+        cp .env.example .env.test
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/docrag_test
+        REDIS_URL: redis://localhost:6379
+
+    - name: Run Database Migrations
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cargo install sqlx-cli --no-default-features --features postgres
+        sqlx database create
+        sqlx migrate run
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/docrag_test
+
+    - name: Build Workspace
+      run: cargo build --workspace --all-features --verbose
+
+    - name: Run Unit Tests
+      run: |
+        cargo test --workspace --all-features --lib --bins --verbose
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/docrag_test
+        REDIS_URL: redis://localhost:6379
+
+    - name: Run Integration Tests
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cargo test --workspace --all-features --test '*' --verbose
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/docrag_test
+        REDIS_URL: redis://localhost:6379
+
+    - name: Run Doc Tests
+      run: cargo test --workspace --all-features --doc --verbose
+
+    - name: Generate Coverage Report
+      if: matrix.coverage
+      run: |
+        cargo install cargo-tarpaulin
+        cargo tarpaulin --workspace --all-features --out xml --timeout 300
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/docrag_test
+        REDIS_URL: redis://localhost:6379
+
+    - name: Upload Coverage to Codecov
+      if: matrix.coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: cobertura.xml
+        flags: unittests
+        name: ${{ matrix.os }}-${{ matrix.rust }}
+
+  # Performance Benchmarks
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Setup Rust Cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: "benchmark"
+
+    - name: Install Criterion
+      run: cargo install cargo-criterion
+
+    - name: Run Benchmarks
+      run: |
+        cargo criterion --workspace --message-format=json > benchmark-results.json
+
+    - name: Store Benchmark Results
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        name: Rust Benchmark
+        tool: 'cargo'
+        output-file-path: benchmark-results.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+
+  # Docker Build and Test
+  docker:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [lint, test]
+
+    strategy:
+      matrix:
+        service: [api, chunker, retriever]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: src/${{ matrix.service }}/Dockerfile
+        target: production
+        tags: doc-rag-${{ matrix.service }}:test
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Test Docker Image
+      run: |
+        docker run --rm doc-rag-${{ matrix.service }}:test --version
+
+    - name: Run Security Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: doc-rag-${{ matrix.service }}:test
+        format: 'sarif'
+        output: 'trivy-${{ matrix.service }}.sarif'
+
+    - name: Upload Security Scan Results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-${{ matrix.service }}.sarif'
+
+  # Integration Tests with Docker Compose
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [docker]
+    if: github.event_name == 'push'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Test Environment
+      run: |
+        cp .env.example .env
+        mkdir -p config/{grafana,nginx}
+        
+        # Create minimal config files
+        echo "global:
+          scrape_interval: 15s
+        scrape_configs:
+          - job_name: 'doc-rag'
+            static_configs:
+              - targets: ['api:9090']" > config/prometheus.yml
+
+    - name: Start Services
+      run: |
+        docker-compose up -d postgres redis qdrant minio
+        sleep 30
+
+    - name: Wait for Services
+      run: |
+        timeout 120 bash -c 'until docker-compose exec -T postgres pg_isready -U docrag; do sleep 2; done'
+        timeout 60 bash -c 'until docker-compose exec -T redis redis-cli ping; do sleep 2; done'
+
+    - name: Run Integration Tests
+      run: |
+        docker-compose run --rm api cargo test --test integration_tests
+      env:
+        RUST_LOG: debug
+
+    - name: Collect Service Logs
+      if: failure()
+      run: |
+        docker-compose logs api
+        docker-compose logs postgres
+        docker-compose logs redis
+
+    - name: Cleanup
+      if: always()
+      run: docker-compose down -v
+
+  # Release and Deploy
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [lint, security, test, integration]
+    if: github.event_name == 'release'
+
+    strategy:
+      matrix:
+        target: 
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Setup Rust Cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: "release-${{ matrix.target }}"
+
+    - name: Install Cross-compilation Tools
+      if: contains(matrix.target, 'aarch64')
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+
+    - name: Build Release Binary
+      run: |
+        cargo build --release --workspace --target ${{ matrix.target }}
+
+    - name: Package Release
+      run: |
+        mkdir -p release
+        cp target/${{ matrix.target }}/release/doc-rag-* release/ || true
+        tar -czf doc-rag-${{ matrix.target }}.tar.gz -C release .
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: doc-rag-${{ matrix.target }}.tar.gz
+        asset_name: doc-rag-${{ matrix.target }}.tar.gz
+        asset_content_type: application/gzip
+
+  # Docker Registry Push
+  docker-release:
+    name: Push Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [release]
+    if: github.event_name == 'release'
+
+    strategy:
+      matrix:
+        service: [api, chunker, retriever]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract Version
+      id: version
+      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Build and Push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: src/${{ matrix.service }}/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          docrag/${{ matrix.service }}:latest
+          docrag/${{ matrix.service }}:${{ steps.version.outputs.version }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Notification
+  notify:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    needs: [lint, security, test, integration]
+    if: always()
+
+    steps:
+    - name: Notify Success
+      if: ${{ needs.lint.result == 'success' && needs.security.result == 'success' && needs.test.result == 'success' }}
+      run: echo "✅ All checks passed!"
+
+    - name: Notify Failure
+      if: ${{ contains(needs.*.result, 'failure') }}
+      run: |
+        echo "❌ Some checks failed!"
+        exit 1
