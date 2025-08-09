@@ -1,6 +1,11 @@
 [workspace]
 members = [
-    "src/chunker"
+    "src/chunker",
+    "src/embedder",
+    "src/storage",
+]
+exclude = [
+    "src/mcp-adapter",
 ]
 resolver = "2"
 
@@ -56,6 +61,8 @@ clap = { version = "4.4", features = ["derive", "env"] }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json"] }
 redis = { version = "0.24", features = ["tokio-comp", "connection-manager", "streams"] }
 minio = "0.1"
+mongodb = { version = "2.7", features = ["tokio-runtime"] }
+bson = { version = "2.7", features = ["chrono-0_4"] }
 
 # Vector operations and ML
 candle-core = { version = "0.4", features = ["cuda", "accelerate"] }
