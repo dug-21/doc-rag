@@ -1,0 +1,95 @@
+# Prometheus configuration for Doc-RAG monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    service: 'doc-rag'
+    environment: 'production'
+
+# Alertmanager configuration
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+# rule_files:
+#   - "alert_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Doc-RAG API service
+  - job_name: 'doc-rag-api'
+    static_configs:
+      - targets: ['api:9090']
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+    
+  # Doc-RAG Chunker service
+  - job_name: 'doc-rag-chunker'
+    static_configs:
+      - targets: ['chunker:9091']
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    
+  # Doc-RAG Retriever service  
+  - job_name: 'doc-rag-retriever'
+    static_configs:
+      - targets: ['retriever:9092']
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+
+  # PostgreSQL metrics (using postgres_exporter)
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # Redis metrics (using redis_exporter)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # Qdrant metrics
+  - job_name: 'qdrant'
+    static_configs:
+      - targets: ['qdrant:6333']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # MinIO metrics
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['minio:9000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # RabbitMQ metrics
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # Docker container metrics (cAdvisor)
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+
+# Recording rules for aggregations
+# rule_files:
+#   - "recording_rules.yml"

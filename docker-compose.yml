@@ -1,0 +1,336 @@
+version: '3.8'
+
+services:
+  # Core Application Services
+  api:
+    build:
+      context: .
+      dockerfile: src/api/Dockerfile
+      target: production
+    container_name: doc-rag-api
+    ports:
+      - "8080:8080"
+      - "9090:9090"  # Metrics
+    environment:
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://docrag:docrag_secret@postgres:5432/docrag
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_URL=http://qdrant:6333
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=docrag_access
+      - MINIO_SECRET_KEY=docrag_secret_key_2024
+      - JAEGER_AGENT_ENDPOINT=jaeger:14268
+      - PROMETHEUS_ENDPOINT=prometheus:9090
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./config:/app/config:ro
+      - doc_storage:/app/storage
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  chunker:
+    build:
+      context: .
+      dockerfile: src/chunker/Dockerfile
+      target: production
+    container_name: doc-rag-chunker
+    environment:
+      - RUST_LOG=info
+      - REDIS_URL=redis://redis:6379
+      - MODEL_CACHE_DIR=/app/models
+      - CHUNKING_STRATEGY=adaptive
+      - MAX_CHUNK_SIZE=1024
+      - OVERLAP_SIZE=128
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      - BATCH_SIZE=32
+      - GPU_ENABLED=true
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - model_cache:/app/models
+      - doc_storage:/app/storage
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  retriever:
+    build:
+      context: .
+      dockerfile: src/retriever/Dockerfile
+      target: production
+    container_name: doc-rag-retriever
+    environment:
+      - RUST_LOG=info
+      - QDRANT_URL=http://qdrant:6333
+      - REDIS_URL=redis://redis:6379
+      - SEARCH_TOP_K=20
+      - RERANK_TOP_K=5
+      - SIMILARITY_THRESHOLD=0.7
+      - SEARCH_TIMEOUT=30s
+      - CACHE_TTL=3600
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+
+  # Database Services
+  postgres:
+    image: postgres:16-alpine
+    container_name: doc-rag-postgres
+    environment:
+      - POSTGRES_DB=docrag
+      - POSTGRES_USER=docrag
+      - POSTGRES_PASSWORD=docrag_secret
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docrag -d docrag"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: doc-rag-redis
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=redis_secret_2024
+    command: redis-server --requirepass redis_secret_2024 --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  # Vector Database
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: doc-rag-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__LOG_LEVEL=INFO
+      - QDRANT__STORAGE__PERFORMANCE__MAX_INDEXING_THREADS=4
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - ./config/qdrant.yaml:/qdrant/config/production.yaml:ro
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Object Storage
+  minio:
+    image: minio/minio:RELEASE.2024-01-16T16-07-38Z
+    container_name: doc-rag-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=docrag_access
+      - MINIO_ROOT_PASSWORD=docrag_secret_key_2024
+      - MINIO_BROWSER_REDIRECT_URL=http://localhost:9001
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
+
+  # Monitoring and Observability
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: doc-rag-prometheus
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: doc-rag-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana_admin_2024
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.52
+    container_name: doc-rag-jaeger
+    ports:
+      - "16686:16686"
+      - "14250:14250"
+      - "14268:14268"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - SPAN_STORAGE_TYPE=memory
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+
+  # Message Queue for async processing
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: doc-rag-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=docrag
+      - RABBITMQ_DEFAULT_PASS=rabbitmq_secret_2024
+      - RABBITMQ_DEFAULT_VHOST=/docrag
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+
+  # Load Balancer (for production scaling)
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: doc-rag-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/ssl:/etc/nginx/ssl:ro
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  qdrant_data:
+    driver: local
+  minio_data:
+    driver: local
+  model_cache:
+    driver: local
+  doc_storage:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+networks:
+  doc-rag-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+# Development override for local development
+# Use: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+x-development:
+  api: &api-dev
+    build:
+      target: development
+    volumes:
+      - .:/app:cached
+      - /app/target  # Anonymous volume for target directory
+    environment:
+      - RUST_LOG=debug
+      - RUST_BACKTRACE=1
+    ports:
+      - "8080:8080"
+      - "8000:8000"  # Debug port
