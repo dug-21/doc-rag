@@ -1,0 +1,44 @@
+# Rust
+/target
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/logs
+
+# Environment
+.env
+.env.local
+
+# Docker
+docker-compose.override.yml
+
+# Testing
+/test_data
+/benchmark_results
+
+# MongoDB
+/data/db
+/data/configdb
+
+# Temporary files
+*.tmp
+*.temp
+
+# Coverage reports
+tarpaulin-report.html
+cobertura.xml
+
+# Benchmarks
+/criterion

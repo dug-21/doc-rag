@@ -1,0 +1,55 @@
+[package]
+name = "storage"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+# MongoDB driver
+mongodb = { workspace = true }
+bson = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+
+# Utils
+uuid = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+parking_lot = { workspace = true }
+dashmap = { workspace = true }
+
+# Config
+config = "0.13"
+toml = "0.8"
+
+# Metrics
+prometheus = "0.13"
+
+[dev-dependencies]
+criterion = { workspace = true }
+proptest = { workspace = true }
+tokio-test = "0.4"
+testcontainers = { version = "0.15", optional = true }
+serial_test = "3.0"
+
+[[bench]]
+name = "storage_benchmarks"
+harness = false
+
+[[bench]]
+name = "search_benchmarks"
+harness = false
+
+[features]
+default = []
+integration-tests = ["testcontainers"]

@@ -1,0 +1,125 @@
+# MongoDB Vector Storage Configuration
+
+# MongoDB connection settings
+connection_string = "mongodb://localhost:27017"
+database_name = "rag_storage"
+chunk_collection_name = "chunks"
+metadata_collection_name = "metadata"
+
+# Connection pool settings
+max_pool_size = 10
+min_pool_size = 1
+connection_timeout_secs = 10
+operation_timeout_secs = 30
+socket_timeout_secs = 30
+server_selection_timeout_secs = 10
+
+# TLS/SSL settings
+enable_tls = false
+# tls_cert_path = "/path/to/cert.pem"
+# tls_key_path = "/path/to/key.pem"
+# ca_cert_path = "/path/to/ca.pem"
+allow_invalid_certs = false
+
+[vector_search]
+# Default embedding dimension (common: 384 for sentence transformers, 1536 for OpenAI)
+embedding_dimension = 384
+
+# Similarity metric for vector comparison
+similarity_metric = "cosine"
+
+# Number of candidates to examine for KNN search
+num_candidates = 100
+
+# Minimum similarity score threshold
+min_similarity_threshold = 0.1
+
+# Maximum results per search
+max_results = 100
+
+# Enable approximate nearest neighbor search
+enable_approximate_search = true
+
+[text_search]
+# Default language for text analysis
+default_language = "en"
+
+# Enable fuzzy matching
+enable_fuzzy_search = true
+
+# Fuzzy search edit distance
+fuzzy_edit_distance = 2
+
+# Enable stemming
+enable_stemming = true
+
+# Minimum word length for indexing
+min_word_length = 2
+
+# Maximum phrase length
+max_phrase_length = 5
+
+[text_search.field_weights]
+content = 10.0
+title = 5.0
+tags = 3.0
+metadata = 1.0
+
+[performance]
+# Batch size for bulk operations
+batch_size = 100
+
+# Maximum concurrent operations
+max_concurrency = 10
+
+# Enable connection pooling
+enable_connection_pooling = true
+
+# Enable query result caching
+enable_query_caching = true
+
+# Query cache TTL in seconds
+query_cache_ttl_secs = 300
+
+# Maximum query cache size (number of entries)
+query_cache_max_size = 1000
+
+# Enable compression for data transfer
+enable_compression = true
+
+# Compression level (1-9)
+compression_level = 6
+
+# Read preference for queries
+read_preference = "primary_preferred"
+
+# Write concern level
+write_concern = "acknowledged"
+
+[monitoring]
+# Enable performance metrics collection
+enable_metrics = true
+
+# Metrics collection interval in seconds
+metrics_interval_secs = 30
+
+# Enable distributed tracing
+enable_tracing = true
+
+# Tracing service endpoint (optional)
+# tracing_endpoint = "http://localhost:14268/api/traces"
+
+# Enable health checks
+enable_health_checks = true
+
+# Health check interval in seconds
+health_check_interval_secs = 60
+
+# Log level
+log_level = "info"
+
+# Enable structured logging
+enable_structured_logging = true
+
+# Log output format
+log_format = "json"
