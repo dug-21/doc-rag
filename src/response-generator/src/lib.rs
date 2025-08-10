@@ -38,25 +38,29 @@
 //! ```
 
 pub mod builder;
+pub mod cache;
 pub mod citation;
 pub mod config;
 pub mod error;
+pub mod fact_accelerated;
 pub mod formatter;
 pub mod pipeline;
+pub mod query_preprocessing;
 pub mod validator;
 
 use std::time::Duration;
 use tokio_stream::wrappers::ReceiverStream;
 
 pub use builder::ResponseBuilder;
+pub use cache::{FACTCacheManager, CacheManagerConfig, CacheResult, CacheSource};
 pub use citation::{Citation, CitationTracker, Source, SourceRanking};
 pub use config::Config;
-pub use formatter::{FormatterConfig, OutputFormat};
-pub use validator::ValidationConfig;
 pub use error::{ResponseError, Result};
-pub use formatter::ResponseFormatter;
+pub use fact_accelerated::{FACTAcceleratedGenerator, FACTConfig, FACTGeneratedResponse};
+pub use formatter::{FormatterConfig, OutputFormat, ResponseFormatter};
 pub use pipeline::{Pipeline, PipelineStage, ProcessingContext};
-pub use validator::{ValidationLayer, ValidationResult, Validator};
+pub use query_preprocessing::{FACTQueryPreprocessingStage, QueryPreprocessingConfig};
+pub use validator::{ValidationConfig, ValidationLayer, ValidationResult, Validator};
 
 // use async_trait::async_trait; // Currently unused
 use serde::{Deserialize, Serialize};
@@ -231,14 +235,16 @@ pub struct GenerationMetrics {
 
 impl Default for ResponseGenerator {
     fn default() -> Self {
-        Self::new(Config::default())
+        // Use blocking approach for Default trait since it can't be async
+        let rt = tokio::runtime::Runtime::new().expect("Failed to create runtime");
+        rt.block_on(Self::new(Config::default()))
     }
 }
 
 impl ResponseGenerator {
     /// Create a new response generator with configuration
-    pub fn new(config: Config) -> Self {
-        let pipeline = Pipeline::new(&config.pipeline_stages);
+    pub async fn new(config: Config) -> Self {
+        let pipeline = Pipeline::new(&config.pipeline_stages).await;
         let validator = Validator::new(config.validation.clone());
         let formatter = ResponseFormatter::new(config.formatter.clone());
         let citation_tracker = CitationTracker::new();
@@ -354,10 +360,11 @@ impl ResponseGenerator {
         
         // Clone necessary data for the task
         let request_clone = request.clone();
-        let mut generator_clone = Self::new(self.config.clone());
+        let config_clone = self.config.clone();
         
         // Spawn streaming task
         tokio::spawn(async move {
+            let mut generator_clone = Self::new(config_clone).await;
             match generator_clone.generate_streaming_impl(request_clone, tx).await {
                 Ok(_) => {},
                 Err(e) => {
@@ -365,6 +372,30 @@ impl ResponseGenerator {
                 }
             }
         });
+        
+        Ok(ReceiverStream::new(rx))
+    }
+
+    /// Generate a streaming response
+    pub async fn generate_stream_v2(
+        &mut self,
+        request: GenerationRequest,
+    ) -> Result<ReceiverStream<Result<ResponseChunk>>> {
+        use tokio::sync::mpsc;
+        
+        let (tx, rx) = mpsc::channel(32);
+        
+        // Clone necessary data for the task
+        let request_clone = request.clone();
+        let mut generator_clone = Self::new(self.config.clone()).await;
+        
+        // Direct call since we're already in async context
+        match generator_clone.generate_streaming_impl(request_clone, tx).await {
+            Ok(_) => {},
+            Err(e) => {
+                error!("Streaming generation failed: {}", e);
+            }
+        }
         
         Ok(ReceiverStream::new(rx))
     }
@@ -598,11 +629,11 @@ impl GenerationRequestBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio_test;
+    // use tokio_test; // Unused import
 
     #[tokio::test]
     async fn test_response_generator_creation() {
-        let generator = ResponseGenerator::default();
+        let generator = ResponseGenerator::new(Config::default()).await;
         assert_eq!(generator.config.max_response_length, 4096);
     }
 

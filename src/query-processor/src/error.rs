@@ -3,7 +3,7 @@
 //! This module provides comprehensive error types and handling for all processor components,
 //! with proper error chaining, context, and recovery strategies.
 
-use std::fmt;
+// use std::fmt; // Unused
 use thiserror::Error;
 
 /// Result type alias for Query Processor operations
@@ -136,7 +136,7 @@ pub enum ProcessorError {
 }
 
 /// Error severity levels
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ErrorSeverity {
     /// Low severity - operation can continue with degraded functionality
     Low,

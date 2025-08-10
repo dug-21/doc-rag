@@ -3,6 +3,7 @@
 use crate::{
     builder::ResponseBuilder,
     error::{Result, ResponseError},
+    query_preprocessing::FACTQueryPreprocessingStage,
     GenerationRequest, ResponseChunk,
 };
 use async_trait::async_trait;
@@ -182,7 +183,7 @@ impl Default for RetryConfig {
 
 impl Pipeline {
     /// Create a new pipeline with default stages
-    pub fn new(stage_names: &[String]) -> Self {
+    pub async fn new(stage_names: &[String]) -> Self {
         let mut pipeline = Self {
             stages: Vec::new(),
             config: PipelineConfig::default(),
@@ -191,22 +192,22 @@ impl Pipeline {
         
         // Add stages based on configuration
         for stage_name in stage_names {
-            if let Some(stage) = pipeline.create_stage(stage_name) {
+            if let Some(stage) = pipeline.create_stage(stage_name).await {
                 pipeline.add_stage(stage);
             }
         }
         
         // If no stages specified, add default stages
         if pipeline.stages.is_empty() {
-            pipeline.add_default_stages();
+            pipeline.add_default_stages().await;
         }
         
         pipeline
     }
 
     /// Create pipeline with custom configuration
-    pub fn with_config(config: PipelineConfig, stage_names: &[String]) -> Self {
-        let mut pipeline = Self::new(stage_names);
+    pub async fn with_config(config: PipelineConfig, stage_names: &[String]) -> Self {
+        let mut pipeline = Self::new(stage_names).await;
         pipeline.config = config;
         pipeline
     }
@@ -280,7 +281,12 @@ impl Pipeline {
     }
 
     /// Add default processing stages
-    fn add_default_stages(&mut self) {
+    async fn add_default_stages(&mut self) {
+        // Add FACT query preprocessing as the first stage
+        if let Ok(fact_stage) = FACTQueryPreprocessingStage::new().await {
+            self.stages.push(Box::new(fact_stage));
+        }
+        
         self.stages.push(Box::new(ContextPreprocessingStage::new()));
         self.stages.push(Box::new(ContentGenerationStage::new()));
         self.stages.push(Box::new(QualityEnhancementStage::new()));
@@ -291,8 +297,16 @@ impl Pipeline {
     }
 
     /// Create a stage by name
-    fn create_stage(&self, stage_name: &str) -> Option<Box<dyn PipelineStage>> {
+    async fn create_stage(&self, stage_name: &str) -> Option<Box<dyn PipelineStage>> {
         match stage_name {
+            "fact_query_preprocessing" => {
+                // Handle async stage creation
+                if let Ok(stage) = FACTQueryPreprocessingStage::new().await {
+                    Some(Box::new(stage))
+                } else {
+                    None
+                }
+            },
             "context_preprocessing" => Some(Box::new(ContextPreprocessingStage::new())),
             "content_generation" => Some(Box::new(ContentGenerationStage::new())),
             "quality_enhancement" => Some(Box::new(QualityEnhancementStage::new())),
@@ -308,7 +322,7 @@ impl Pipeline {
     }
 
     /// Validate pipeline configuration and dependencies
-    async fn validate_pipeline(&self, context: &ProcessingContext) -> Result<()> {
+    async fn validate_pipeline(&self, _context: &ProcessingContext) -> Result<()> {
         // Check for dependency cycles
         let mut dependencies: HashMap<String, Vec<String>> = HashMap::new();
         
@@ -704,12 +718,12 @@ impl PipelineStage for FinalOptimizationStage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{GenerationRequest, ContextChunk, Source};
+    use crate::GenerationRequest;
 
     #[tokio::test]
     async fn test_pipeline_creation() {
         let stage_names = vec!["content_generation".to_string()];
-        let pipeline = Pipeline::new(&stage_names);
+        let pipeline = Pipeline::new(&stage_names).await;
         assert!(pipeline.stages.len() > 0);
     }
 
@@ -734,8 +748,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_stage_ordering() {
-        let mut pipeline = Pipeline::new(&[]);
-        pipeline.add_default_stages();
+        let mut pipeline = Pipeline::new(&[]).await;
+        pipeline.add_default_stages().await;
         
         // Verify stages are sorted by order
         for i in 1..pipeline.stages.len() {
@@ -745,7 +759,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_retry_delay_calculation() {
-        let pipeline = Pipeline::new(&[]);
+        let pipeline = Pipeline::new(&[]).await;
         
         let delay1 = pipeline.calculate_retry_delay(1);
         let delay2 = pipeline.calculate_retry_delay(2);

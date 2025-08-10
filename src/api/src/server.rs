@@ -40,11 +40,13 @@ impl ApiServer {
 
         // Initialize metrics registry
         let metrics = MetricsRegistry::new()
-            .context("Failed to initialize metrics registry")?;
+            .map_err(|e| anyhow::anyhow!("Failed to initialize metrics registry: {}", e))?;
 
         // Run health checks on all components
-        clients.health_check_all().await
-            .context("Initial component health check failed")?;
+        match clients.health_check_all().await {
+            Ok(health) => health,
+            Err(e) => return Err(anyhow::anyhow!("Initial component health check failed: {}", e)),
+        };
 
         info!("All components are healthy and ready");
 

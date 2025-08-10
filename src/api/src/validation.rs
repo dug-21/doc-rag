@@ -2,8 +2,9 @@ use validator::{Validate, ValidationError};
 use crate::{
     models::{
         QueryRequest, IngestRequest, LoginRequest, 
-        BatchIngestRequest, QueryHistoryParams
+        BatchIngestRequest
     },
+    handlers::queries::QueryHistoryParams,
     ApiError,
 };
 

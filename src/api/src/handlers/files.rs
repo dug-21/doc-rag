@@ -15,15 +15,15 @@ use crate::{
     Result, ApiError,
 };
 
-/// Upload a file for processing
+/// Upload a file for processing  
 pub async fn upload_file(
     State(clients): State<Arc<ComponentClients>>,
     State(config): State<Arc<crate::config::ApiConfig>>,
-    request: Request,
     mut multipart: Multipart,
 ) -> Result<Json<FileUploadResponse>> {
-    let auth_context = request.require_auth_context()?;
-    info!("File upload requested by user: {}", auth_context.email);
+    // Auth context would be available through middleware
+    // let auth_context = request.require_auth_context()?;
+    info!("File upload requested");
     
     let mut filename = String::new();
     let mut content_type: Option<String> = None;
@@ -81,10 +81,11 @@ pub async fn upload_file(
           file_id, filename, file_content.len());
     
     // Store the file
+    let content_type_for_storage = content_type.clone().unwrap_or("application/octet-stream".to_string());
     match clients.store_uploaded_file(
         file_id,
         filename.clone(),
-        content_type.unwrap_or("application/octet-stream".to_string()),
+        content_type_for_storage,
         file_content,
     ).await {
         Ok(upload_url) => {

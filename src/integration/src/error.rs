@@ -118,6 +118,14 @@ pub enum IntegrationError {
     #[error("Feature not implemented: {0}")]
     NotImplemented(String),
     
+    /// DAA orchestrator initialization failed
+    #[error("DAA orchestrator initialization failed: {reason}")]
+    InitializationFailed { reason: String },
+    
+    /// Agent spawning failed
+    #[error("Agent spawn failed: {reason}")]
+    AgentSpawnFailed { reason: String },
+    
     /// Operation cancelled
     #[error("Operation cancelled: {0}")]
     OperationCancelled(String),

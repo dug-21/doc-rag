@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::types::{
     ConsensusResult, ExtractedEntity, IntentClassification, KeyTerm, SemanticAnalysis,
-    StrategySelection,
+    StrategySelection, ClassificationMethod, PerformanceMetrics, StrategyPredictions,
 };
 use crate::error::{ProcessorError, Result};
 
@@ -175,7 +175,7 @@ pub enum ValidationStatus {
 
 /// Performance metrics for processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PerformanceMetrics {
+pub struct ProcessingPerformanceMetrics {
     /// Throughput (queries per second)
     pub throughput: f64,
     /// Latency percentiles
@@ -549,7 +549,20 @@ impl ProcessedQuery {
 
         // Consensus confidence (if available)
         if let Some(ref consensus) = self.consensus {
-            confidence_sum += consensus.agreement;
+            let consensus_confidence = match consensus {
+                ConsensusResult::QueryProcessing { result } => result.confidence,
+                ConsensusResult::EntityExtraction { entities } => {
+                    if entities.is_empty() {
+                        0.0
+                    } else {
+                        entities.iter().map(|e| e.entity.confidence).sum::<f64>() / entities.len() as f64
+                    }
+                },
+                ConsensusResult::Classification { classification } => classification.confidence,
+                ConsensusResult::StrategyRecommendation { strategy } => strategy.confidence,
+                ConsensusResult::ResultValidation { validation } => validation.score,
+            };
+            confidence_sum += consensus_confidence;
             confidence_count += 1;
         }
 
@@ -583,7 +596,15 @@ impl ProcessedQuery {
             quality_score: self.quality_score(),
             processing_duration: self.processing_metadata.total_duration,
             warnings: self.processing_metadata.warnings.len(),
-            consensus_reached: self.consensus.as_ref().map(|c| c.byzantine_tolerance),
+            consensus_reached: self.consensus.as_ref().map(|consensus| {
+                match consensus {
+                    ConsensusResult::QueryProcessing { .. } => true, // Query processing consensus always indicates success
+                    ConsensusResult::EntityExtraction { entities } => !entities.is_empty(), // Consensus reached if entities extracted
+                    ConsensusResult::Classification { classification } => classification.confidence > 0.5, // Consensus if confident
+                    ConsensusResult::StrategyRecommendation { strategy } => strategy.confidence > 0.5, // Consensus if confident
+                    ConsensusResult::ResultValidation { validation } => validation.is_valid, // Consensus if validation passed
+                }
+            }),
         }
     }
 }
@@ -640,7 +661,7 @@ impl Default for ResourceUsage {
     }
 }
 
-impl Default for PerformanceMetrics {
+impl Default for ProcessingPerformanceMetrics {
     fn default() -> Self {
         Self {
             throughput: 0.0,
@@ -729,33 +750,36 @@ mod tests {
         
         let intent = IntentClassification {
             primary_intent: QueryIntent::Factual,
-            primary_confidence: 0.9,
+            confidence: 0.9,
             secondary_intents: vec![],
-            metadata: ClassificationMetadata {
-                classifier: "test".to_string(),
-                classified_at: Utc::now(),
-                features: vec![],
-                alternatives: vec![],
-            },
+            probabilities: HashMap::new(),
+            method: ClassificationMethod::RuleBased,
+            features: HashMap::new(),
         };
         
         let strategy = StrategySelection {
-            primary_strategy: SearchStrategy::VectorSimilarity,
-            primary_confidence: 0.85,
-            fallback_strategies: vec![],
+            strategy: SearchStrategy::VectorSimilarity,
+            confidence: 0.85,
+            fallbacks: vec![],
             reasoning: "Test reasoning".to_string(),
-            predictions: PerformancePrediction {
-                accuracy: 0.9,
-                latency: std::time::Duration::from_millis(100),
-                recall: 0.85,
-                precision: 0.90,
-                confidence: 0.8,
+            expected_metrics: PerformanceMetrics {
+                expected_accuracy: 0.9,
+                expected_response_time: std::time::Duration::from_millis(100),
+                expected_recall: 0.85,
+                expected_precision: 0.90,
+                resource_usage: ResourceUsage {
+                    memory: 1000,
+                    cpu: 0.5,
+                    api_calls: 1,
+                    cache_hits: 0,
+                    cache_misses: 1,
+                    peak_memory: 2000,
+                },
             },
-            metadata: SelectionMetadata {
-                algorithm: "test".to_string(),
-                selected_at: Utc::now(),
-                factors: vec![],
-                characteristics: HashMap::new(),
+            predictions: StrategyPredictions {
+                latency: 0.1,
+                accuracy: 0.85,
+                resource_usage: 0.5,
             },
         };
         

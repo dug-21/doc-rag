@@ -138,6 +138,7 @@ pub struct ServiceTraceStats {
 }
 
 /// Distributed tracing system
+#[derive(Debug)]
 pub struct TracingSystem {
     /// System ID
     id: Uuid,

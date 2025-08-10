@@ -78,6 +78,11 @@ ort = { version = "2.0.0-rc.10", features = ["cuda", "tensorrt"] }
 sha2 = "0.10"
 ndarray = { version = "0.15", features = ["serde"] }
 
+# Phase 1 Rework: Library Integration (Design Principle #2)
+ruv-fann = "0.1.6"  # Neural networks for boundary detection and classification
+daa = { git = "https://github.com/ruvnet/daa.git", branch = "main" }  # Autonomous orchestration
+fact = { git = "https://github.com/ruvnet/FACT.git", branch = "main" }  # Intelligent caching
+
 # Vector databases
 qdrant-client = "1.7"
 pinecone-sdk = "0.6"

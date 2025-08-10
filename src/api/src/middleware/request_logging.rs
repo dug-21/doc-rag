@@ -38,6 +38,7 @@ impl<S> Service<Request> for RequestLoggingMiddleware<S>
 where
     S: Service<Request, Response = Response> + Send + 'static,
     S::Future: Send + 'static,
+    S::Error: std::fmt::Display,
 {
     type Response = Response;
     type Error = S::Error;
@@ -47,10 +48,8 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, request: Request) -> Self::Future 
-    where
-        S::Error: std::fmt::Display,
-    {
+    fn call(&mut self, request: Request) -> Self::Future {
+        // Remove the stricter requirement on S::Error
         let start_time = Instant::now();
         
         // Extract request information

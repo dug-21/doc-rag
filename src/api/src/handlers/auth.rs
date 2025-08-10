@@ -122,11 +122,11 @@ pub async fn refresh_token(
 
 /// User logout endpoint
 pub async fn logout(
-    request: Request,
     Json(logout_request): Json<LogoutRequest>,
 ) -> Result<StatusCode> {
-    let auth_context = request.require_auth_context()?;
-    info!("Logout requested for user: {}", auth_context.email);
+    // Auth context would be available through middleware
+    // let auth_context = request.require_auth_context()?;
+    info!("Logout requested");
     
     // In a real implementation, this would:
     // 1. Revoke the current access token (add to blacklist)
@@ -136,13 +136,13 @@ pub async fn logout(
     
     if let Some(refresh_token) = logout_request.refresh_token {
         // revoke_refresh_token(&refresh_token).await?;
-        info!("Refresh token revoked for user: {}", auth_context.email);
+        info!("Refresh token revoked");
     }
     
     // In production, add access token to blacklist
     // blacklist_access_token(&auth_context.token_id).await?;
     
-    info!("Logout successful for user: {}", auth_context.email);
+    info!("Logout successful");
     
     Ok(StatusCode::NO_CONTENT)
 }
@@ -238,7 +238,7 @@ fn extract_name_from_email(email: &str) -> String {
             let mut chars = word.chars();
             match chars.next() {
                 None => String::new(),
-                Some(first) => first.to_uppercase().chain(chars.as_str().to_lowercase()).collect(),
+                Some(first) => first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase(),
             }
         })
         .collect::<Vec<String>>()

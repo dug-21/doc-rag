@@ -4,7 +4,7 @@ use axum::{
     response::Response,
 };
 use prometheus::{
-    Counter, Histogram, IntCounter, IntGauge, Opts, Registry,
+    CounterVec, HistogramVec, IntCounter, IntGauge, Opts, Registry,
 };
 use std::{
     sync::Arc,
@@ -130,19 +130,19 @@ where
 
 /// Centralized metrics registry
 pub struct MetricsRegistry {
-    pub requests_total: Counter,
-    pub responses_total: Counter,
-    pub request_duration_seconds: Histogram,
-    pub response_size_bytes: Histogram,
+    pub requests_total: CounterVec,
+    pub responses_total: CounterVec,
+    pub request_duration_seconds: HistogramVec,
+    pub response_size_bytes: HistogramVec,
     pub active_requests: IntGauge,
-    pub component_requests_total: Counter,
-    pub component_errors_total: Counter,
-    pub component_duration_seconds: Histogram,
+    pub component_requests_total: CounterVec,
+    pub component_errors_total: CounterVec,
+    pub component_duration_seconds: HistogramVec,
     pub database_connections_active: IntGauge,
     pub cache_hits_total: IntCounter,
     pub cache_misses_total: IntCounter,
-    pub auth_attempts_total: Counter,
-    pub auth_failures_total: Counter,
+    pub auth_attempts_total: CounterVec,
+    pub auth_failures_total: CounterVec,
     pub registry: Registry,
 }
 
@@ -150,29 +150,33 @@ impl MetricsRegistry {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let registry = Registry::new();
 
-        let requests_total = Counter::with_opts(
+        let requests_total = CounterVec::new(
             Opts::new("http_requests_total", "Total number of HTTP requests")
                 .const_label("service", "api-gateway"),
+            &["method", "path"],
         )?;
         registry.register(Box::new(requests_total.clone()))?;
 
-        let responses_total = Counter::with_opts(
+        let responses_total = CounterVec::new(
             Opts::new("http_responses_total", "Total number of HTTP responses")
                 .const_label("service", "api-gateway"),
+            &["method", "path", "status_code"],
         )?;
         registry.register(Box::new(responses_total.clone()))?;
 
-        let request_duration_seconds = Histogram::with_opts(
+        let request_duration_seconds = HistogramVec::new(
             prometheus::HistogramOpts::new("http_request_duration_seconds", "HTTP request duration in seconds")
                 .const_label("service", "api-gateway")
                 .buckets(vec![0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]),
+            &["method", "path", "status_class"],
         )?;
         registry.register(Box::new(request_duration_seconds.clone()))?;
 
-        let response_size_bytes = Histogram::with_opts(
+        let response_size_bytes = HistogramVec::new(
             prometheus::HistogramOpts::new("http_response_size_bytes", "HTTP response size in bytes")
                 .const_label("service", "api-gateway")
                 .buckets(vec![100.0, 1000.0, 10000.0, 100000.0, 1000000.0, 10000000.0]),
+            &["method", "path"],
         )?;
         registry.register(Box::new(response_size_bytes.clone()))?;
 
@@ -182,21 +186,24 @@ impl MetricsRegistry {
         )?;
         registry.register(Box::new(active_requests.clone()))?;
 
-        let component_requests_total = Counter::with_opts(
+        let component_requests_total = CounterVec::new(
             Opts::new("component_requests_total", "Total requests to components")
                 .const_label("service", "api-gateway"),
+            &["component", "operation"],
         )?;
         registry.register(Box::new(component_requests_total.clone()))?;
 
-        let component_errors_total = Counter::with_opts(
+        let component_errors_total = CounterVec::new(
             Opts::new("component_errors_total", "Total component errors")
                 .const_label("service", "api-gateway"),
+            &["component", "operation"],
         )?;
         registry.register(Box::new(component_errors_total.clone()))?;
 
-        let component_duration_seconds = Histogram::with_opts(
+        let component_duration_seconds = HistogramVec::new(
             prometheus::HistogramOpts::new("component_request_duration_seconds", "Component request duration")
                 .const_label("service", "api-gateway"),
+            &["component", "operation"],
         )?;
         registry.register(Box::new(component_duration_seconds.clone()))?;
 
@@ -218,15 +225,17 @@ impl MetricsRegistry {
         )?;
         registry.register(Box::new(cache_misses_total.clone()))?;
 
-        let auth_attempts_total = Counter::with_opts(
+        let auth_attempts_total = CounterVec::new(
             Opts::new("auth_attempts_total", "Total authentication attempts")
                 .const_label("service", "api-gateway"),
+            &["method"],
         )?;
         registry.register(Box::new(auth_attempts_total.clone()))?;
 
-        let auth_failures_total = Counter::with_opts(
+        let auth_failures_total = CounterVec::new(
             Opts::new("auth_failures_total", "Total authentication failures")
                 .const_label("service", "api-gateway"),
+            &["method"],
         )?;
         registry.register(Box::new(auth_failures_total.clone()))?;
 

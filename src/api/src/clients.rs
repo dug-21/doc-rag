@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use base64::prelude::*;
 use reqwest::{Client, Response, StatusCode};
 use serde_json::{json, Value};
 use std::{collections::HashMap, sync::Arc, time::Duration};
@@ -386,7 +387,7 @@ impl ComponentClients {
 
     pub async fn extract_text_from_file(&self, file_content: Vec<u8>, content_type: Option<&str>) -> Result<String> {
         let request = json!({
-            "content": base64::encode(&file_content),
+            "content": base64::prelude::BASE64_STANDARD.encode(&file_content),
             "content_type": content_type
         });
 

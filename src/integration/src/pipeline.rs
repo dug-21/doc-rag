@@ -11,8 +11,9 @@ use tracing::{info, error, instrument};
 use uuid::Uuid;
 
 use crate::{
-    Result, IntegrationError, IntegrationCoordinator, MessageBus,
+    Result, IntegrationError, DAAOrchestrator, MessageBus,
     QueryRequest, QueryResponse, ResponseFormat, Citation,
+    IntegrationConfig,
 };
 
 /// Pipeline stage trait for processing steps
@@ -102,9 +103,9 @@ pub struct ProcessingPipeline {
     /// Pipeline ID
     id: Uuid,
     /// Configuration
-    config: Arc<crate::IntegrationConfig>,
-    /// Coordinator reference
-    coordinator: Arc<IntegrationCoordinator>,
+    config: Arc<IntegrationConfig>,
+    /// DAA orchestrator reference
+    daa_orchestrator: Arc<RwLock<DAAOrchestrator>>,
     /// Message bus
     message_bus: Arc<MessageBus>,
     /// Pipeline stages
@@ -148,13 +149,13 @@ pub struct StageMetrics {
 }
 
 impl ProcessingPipeline {
-    /// Create new processing pipeline
+    /// Create new processing pipeline with DAA orchestration
     pub async fn new(
         config: Arc<crate::IntegrationConfig>,
-        coordinator: Arc<IntegrationCoordinator>,
+        daa_orchestrator: Arc<RwLock<DAAOrchestrator>>,
         message_bus: Arc<MessageBus>,
     ) -> Result<Self> {
-        let stages = Self::create_stages(&config, &coordinator).await?;
+        let stages = Self::create_stages(&config, &daa_orchestrator).await?;
         let mut stage_semaphores = HashMap::new();
         
         // Create concurrency controls for each stage
@@ -166,7 +167,7 @@ impl ProcessingPipeline {
         Ok(Self {
             id: Uuid::new_v4(),
             config,
-            coordinator,
+            daa_orchestrator,
             message_bus,
             stages,
             stage_semaphores,
@@ -304,41 +305,41 @@ impl ProcessingPipeline {
         Ok(response)
     }
     
-    /// Create pipeline stages
+    /// Create pipeline stages with DAA orchestration
     async fn create_stages(
-        config: &crate::IntegrationConfig,
-        coordinator: &IntegrationCoordinator,
+        config: &IntegrationConfig,
+        daa_orchestrator: &Arc<RwLock<DAAOrchestrator>>,
     ) -> Result<Vec<Arc<dyn PipelineStage>>> {
         let mut stages: Vec<Arc<dyn PipelineStage>> = Vec::new();
         
         // Stage 1: Query Processing
         stages.push(Arc::new(
-            QueryProcessingStage::new(config, coordinator).await?
+            QueryProcessingStage::new(config, daa_orchestrator).await?
         ));
         
         // Stage 2: Document Chunking
         stages.push(Arc::new(
-            ChunkingStage::new(config, coordinator).await?
+            ChunkingStage::new(config, daa_orchestrator).await?
         ));
         
         // Stage 3: Embedding Generation
         stages.push(Arc::new(
-            EmbeddingStage::new(config, coordinator).await?
+            EmbeddingStage::new(config, daa_orchestrator).await?
         ));
         
         // Stage 4: Vector Search
         stages.push(Arc::new(
-            VectorSearchStage::new(config, coordinator).await?
+            VectorSearchStage::new(config, daa_orchestrator).await?
         ));
         
         // Stage 5: Response Generation
         stages.push(Arc::new(
-            ResponseGenerationStage::new(config, coordinator).await?
+            ResponseGenerationStage::new(config, daa_orchestrator).await?
         ));
         
         // Stage 6: Citation and Validation
         stages.push(Arc::new(
-            CitationValidationStage::new(config, coordinator).await?
+            CitationValidationStage::new(config, daa_orchestrator).await?
         ));
         
         Ok(stages)
@@ -454,7 +455,7 @@ impl Clone for ProcessingPipeline {
         Self {
             id: self.id,
             config: self.config.clone(),
-            coordinator: self.coordinator.clone(),
+            daa_orchestrator: self.daa_orchestrator.clone(),
             message_bus: self.message_bus.clone(),
             stages: self.stages.clone(),
             stage_semaphores: self.stage_semaphores.clone(),
@@ -469,13 +470,13 @@ impl Clone for ProcessingPipeline {
 struct QueryProcessingStage {
     name: String,
     config: StageConfig,
-    coordinator: Arc<IntegrationCoordinator>,
+    daa_orchestrator: Arc<RwLock<DAAOrchestrator>>,
 }
 
 impl QueryProcessingStage {
     async fn new(
-        _config: &crate::IntegrationConfig,
-        coordinator: &IntegrationCoordinator,
+        _config: &IntegrationConfig,
+        daa_orchestrator: &Arc<RwLock<DAAOrchestrator>>,
     ) -> Result<Self> {
         Ok(Self {
             name: "query-processing".to_string(),
@@ -486,7 +487,7 @@ impl QueryProcessingStage {
                 circuit_breaker_threshold: 5,
                 settings: HashMap::new(),
             },
-            coordinator: Arc::new(coordinator.clone()),
+            daa_orchestrator: daa_orchestrator.clone(),
         })
     }
 }
@@ -532,13 +533,13 @@ impl PipelineStage for QueryProcessingStage {
 struct ChunkingStage {
     name: String,
     config: StageConfig,
-    coordinator: Arc<IntegrationCoordinator>,
+    daa_orchestrator: Arc<RwLock<DAAOrchestrator>>,
 }
 
 impl ChunkingStage {
     async fn new(
-        _config: &crate::IntegrationConfig,
-        coordinator: &IntegrationCoordinator,
+        _config: &IntegrationConfig,
+        daa_orchestrator: &Arc<RwLock<DAAOrchestrator>>,
     ) -> Result<Self> {
         Ok(Self {
             name: "chunking".to_string(),
@@ -549,7 +550,7 @@ impl ChunkingStage {
                 circuit_breaker_threshold: 5,
                 settings: HashMap::new(),
             },
-            coordinator: Arc::new(coordinator.clone()),
+            daa_orchestrator: daa_orchestrator.clone(),
         })
     }
 }
@@ -596,13 +597,13 @@ macro_rules! impl_stage {
         struct $stage {
             name: String,
             config: StageConfig,
-            coordinator: Arc<IntegrationCoordinator>,
+            daa_orchestrator: Arc<RwLock<DAAOrchestrator>>,
         }
         
         impl $stage {
             async fn new(
-                _config: &crate::IntegrationConfig,
-                coordinator: &IntegrationCoordinator,
+                _config: &IntegrationConfig,
+                daa_orchestrator: &Arc<RwLock<DAAOrchestrator>>,
             ) -> Result<Self> {
                 Ok(Self {
                     name: $name.to_string(),
@@ -613,7 +614,7 @@ macro_rules! impl_stage {
                         circuit_breaker_threshold: 5,
                         settings: HashMap::new(),
                     },
-                    coordinator: Arc::new(coordinator.clone()),
+                    daa_orchestrator: daa_orchestrator.clone(),
                 })
             }
         }
@@ -689,31 +690,29 @@ impl_stage!(CitationValidationStage, "citation-validation", 10, 50);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{IntegrationConfig, ServiceDiscovery, MessageBus};
+    use crate::{IntegrationConfig, DAAOrchestrator, MessageBus};
     
     #[tokio::test]
     async fn test_pipeline_creation() {
         let config = Arc::new(IntegrationConfig::default());
-        let service_discovery = Arc::new(ServiceDiscovery::new(config.clone()).await.unwrap());
+        let mut daa_orchestrator = DAAOrchestrator::new(config.clone()).await.unwrap();
+        daa_orchestrator.initialize().await.unwrap();
+        let daa_orchestrator = Arc::new(RwLock::new(daa_orchestrator));
         let message_bus = Arc::new(MessageBus::new(config.clone()).await.unwrap());
-        let coordinator = Arc::new(
-            IntegrationCoordinator::new(config.clone(), service_discovery, message_bus.clone()).await.unwrap()
-        );
         
-        let pipeline = ProcessingPipeline::new(config, coordinator, message_bus).await;
+        let pipeline = ProcessingPipeline::new(config, daa_orchestrator, message_bus).await;
         assert!(pipeline.is_ok());
     }
     
     #[tokio::test]
     async fn test_query_processing() {
         let config = Arc::new(IntegrationConfig::default());
-        let service_discovery = Arc::new(ServiceDiscovery::new(config.clone()).await.unwrap());
+        let mut daa_orchestrator = DAAOrchestrator::new(config.clone()).await.unwrap();
+        daa_orchestrator.initialize().await.unwrap();
+        let daa_orchestrator = Arc::new(RwLock::new(daa_orchestrator));
         let message_bus = Arc::new(MessageBus::new(config.clone()).await.unwrap());
-        let coordinator = Arc::new(
-            IntegrationCoordinator::new(config.clone(), service_discovery, message_bus.clone()).await.unwrap()
-        );
         
-        let pipeline = ProcessingPipeline::new(config, coordinator, message_bus).await.unwrap();
+        let pipeline = ProcessingPipeline::new(config, daa_orchestrator, message_bus).await.unwrap();
         pipeline.initialize().await.unwrap();
         pipeline.start().await.unwrap();
         

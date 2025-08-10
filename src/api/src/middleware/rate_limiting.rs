@@ -15,9 +15,10 @@ use tower::{Layer, Service};
 use tracing::{debug, warn};
 
 use crate::{config::ApiConfig, ApiError, middleware::error_handling::handle_rate_limit_error};
+use axum::response::IntoResponse;
 
 /// Rate limiting configuration
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RateLimitConfig {
     /// Maximum requests per window
     pub max_requests: u32,
@@ -103,20 +104,15 @@ pub struct RateLimitingMiddleware<S> {
 
 impl<S> Service<Request> for RateLimitingMiddleware<S>
 where
-    S: Service<Request, Response = Response> + Send + 'static,
+    S: Service<Request, Response = Response, Error = std::convert::Infallible> + Send + 'static,
     S::Future: Send + 'static,
-    S::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
 {
     type Response = Response;
-    type Error = Box<dyn std::error::Error + Send + Sync>;
+    type Error = std::convert::Infallible;
     type Future = std::pin::Pin<Box<dyn std::future::Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
     fn poll_ready(&mut self, cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), Self::Error>> {
-        match self.inner.poll_ready(cx) {
-            std::task::Poll::Ready(Ok(())) => std::task::Poll::Ready(Ok(())),
-            std::task::Poll::Ready(Err(e)) => std::task::Poll::Ready(Err(e.into())),
-            std::task::Poll::Pending => std::task::Poll::Pending,
-        }
+        self.inner.poll_ready(cx)
     }
 
     fn call(&mut self, request: Request) -> Self::Future {
@@ -127,7 +123,7 @@ where
             debug!("Path {} is exempt from rate limiting", path);
             let future = self.inner.call(request);
             return Box::pin(async move {
-                future.await.map_err(|e| e.into())
+                future.await
             });
         }
 
@@ -145,7 +141,7 @@ where
                     debug!("Rate limit check passed for {}: {} remaining", client_id, remaining);
                     
                     // Proceed with request
-                    let mut response = future.await.map_err(|e| e.into())?;
+                    let mut response = future.await?;
                     
                     // Add rate limit headers
                     add_rate_limit_headers(&mut response, &config, remaining, None);
@@ -255,7 +251,7 @@ impl RateLimitStore {
 }
 
 /// Rate limit state for a single client
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ClientRateLimit {
     requests: Vec<Instant>,
     config: Arc<RateLimitConfig>,

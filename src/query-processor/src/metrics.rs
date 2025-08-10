@@ -6,7 +6,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
-use std::sync::atomic::{AtomicU64, Ordering};
+// use std::sync::atomic::{AtomicU64, Ordering}; // Unused
 use std::time::{Duration, Instant};
 use tracing::{info, instrument};
 
@@ -34,8 +34,8 @@ pub struct ProcessorMetrics {
     pub stage_metrics: HashMap<String, StageMetrics>,
     /// Intent distribution metrics
     pub intent_distribution: HashMap<QueryIntent, IntentMetrics>,
-    /// Strategy effectiveness metrics
-    pub strategy_effectiveness: HashMap<SearchStrategy, StrategyMetrics>,
+    /// Strategy effectiveness metrics (keyed by strategy name)
+    pub strategy_effectiveness: HashMap<String, StrategyMetrics>,
     /// Error distribution
     pub error_distribution: HashMap<String, u64>,
     /// Metrics collection start time
@@ -101,13 +101,13 @@ impl ProcessorMetrics {
         let intent_metrics = self.intent_distribution
             .entry(processed_query.intent.primary_intent.clone())
             .or_insert_with(IntentMetrics::new);
-        intent_metrics.record_processing(processed_query.intent.primary_confidence);
+        intent_metrics.record_processing(processed_query.intent.confidence);
         
         // Record strategy effectiveness
         let strategy_metrics = self.strategy_effectiveness
-            .entry(processed_query.strategy.primary_strategy.clone())
+            .entry(format!("{:?}", processed_query.strategy.strategy))
             .or_insert_with(StrategyMetrics::new);
-        strategy_metrics.record_usage(processed_query.strategy.primary_confidence);
+        strategy_metrics.record_usage(processed_query.strategy.confidence);
         
         // Store recent summary (circular buffer)
         let summary = processed_query.summary();
@@ -193,7 +193,7 @@ impl ProcessorMetrics {
     }
 
     /// Get most effective strategy
-    fn most_effective_strategy(&self) -> Option<SearchStrategy> {
+    fn most_effective_strategy(&self) -> Option<String> {
         self.strategy_effectiveness
             .iter()
             .max_by(|(_, a), (_, b)| {
@@ -326,6 +326,7 @@ impl LatencyStatistics {
 /// Throughput statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThroughputStatistics {
+    #[serde(skip)]
     processing_times: VecDeque<Instant>,
     window_duration: Duration,
 }
@@ -538,7 +539,7 @@ pub struct PerformanceSummary {
     pub current_throughput: f64,
     pub average_confidence: f64,
     pub top_intent: Option<QueryIntent>,
-    pub top_strategy: Option<SearchStrategy>,
+    pub top_strategy: Option<String>,
     pub uptime: Duration,
     pub last_updated: DateTime<Utc>,
 }
@@ -734,6 +735,6 @@ mod tests {
         assert_eq!(summary.success_rate, 1.0);
         assert_eq!(summary.average_latency, Duration::from_millis(200));
         assert_eq!(summary.top_intent, Some(QueryIntent::Factual));
-        assert_eq!(summary.top_strategy, Some(SearchStrategy::VectorSimilarity));
+        assert_eq!(summary.top_strategy, Some("VectorSimilarity".to_string()));
     }
 }

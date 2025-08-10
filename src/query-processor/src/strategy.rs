@@ -5,15 +5,15 @@
 //! It optimizes search performance by selecting the most appropriate strategy
 //! for each query type.
 
-use async_trait::async_trait;
+// use async_trait::async_trait; // Unused
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tracing::{info, instrument, warn};
-use uuid::Uuid;
+use tracing::{info, instrument}; // removed unused warn
+// use uuid::Uuid; // Unused
 
 use crate::config::ProcessorConfig;
-use crate::error::{ProcessorError, Result};
+use crate::error::Result; // removed unused ProcessorError
 use crate::query::Query;
 use crate::types::*;
 
@@ -362,6 +362,12 @@ impl StrategySelector {
             SearchStrategy::Hybrid { .. } => 0.90,
             SearchStrategy::Semantic { .. } => 0.88,
             SearchStrategy::Adaptive { .. } => 0.92,
+            SearchStrategy::HybridSearch => 0.90,
+            SearchStrategy::SemanticSearch => 0.88,
+            SearchStrategy::KeywordSearch => 0.75,
+            SearchStrategy::VectorSimilarity => 0.85,
+            SearchStrategy::ExactMatch => 0.95,
+            SearchStrategy::NeuralSearch => 0.91,
         };
 
         let base_latency = match strategy {
@@ -370,6 +376,12 @@ impl StrategySelector {
             SearchStrategy::Hybrid { .. } => Duration::from_millis(200),
             SearchStrategy::Semantic { .. } => Duration::from_millis(300),
             SearchStrategy::Adaptive { .. } => Duration::from_millis(250),
+            SearchStrategy::HybridSearch => Duration::from_millis(200),
+            SearchStrategy::SemanticSearch => Duration::from_millis(300),
+            SearchStrategy::KeywordSearch => Duration::from_millis(50),
+            SearchStrategy::VectorSimilarity => Duration::from_millis(150),
+            SearchStrategy::ExactMatch => Duration::from_millis(30),
+            SearchStrategy::NeuralSearch => Duration::from_millis(180),
         };
 
         // Adjust based on characteristics
@@ -377,7 +389,7 @@ impl StrategySelector {
         let latency_adjustment = characteristics.complexity_score * 50.0; // ms
 
         PerformanceMetrics {
-            expected_accuracy: (base_accuracy + accuracy_adjustment).min(1.0),
+            expected_accuracy: f64::min(base_accuracy + accuracy_adjustment, 1.0),
             expected_response_time: base_latency + Duration::from_millis(latency_adjustment as u64),
             expected_recall: base_accuracy * 0.95,
             expected_precision: base_accuracy * 1.05,
@@ -396,7 +408,7 @@ impl StrategySelector {
         selection: &StrategySelection,
         actual_performance: ActualPerformance,
     ) -> Result<()> {
-        self.performance_tracker.record_performance(selection, actual_performance).await?;
+        self.performance_tracker.record_performance(selection, actual_performance.clone()).await?;
         
         if let Some(ref mut learner) = self.adaptive_learner {
             learner.update_from_performance(selection, &actual_performance).await?;
@@ -407,6 +419,7 @@ impl StrategySelector {
 }
 
 /// Strategy engine for generating recommendations
+#[derive(Debug)]
 pub struct StrategyEngine {
     strategy_rules: Vec<StrategyRule>,
     strategy_templates: HashMap<String, SearchStrategy>,
@@ -785,6 +798,7 @@ pub struct PerformanceRequirements {
 }
 
 /// Performance tracker for strategy effectiveness
+#[derive(Debug)]
 pub struct PerformanceTracker {
     performance_history: HashMap<String, Vec<PerformanceRecord>>,
     strategy_metrics: HashMap<String, StrategyMetrics>,
@@ -891,6 +905,7 @@ pub struct StrategyMetrics {
 }
 
 /// Adaptive learner for strategy optimization
+#[derive(Debug)]
 pub struct AdaptiveLearner {
     learning_rate: f64,
     strategy_weights: HashMap<String, f64>,
@@ -951,31 +966,33 @@ impl AdaptiveLearner {
 }
 
 /// Strategy cache for performance optimization
+#[derive(Debug)]
 pub struct StrategyCache {
-    cache: HashMap<String, StrategySelection>,
+    cache: Mutex<HashMap<String, StrategySelection>>,
     max_size: usize,
 }
 
 impl StrategyCache {
     pub fn new(max_size: usize) -> Result<Self> {
         Ok(Self {
-            cache: HashMap::new(),
+            cache: Mutex::new(HashMap::new()),
             max_size,
         })
     }
 
     pub fn get(&self, key: &str) -> Option<StrategySelection> {
-        self.cache.get(key).cloned()
+        self.cache.lock().unwrap().get(key).cloned()
     }
 
-    pub fn put(&mut self, key: String, value: StrategySelection) {
-        if self.cache.len() >= self.max_size {
+    pub fn put(&self, key: String, value: StrategySelection) {
+        let mut cache = self.cache.lock().unwrap();
+        if cache.len() >= self.max_size {
             // Simple eviction: remove first entry
-            if let Some(first_key) = self.cache.keys().next().cloned() {
-                self.cache.remove(&first_key);
+            if let Some(first_key) = cache.keys().next().cloned() {
+                cache.remove(&first_key);
             }
         }
-        self.cache.insert(key, value);
+        cache.insert(key, value);
     }
 }
 
@@ -989,6 +1006,10 @@ fn strategy_name(strategy: &SearchStrategy) -> String {
         SearchStrategy::Adaptive { .. } => "adaptive".to_string(),
         SearchStrategy::HybridSearch => "hybrid_search".to_string(),
         SearchStrategy::SemanticSearch => "semantic_search".to_string(),
+        SearchStrategy::KeywordSearch => "keyword_search".to_string(),
+        SearchStrategy::VectorSimilarity => "vector_similarity".to_string(),
+        SearchStrategy::ExactMatch => "exact_match".to_string(),
+        SearchStrategy::NeuralSearch => "neural_search".to_string(),
     }
 }
 

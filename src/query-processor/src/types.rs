@@ -463,6 +463,8 @@ pub struct KeyTerm {
     pub importance: f64,
     /// N-gram size (1 for unigram, 2 for bigram, etc.)
     pub ngram_size: usize,
+    /// Context information for the term
+    pub contexts: Vec<String>,
 }
 
 /// Term categories
@@ -473,6 +475,13 @@ pub enum TermCategory {
     BusinessTerm,
     GeneralTerm,
     StopWord,
+    // Additional categories needed by code
+    Domain,
+    Compliance,
+    Technical,
+    Concept,
+    Action,
+    General,
 }
 
 /// Search strategy types
@@ -514,10 +523,22 @@ pub enum SearchStrategy {
     
     /// Simple semantic search (backward compatibility)  
     SemanticSearch,
+    
+    /// Simple keyword search (backward compatibility)
+    KeywordSearch,
+    
+    /// Simple vector similarity search (backward compatibility)
+    VectorSimilarity,
+    
+    /// Exact match search (backward compatibility)
+    ExactMatch,
+    
+    /// Neural network-based search (backward compatibility)
+    NeuralSearch,
 }
 
 /// Keyword search algorithms
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum KeywordAlgorithm {
     BM25,
     TfIdf,
@@ -526,7 +547,7 @@ pub enum KeywordAlgorithm {
 }
 
 /// Strategy combination methods
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum CombinationMethod {
     WeightedSum,
     RankFusion,
@@ -535,7 +556,7 @@ pub enum CombinationMethod {
 }
 
 /// Graph traversal methods
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum GraphTraversal {
     BreadthFirst,
     DepthFirst,
@@ -618,6 +639,18 @@ pub struct PerformanceMetrics {
     pub resource_usage: ResourceUsage,
 }
 
+impl Default for PerformanceMetrics {
+    fn default() -> Self {
+        Self {
+            expected_accuracy: 0.0,
+            expected_response_time: Duration::from_millis(100),
+            expected_recall: 0.0,
+            expected_precision: 0.0,
+            resource_usage: ResourceUsage::default(),
+        }
+    }
+}
+
 /// Resource usage metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUsage {
@@ -674,7 +707,7 @@ pub struct ConsensusVote {
 }
 
 /// Consensus decision types
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ConsensusDecision {
     Approve,
     Reject,
@@ -682,9 +715,9 @@ pub enum ConsensusDecision {
     Conditional(String),
 }
 
-/// Consensus result
+/// Consensus result for PBFT
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConsensusResult {
+pub struct ConsensusDecisionResult {
     /// Final decision
     pub decision: ConsensusDecision,
     /// Agreement percentage
@@ -697,6 +730,21 @@ pub struct ConsensusResult {
     pub consensus_time: Duration,
     /// Whether Byzantine tolerance was achieved
     pub byzantine_tolerance: bool,
+}
+
+/// Consensus result enum for different consensus operations
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ConsensusResult {
+    /// Query processing consensus result
+    QueryProcessing { result: QueryResult },
+    /// Entity extraction consensus result
+    EntityExtraction { entities: Vec<ExtractedEntity> },
+    /// Intent classification consensus result
+    Classification { classification: ClassificationResult },
+    /// Strategy recommendation consensus result
+    StrategyRecommendation { strategy: StrategyRecommendation },
+    /// Result validation consensus result
+    ResultValidation { validation: ValidationResult },
 }
 
 /// Validation rule types
@@ -751,7 +799,7 @@ pub struct ValidationWarning {
 }
 
 /// Violation severity levels
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ViolationSeverity {
     Low,
     Medium,
@@ -955,7 +1003,7 @@ pub struct ExtractedEntity {
 }
 
 /// Entity categories for classification
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EntityCategory {
     /// Compliance standard (PCI DSS, HIPAA, etc.)
@@ -991,7 +1039,7 @@ pub enum EntityCategory {
 }
 
 /// Entity extraction metadata
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EntityMetadata {
     /// Extraction method used
     pub extraction_method: String,
@@ -1006,7 +1054,7 @@ pub struct EntityMetadata {
 }
 
 /// Relationship between entities
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EntityRelationship {
     /// Related entity ID
     pub entity_id: String,

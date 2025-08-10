@@ -59,17 +59,18 @@ pub async fn process_query(
     }
 }
 
-/// Stream query response for real-time processing
+/// Stream query response for real-time processing  
+#[axum::debug_handler]
 pub async fn stream_query_response(
     State(clients): State<Arc<ComponentClients>>,
     Json(request): Json<QueryRequest>,
-) -> Result<Sse<ReceiverStream<tokio::sync::mpsc::Receiver<Result<axum::response::sse::Event, std::convert::Infallible>>>>> {
+) -> Result<Sse<ReceiverStream<tokio::sync::mpsc::Receiver<Result<axum::response::sse::Event, axum::Error>>>>> {
     info!("Starting streaming query: query_id={}", request.query_id);
 
     // Validate the query request
     validate_query_request(&request)?;
 
-    let (tx, rx) = tokio::sync::mpsc::channel(100);
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<axum::response::sse::Event, axum::Error>>(100);
     let query_id = request.query_id;
 
     // Spawn task to handle streaming response

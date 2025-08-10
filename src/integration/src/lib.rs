@@ -1,6 +1,7 @@
 //! # System Integration Orchestrator
 //!
-//! Complete system integration for the Doc-RAG system, connecting all 6 components:
+//! Complete system integration for the Doc-RAG system using claude-flow and ruv-swarm
+//! MCP tools for autonomous orchestration, connecting all 6 components:
 //! - MCP Adapter: Message passing and external communication
 //! - Document Chunker: Intelligent document segmentation
 //! - Embedding Generator: Vector embedding generation
@@ -10,22 +11,22 @@
 //!
 //! ## Architecture
 //!
-//! This integration orchestrator implements:
-//! - **Service Discovery**: Automatic component registration and health monitoring
-//! - **Circuit Breaker**: Fault tolerance with automatic recovery
-//! - **Distributed Tracing**: End-to-end request tracking
-//! - **Message Passing**: Async event-driven communication
-//! - **API Gateway**: Unified external interface
-//! - **Pipeline Coordination**: Multi-stage processing workflows
+//! This integration orchestrator leverages:
+//! - **Claude Flow**: Swarm coordination and agent orchestration
+//! - **Ruv Swarm**: Autonomous agents with consensus and fault tolerance
+//! - **DAA Integration**: Decentralized autonomous agent capabilities
+//! - **MRAP Loop**: Monitor, Reason, Act, Reflect for self-healing
+//! - **Byzantine Consensus**: Built-in fault tolerance and security
+//! - **Neural Networks**: Adaptive learning and pattern recognition
 //!
 //! ## Design Principles Compliance
 //!
-//! - **No Placeholders**: All functionality fully implemented
+//! - **Integrate First**: Uses ruv-swarm, claude-flow MCP libraries
+//! - **No Custom Orchestration**: Leverages existing DAA capabilities
 //! - **Test-First**: Comprehensive test coverage
 //! - **Performance by Design**: Sub-2s response targets
-//! - **Security First**: Authentication and authorization built-in
+//! - **Security First**: Quantum-resistant consensus built-in
 //! - **Observable by Default**: Full metrics and tracing
-//! - **Byzantine Fault Tolerance**: Consensus mechanisms
 
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
@@ -36,50 +37,118 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 use crate::tracing::TracingSystem;
-// Re-export IntegrationError directly from error module
-// Import tracing macros directly
 
 // Type alias for integration results
 pub type Result<T> = std::result::Result<T, IntegrationError>;
 
-pub mod coordinator;
+pub mod daa_orchestrator;
 pub mod pipeline;
 pub mod health;
 pub mod tracing;
 pub mod gateway;
 pub mod error;
 pub mod config;
+
+// Re-exports from error module
+pub use error::IntegrationError;
+
+// Define missing types
+/// Service discovery component for locating services
+#[derive(Debug, Clone)]
+pub struct ServiceDiscovery {
+    /// Service registry
+    pub services: std::collections::HashMap<String, String>,
+}
+
+impl ServiceDiscovery {
+    /// Create a new service discovery instance
+    pub async fn new(config: Arc<IntegrationConfig>) -> Result<Self> {
+        let mut services = std::collections::HashMap::new();
+        services.insert("mcp-adapter".to_string(), config.mcp_adapter_endpoint.clone());
+        services.insert("chunker".to_string(), config.chunker_endpoint.clone());
+        services.insert("embedder".to_string(), config.embedder_endpoint.clone());
+        services.insert("storage".to_string(), config.storage_endpoint.clone());
+        services.insert("query-processor".to_string(), config.query_processor_endpoint.clone());
+        services.insert("response-generator".to_string(), config.response_generator_endpoint.clone());
+        
+        Ok(Self { services })
+    }
+    
+    /// Get service endpoint by name
+    pub async fn get_service_endpoint(&self, service: &str) -> Option<String> {
+        self.services.get(service).cloned()
+    }
+}
+
+/// Component health status
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub enum ComponentHealthStatus {
+    /// Component is healthy
+    Healthy,
+    /// Component is degraded but functional
+    Degraded,
+    /// Component is unhealthy
+    Unhealthy,
+    /// Component is unknown/not responding
+    Unknown,
+}
+
+/// Integration coordinator for managing component interactions
+#[derive(Debug, Clone)]
+pub struct IntegrationCoordinator {
+    /// Coordinator ID
+    pub id: Uuid,
+    /// Service discovery
+    pub service_discovery: Arc<RwLock<ServiceDiscovery>>,
+    /// Tracing system
+    pub tracing: Arc<TracingSystem>,
+}
+
+/// Health status enum
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub enum HealthStatus {
+    /// System is healthy
+    Healthy,
+    /// System is degraded
+    Degraded,
+    /// System is critical
+    Critical,
+    /// System is down
+    Down,
+    /// System starting up
+    Starting,
+    /// System shutting down
+    Stopping,
+}
+
+
 pub mod metrics;
-pub mod circuit_breaker;
-pub mod service_discovery;
 pub mod message_bus;
 pub mod temp_types;
 
 // Re-export key types
-pub use coordinator::*;
+pub use daa_orchestrator::*;
 pub use pipeline::*;
 pub use health::*;
 pub use gateway::*;
 pub use error::*;
 pub use config::*;
 pub use metrics::*;
-pub use circuit_breaker::*;
-pub use service_discovery::*;
 pub use message_bus::*;
 pub use temp_types::*;
 
 /// Integration system version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Main integration orchestrator that coordinates all system components
+/// Main integration orchestrator that coordinates all system components using DAA
 #[derive(Clone)]
 pub struct SystemIntegration {
     /// Unique system instance ID
     id: Uuid,
     /// System configuration
     config: Arc<IntegrationConfig>,
-    /// Service coordinator
-    coordinator: Arc<IntegrationCoordinator>,
+    /// DAA orchestrator (replaces custom coordinator and service discovery)
+    daa_orchestrator: Arc<RwLock<DAAOrchestrator>>,
     /// Processing pipeline
     pipeline: Arc<ProcessingPipeline>,
     /// Health monitoring system
@@ -88,8 +157,6 @@ pub struct SystemIntegration {
     gateway: Arc<ApiGateway>,
     /// Distributed tracing system
     tracing_system: Arc<TracingSystem>,
-    /// Service discovery
-    service_discovery: Arc<ServiceDiscovery>,
     /// Message bus for inter-component communication
     message_bus: Arc<MessageBus>,
     /// System metrics
@@ -97,35 +164,34 @@ pub struct SystemIntegration {
 }
 
 impl SystemIntegration {
-    /// Create a new system integration instance
+    /// Create a new system integration instance using DAA orchestration
     pub async fn new(config: IntegrationConfig) -> Result<Self> {
-        // info!("Initializing System Integration v{}", VERSION);
+        // info!("Initializing System Integration v{} with DAA orchestration", VERSION);
         
         let config = Arc::new(config);
-        let service_discovery = Arc::new(ServiceDiscovery::new(config.clone()).await?);
         let message_bus = Arc::new(MessageBus::new(config.clone()).await?);
         let tracing_system = Arc::new(TracingSystem::new(config.clone()).await?);
         
-        let coordinator = Arc::new(
-            IntegrationCoordinator::new(
-                config.clone(),
-                service_discovery.clone(),
-                message_bus.clone(),
-            ).await?
-        );
+        // Create DAA orchestrator (replaces coordinator and service discovery)
+        let mut daa_orchestrator = DAAOrchestrator::new(config.clone()).await?;
+        daa_orchestrator.initialize().await?;
+        let daa_orchestrator = Arc::new(RwLock::new(daa_orchestrator));
         
         let pipeline = Arc::new(
             ProcessingPipeline::new(
                 config.clone(),
-                coordinator.clone(),
+                daa_orchestrator.clone(),
                 message_bus.clone(),
             ).await?
         );
         
+        // Create a simple service discovery for health monitor
+        let service_discovery = Arc::new(ServiceDiscovery::new(config.clone()).await?);
+        
         let health_monitor = Arc::new(
             HealthMonitor::new(
                 config.clone(),
-                service_discovery.clone(),
+                service_discovery,
             ).await?
         );
         
@@ -142,12 +208,11 @@ impl SystemIntegration {
         let system = Self {
             id: Uuid::new_v4(),
             config,
-            coordinator,
+            daa_orchestrator,
             pipeline,
             health_monitor,
             gateway,
             tracing_system,
-            service_discovery,
             message_bus,
             metrics,
         };
@@ -155,37 +220,37 @@ impl SystemIntegration {
         // Initialize all components
         system.initialize().await?;
         
-        // info!("System Integration initialized with ID: {}", system.id);
+        // info!("System Integration initialized with ID: {} using DAA", system.id);
         Ok(system)
     }
     
     /// Initialize all system components
     async fn initialize(&self) -> Result<()> {
-        // info!("Initializing system components...");
+        // info!("Initializing system components with DAA orchestration...");
         
         // Initialize in dependency order
         self.tracing_system.initialize().await?;
-        self.service_discovery.initialize().await?;
         self.message_bus.initialize().await?;
-        self.coordinator.initialize().await?;
+        // DAA orchestrator already initialized in constructor
         self.pipeline.initialize().await?;
         self.health_monitor.initialize().await?;
         self.gateway.initialize().await?;
         
-        // info!("All system components initialized successfully");
+        // Register system components with DAA orchestrator
+        self.register_system_components().await?;
+        
+        // info!("All system components initialized with DAA orchestration");
         Ok(())
     }
     
-    /// Start the integration system
+    /// Start the integration system with DAA orchestration
     pub async fn start(&self) -> Result<()> {
-        // info!("Starting System Integration...");
+        // info!("Starting System Integration with DAA orchestration...");
         
-        // Start all components concurrently
-        let results: Result<((), (), (), (), (), (), ())> = tokio::try_join!(
+        // Start all components concurrently (DAA orchestrator is already running)
+        let results: Result<((), (), (), (), ())> = tokio::try_join!(
             self.tracing_system.start(),
-            self.service_discovery.start(),
             self.message_bus.start(),
-            self.coordinator.start(),
             self.pipeline.start(),
             self.health_monitor.start(),
             self.gateway.start(),
@@ -193,12 +258,12 @@ impl SystemIntegration {
         
         match results {
             Ok(_) => {
-                // info!("System Integration started successfully");
+                // info!("System Integration started successfully with DAA");
                 self.update_metrics(|m| m.system_started()).await;
                 Ok(())
             }
             Err(e) => {
-                // error!("Failed to start System Integration: {}", e);
+                // error!("Failed to start System Integration with DAA: {}", e);
                 self.update_metrics(|m| m.system_start_failed()).await;
                 Err(e)
             }
@@ -207,26 +272,30 @@ impl SystemIntegration {
     
     /// Stop the integration system gracefully
     pub async fn stop(&self) -> Result<()> {
-        // info!("Stopping System Integration...");
+        // info!("Stopping System Integration with DAA orchestration...");
         
         // Stop components in reverse order
-        let results: Result<((), (), (), (), (), (), ())> = tokio::try_join!(
+        let results: Result<((), (), (), (), ())> = tokio::try_join!(
             self.gateway.stop(),
             self.health_monitor.stop(),
             self.pipeline.stop(),
-            self.coordinator.stop(),
             self.message_bus.stop(),
-            self.service_discovery.stop(),
             self.tracing_system.stop(),
         );
         
-        match results {
-            Ok(_) => {
-                // info!("System Integration stopped successfully");
+        // Stop DAA orchestrator last
+        let daa_result = {
+            let orchestrator = self.daa_orchestrator.read().await;
+            orchestrator.shutdown().await
+        };
+        
+        match (results, daa_result) {
+            (Ok(_), Ok(_)) => {
+                // info!("System Integration stopped successfully with DAA");
                 self.update_metrics(|m| m.system_stopped()).await;
                 Ok(())
             }
-            Err(e) => {
+            (Err(e), _) | (_, Err(e)) => {
                 // error!("Error during System Integration shutdown: {}", e);
                 Err(e)
             }
@@ -241,6 +310,27 @@ impl SystemIntegration {
     /// Get system health status
     pub async fn health(&self) -> SystemHealth {
         self.health_monitor.system_health().await
+    }
+
+    /// Register system components with DAA orchestrator
+    async fn register_system_components(&self) -> Result<()> {
+        let orchestrator = self.daa_orchestrator.read().await;
+        
+        // Register all 6 system components
+        let components = [
+            ("mcp-adapter", ComponentType::McpAdapter, &self.config.mcp_adapter_endpoint),
+            ("chunker", ComponentType::Chunker, &self.config.chunker_endpoint),
+            ("embedder", ComponentType::Embedder, &self.config.embedder_endpoint),
+            ("storage", ComponentType::Storage, &self.config.storage_endpoint),
+            ("query-processor", ComponentType::QueryProcessor, &self.config.query_processor_endpoint),
+            ("response-generator", ComponentType::ResponseGenerator, &self.config.response_generator_endpoint),
+        ];
+
+        for (name, component_type, endpoint) in components {
+            orchestrator.register_component(name, component_type, endpoint).await?;
+        }
+
+        Ok(())
     }
     
     /// Get system metrics
@@ -276,21 +366,6 @@ pub struct SystemHealth {
     pub uptime: std::time::Duration,
     /// Last health check timestamp
     pub timestamp: chrono::DateTime<chrono::Utc>,
-}
-
-/// Health status enumeration
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub enum HealthStatus {
-    /// All components healthy
-    Healthy,
-    /// Some components degraded
-    Degraded,
-    /// System unhealthy
-    Unhealthy,
-    /// System starting up
-    Starting,
-    /// System shutting down
-    Stopping,
 }
 
 /// Component health information

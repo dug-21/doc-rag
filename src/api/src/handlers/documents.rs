@@ -51,7 +51,7 @@ pub async fn ingest_document(
                 document_id,
                 status: TaskStatus::Completed,
                 message: "Document processed successfully".to_string(),
-                chunks_created: Some(0), // Would be populated from actual processing
+                chunks_created: Some(count_document_chunks(&document_id, &clients).await.unwrap_or(0) as usize),
                 processing_time_ms: processing_time.as_millis() as u64,
             }))
         }
@@ -106,7 +106,7 @@ pub async fn batch_ingest(
                     document_id,
                     status: TaskStatus::Completed,
                     message: "Document processed successfully".to_string(),
-                    chunks_created: Some(0), // Would be populated from actual processing
+                    chunks_created: Some(count_document_chunks(&document_id, &clients).await.unwrap_or(0) as usize),
                     processing_time_ms: processing_time.as_millis() as u64,
                 });
             }
@@ -167,15 +167,21 @@ pub async fn get_processing_history(
 ) -> Result<Json<serde_json::Value>> {
     info!("Retrieving document processing history");
     
-    // In a real implementation, this would query the database for processing history
-    // For now, return a placeholder response
-    let history = serde_json::json!({
-        "total_documents": 0,
-        "successful_processing": 0,
-        "failed_processing": 0,
-        "average_processing_time_ms": 0,
-        "recent_documents": []
-    });
+    // Query the database for real processing history
+    let history = match get_real_processing_history(&clients).await {
+        Ok(hist) => hist,
+        Err(e) => {
+            warn!("Failed to retrieve processing history: {}", e);
+            serde_json::json!({
+                "total_documents": 0,
+                "successful_processing": 0,
+                "failed_processing": 0,
+                "average_processing_time_ms": 0,
+                "recent_documents": [],
+                "error": "Failed to retrieve history from database"
+            })
+        }
+    };
     
     Ok(Json(history))
 }
@@ -187,19 +193,22 @@ pub async fn cancel_document_processing(
 ) -> Result<Json<serde_json::Value>> {
     info!("Cancelling document processing: task_id={}", task_id);
     
-    // In a real implementation, this would:
-    // 1. Check if the task is still processing
-    // 2. Send cancellation signal to processing pipeline
-    // 3. Update task status to cancelled
-    // 4. Clean up any partial processing results
-    
-    let response = serde_json::json!({
-        "task_id": task_id,
-        "status": "cancelled",
-        "message": "Document processing cancelled successfully"
-    });
-    
-    Ok(Json(response))
+    // Real cancellation implementation
+    match cancel_real_document_processing(task_id, &clients).await {
+        Ok(cancellation_result) => {
+            info!("Document processing cancelled: task_id={}", task_id);
+            Ok(Json(cancellation_result))
+        },
+        Err(e) => {
+            error!("Failed to cancel document processing: task_id={}, error={}", task_id, e);
+            let response = serde_json::json!({
+                "task_id": task_id,
+                "status": "error",
+                "message": format!("Failed to cancel processing: {}", e)
+            });
+            Ok(Json(response))
+        }
+    }
 }
 
 /// Retry failed document processing
@@ -209,25 +218,30 @@ pub async fn retry_document_processing(
 ) -> Result<Json<IngestResponse>> {
     info!("Retrying document processing: task_id={}", task_id);
     
-    // In a real implementation, this would:
-    // 1. Retrieve the original document and parameters
-    // 2. Reset the task status to pending
-    // 3. Re-initiate the processing pipeline
-    // 4. Return new processing status
-    
+    // Real retry implementation
     let start_time = std::time::Instant::now();
     
-    // For demo purposes, return a success response
-    let response = IngestResponse {
-        task_id,
-        document_id: Uuid::new_v4(),
-        status: TaskStatus::Processing,
-        message: "Document processing retried successfully".to_string(),
-        chunks_created: None,
-        processing_time_ms: start_time.elapsed().as_millis() as u64,
-    };
-    
-    Ok(Json(response))
+    match retry_real_document_processing(task_id, &clients).await {
+        Ok(retry_result) => {
+            info!("Document processing retried: task_id={}", task_id);
+            Ok(Json(retry_result))
+        },
+        Err(e) => {
+            error!("Failed to retry document processing: task_id={}, error={}", task_id, e);
+            let processing_time = start_time.elapsed();
+            
+            let response = IngestResponse {
+                task_id,
+                document_id: Uuid::new_v4(),
+                status: TaskStatus::Failed,
+                message: format!("Retry failed: {}", e),
+                chunks_created: None,
+                processing_time_ms: processing_time.as_millis() as u64,
+            };
+            
+            Ok(Json(response))
+        }
+    }
 }
 
 /// Get processing statistics
@@ -236,24 +250,199 @@ pub async fn get_processing_stats(
 ) -> Result<Json<serde_json::Value>> {
     info!("Retrieving processing statistics");
     
-    // In a real implementation, this would aggregate statistics from the database
-    let stats = serde_json::json!({
-        "total_documents_processed": 0,
-        "documents_processed_today": 0,
-        "average_processing_time_ms": 0,
-        "success_rate_percent": 100.0,
-        "active_processing_tasks": 0,
-        "queue_size": 0,
-        "processing_rate_per_hour": 0,
-        "storage_usage_mb": 0,
-        "by_content_type": {
-            "application/pdf": 0,
-            "text/plain": 0,
-            "application/json": 0
+    // Aggregate real statistics from the database
+    let stats = match get_real_processing_stats(&clients).await {
+        Ok(statistics) => statistics,
+        Err(e) => {
+            warn!("Failed to retrieve processing statistics: {}", e);
+            serde_json::json!({
+                "total_documents_processed": 0,
+                "documents_processed_today": 0,
+                "average_processing_time_ms": 0,
+                "success_rate_percent": 0.0,
+                "active_processing_tasks": 0,
+                "queue_size": 0,
+                "processing_rate_per_hour": 0,
+                "storage_usage_mb": 0,
+                "by_content_type": {
+                    "application/pdf": 0,
+                    "text/plain": 0,
+                    "application/json": 0
+                },
+                "error": "Failed to retrieve statistics from database"
+            })
         }
-    });
+    };
     
     Ok(Json(stats))
+}
+
+/// Count chunks for a specific document
+async fn count_document_chunks(
+    document_id: &uuid::Uuid,
+    clients: &Arc<ComponentClients>,
+) -> Result<u32> {
+    // Query the storage backend to get chunk count for document
+    match clients.storage_client.count_chunks_for_document(*document_id).await {
+        Ok(count) => Ok(count as u32),
+        Err(e) => {
+            warn!("Failed to count chunks for document {}: {}", document_id, e);
+            // Return 0 as fallback rather than failing the request
+            Ok(0)
+        }
+    }
+}
+
+/// Get real processing history from database
+async fn get_real_processing_history(
+    clients: &Arc<ComponentClients>,
+) -> Result<serde_json::Value> {
+    let processing_history = clients.storage_client.get_processing_history().await
+        .map_err(|e| ApiError::Internal(format!("Failed to query processing history: {}", e)))?;
+    
+    let recent_documents = clients.storage_client.get_recent_documents(10).await
+        .map_err(|e| ApiError::Internal(format!("Failed to query recent documents: {}", e)))?;
+    
+    Ok(serde_json::json!({
+        "total_documents": processing_history.total_documents,
+        "successful_processing": processing_history.successful_count,
+        "failed_processing": processing_history.failed_count,
+        "average_processing_time_ms": processing_history.avg_processing_time_ms,
+        "recent_documents": recent_documents.iter().map(|doc| {
+            serde_json::json!({
+                "document_id": doc.document_id,
+                "task_id": doc.task_id,
+                "status": doc.status,
+                "created_at": doc.created_at,
+                "processing_time_ms": doc.processing_time_ms,
+                "content_type": doc.content_type,
+                "chunks_created": doc.chunks_created
+            })
+        }).collect::<Vec<_>>()
+    }))
+}
+
+/// Get real processing statistics from database  
+async fn get_real_processing_stats(
+    clients: &Arc<ComponentClients>,
+) -> Result<serde_json::Value> {
+    let stats = clients.storage_client.get_processing_statistics().await
+        .map_err(|e| ApiError::Internal(format!("Failed to query processing statistics: {}", e)))?;
+    
+    let storage_usage = clients.storage_client.get_storage_usage().await
+        .map_err(|e| ApiError::Internal(format!("Failed to query storage usage: {}", e)))?;
+    
+    let content_type_breakdown = clients.storage_client.get_content_type_statistics().await
+        .map_err(|e| ApiError::Internal(format!("Failed to query content type statistics: {}", e)))?;
+    
+    let active_tasks = clients.get_active_processing_tasks().await
+        .map_err(|e| ApiError::Internal(format!("Failed to query active tasks: {}", e)))?;
+    
+    Ok(serde_json::json!({
+        "total_documents_processed": stats.total_processed,
+        "documents_processed_today": stats.processed_today,
+        "average_processing_time_ms": stats.avg_processing_time_ms,
+        "success_rate_percent": stats.success_rate * 100.0,
+        "active_processing_tasks": active_tasks.len(),
+        "queue_size": clients.get_processing_queue_size().await.unwrap_or(0),
+        "processing_rate_per_hour": stats.processing_rate_per_hour,
+        "storage_usage_mb": storage_usage.total_size_mb,
+        "by_content_type": content_type_breakdown
+    }))
+}
+
+/// Cancel real document processing
+async fn cancel_real_document_processing(
+    task_id: Uuid,
+    clients: &Arc<ComponentClients>,
+) -> Result<serde_json::Value> {
+    // Check if task exists and is still processing
+    let task_status = clients.storage_client.get_task_status(task_id).await
+        .map_err(|e| ApiError::Internal(format!("Failed to query task status: {}", e)))?;
+    
+    match task_status.status {
+        TaskStatus::Processing => {
+            // Send cancellation signal to processing pipeline
+            clients.send_cancellation_signal(task_id).await
+                .map_err(|e| ApiError::Internal(format!("Failed to send cancellation signal: {}", e)))?;
+            
+            // Update task status to cancelled in database
+            clients.storage_client.update_task_status(task_id, TaskStatus::Cancelled).await
+                .map_err(|e| ApiError::Internal(format!("Failed to update task status: {}", e)))?;
+            
+            // Clean up any partial processing results
+            if let Err(e) = clients.cleanup_partial_processing(task_id).await {
+                warn!("Failed to cleanup partial processing for task {}: {}", task_id, e);
+            }
+            
+            Ok(serde_json::json!({
+                "task_id": task_id,
+                "status": "cancelled",
+                "message": "Document processing cancelled successfully",
+                "cancelled_at": chrono::Utc::now()
+            }))
+        },
+        TaskStatus::Completed => {
+            Err(ApiError::BadRequest("Cannot cancel completed task".to_string()))
+        },
+        TaskStatus::Failed => {
+            Err(ApiError::BadRequest("Cannot cancel failed task".to_string()))
+        },
+        TaskStatus::Cancelled => {
+            Ok(serde_json::json!({
+                "task_id": task_id,
+                "status": "already_cancelled",
+                "message": "Task was already cancelled"
+            }))
+        },
+        TaskStatus::Pending => {
+            // Update status to cancelled
+            clients.storage_client.update_task_status(task_id, TaskStatus::Cancelled).await
+                .map_err(|e| ApiError::Internal(format!("Failed to update task status: {}", e)))?;
+            
+            Ok(serde_json::json!({
+                "task_id": task_id,
+                "status": "cancelled",
+                "message": "Pending task cancelled successfully"
+            }))
+        }
+    }
+}
+
+/// Retry real document processing
+async fn retry_real_document_processing(
+    task_id: Uuid,
+    clients: &Arc<ComponentClients>,
+) -> Result<IngestResponse> {
+    // Retrieve the original document and parameters from database
+    let original_task = clients.storage_client.get_task_details(task_id).await
+        .map_err(|e| ApiError::Internal(format!("Failed to retrieve task details: {}", e)))?;
+    
+    if original_task.status != TaskStatus::Failed {
+        return Err(ApiError::BadRequest("Can only retry failed tasks".to_string()));
+    }
+    
+    // Reset the task status to pending
+    clients.storage_client.update_task_status(task_id, TaskStatus::Pending).await
+        .map_err(|e| ApiError::Internal(format!("Failed to reset task status: {}", e)))?;
+    
+    // Re-initiate the processing pipeline with original parameters
+    let new_document_id = clients.reprocess_document(
+        task_id,
+        original_task.content.clone(),
+        original_task.metadata.clone(),
+        original_task.chunking_strategy.clone(),
+    ).await
+    .map_err(|e| ApiError::Internal(format!("Failed to reinitiate processing: {}", e)))?;
+    
+    Ok(IngestResponse {
+        task_id,
+        document_id: new_document_id,
+        status: TaskStatus::Processing,
+        message: "Document processing retried successfully".to_string(),
+        chunks_created: None,
+        processing_time_ms: 0, // Will be updated when processing completes
+    })
 }
 
 #[cfg(test)]

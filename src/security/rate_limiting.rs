@@ -192,14 +192,67 @@ pub fn extract_client_identifier(headers: &std::collections::HashMap<String, Str
 }
 
 fn extract_user_id_from_jwt(auth_header: &str) -> Option<String> {
-    // This would normally decode and verify the JWT
-    // For now, return a placeholder implementation
-    if auth_header.starts_with("Bearer ") {
-        // In a real implementation, decode JWT and extract user ID
-        Some("user123".to_string()) // Placeholder
-    } else {
-        None
+    use base64::{Engine as _, engine::general_purpose};
+    use serde_json::Value;
+    
+    if !auth_header.starts_with("Bearer ") {
+        return None;
     }
+    
+    let token = auth_header.strip_prefix("Bearer ")?;
+    
+    // Split JWT into parts (header.payload.signature)
+    let parts: Vec<&str> = token.split('.').collect();
+    if parts.len() != 3 {
+        return None;
+    }
+    
+    // Decode the payload (second part)
+    let payload_part = parts[1];
+    
+    // Add padding if necessary for base64 decoding
+    let padded_payload = match payload_part.len() % 4 {
+        0 => payload_part.to_string(),
+        2 => format!("{}==", payload_part),
+        3 => format!("{}=", payload_part),
+        _ => return None,
+    };
+    
+    // Decode base64url (JWT uses base64url encoding)
+    let decoded_bytes = general_purpose::URL_SAFE_NO_PAD
+        .decode(&padded_payload)
+        .ok()?;
+    
+    // Parse JSON payload
+    let payload_str = String::from_utf8(decoded_bytes).ok()?;
+    let payload_json: Value = serde_json::from_str(&payload_str).ok()?;
+    
+    // Extract user ID from various common JWT fields
+    if let Some(user_id) = payload_json.get("sub") {
+        if let Some(user_id_str) = user_id.as_str() {
+            return Some(user_id_str.to_string());
+        }
+    }
+    
+    if let Some(user_id) = payload_json.get("user_id") {
+        if let Some(user_id_str) = user_id.as_str() {
+            return Some(user_id_str.to_string());
+        }
+    }
+    
+    if let Some(user_id) = payload_json.get("uid") {
+        if let Some(user_id_str) = user_id.as_str() {
+            return Some(user_id_str.to_string());
+        }
+    }
+    
+    if let Some(email) = payload_json.get("email") {
+        if let Some(email_str) = email.as_str() {
+            return Some(email_str.to_string());
+        }
+    }
+    
+    None
 }
 
 // Rate limiting metrics for monitoring

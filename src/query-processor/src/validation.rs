@@ -5,10 +5,11 @@
 
 use async_trait::async_trait;
 use chrono::Utc;
-use std::collections::HashMap;
+// use std::collections::HashMap; // Unused
 use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tracing::{info, instrument, warn};
+use std::time::Instant; // removed unused Duration
+use tracing::{info, instrument}; // removed unused warn
+// use uuid::Uuid; // Unused
 
 use crate::config::ValidationConfig;
 use crate::error::{ProcessorError, Result};
@@ -113,10 +114,10 @@ impl ValidationEngine {
         let overall_status = self.determine_overall_status(&processed_query);
         
         if overall_status == ValidationStatus::Failed {
-            return Err(ProcessorError::validation_failed(
-                "validation",
-                "Overall validation failed"
-            ));
+            return Err(ProcessorError::ValidationFailed {
+                field: "validation".to_string(),
+                reason: "Overall validation failed".to_string(),
+            });
         }
         
         info!(
@@ -136,10 +137,10 @@ impl ValidationEngine {
         for required_field in &self.config.rules.required_fields {
             match required_field.as_str() {
                 "intent" => {
-                    if query.intent.primary_confidence < self.config.rules.min_confidence {
+                    if query.intent.confidence < self.config.rules.min_confidence {
                         issues.push(format!(
                             "Intent confidence {} below minimum {}",
-                            query.intent.primary_confidence,
+                            query.intent.confidence,
                             self.config.rules.min_confidence
                         ));
                     }
@@ -150,10 +151,10 @@ impl ValidationEngine {
                     }
                 }
                 "strategy" => {
-                    if query.strategy.primary_confidence < self.config.rules.min_confidence {
+                    if query.strategy.confidence < self.config.rules.min_confidence {
                         issues.push(format!(
                             "Strategy confidence {} below minimum {}",
-                            query.strategy.primary_confidence,
+                            query.strategy.confidence,
                             self.config.rules.min_confidence
                         ));
                     }
@@ -234,7 +235,7 @@ impl ValidationEngine {
             stage: "output".to_string(),
             status,
             message,
-            score: score.clamp(0.0, 1.0),
+            score: f64::min(1.0, f64::max(0.0, score)),
             validated_at: Utc::now(),
         })
     }
@@ -360,11 +361,11 @@ impl Validator for SemanticValidator {
         }
         
         // Check intent classification quality
-        if query.intent.primary_confidence < 0.8 {
+        if query.intent.confidence < 0.8 {
             score -= 0.2;
             issues.push(format!(
                 "Low intent classification confidence: {}",
-                query.intent.primary_confidence
+                query.intent.confidence
             ));
         }
         
@@ -463,7 +464,7 @@ impl Validator for FactualValidator {
         // Check strategy-intent alignment
         let strategy_intent_alignment = self.check_strategy_intent_alignment(
             &query.intent.primary_intent,
-            &query.strategy.primary_strategy
+            &query.strategy.strategy
         );
         
         if !strategy_intent_alignment {
@@ -625,16 +626,16 @@ impl Validator for ConsistencyChecker {
         }
         
         // Check strategy-performance consistency
-        let predicted_latency = query.strategy.predictions.latency;
-        let actual_duration = query.processing_metadata.total_duration;
+        let predicted_latency_secs = query.strategy.predictions.latency;
+        let actual_duration_secs = query.processing_metadata.total_duration.as_secs_f64();
         
         // Allow 50% variance
-        if actual_duration > predicted_latency + predicted_latency / 2 {
+        if actual_duration_secs > predicted_latency_secs + predicted_latency_secs / 2.0 {
             score -= 0.1;
             issues.push(format!(
-                "Actual duration {:?} significantly exceeds prediction {:?}",
-                actual_duration,
-                predicted_latency
+                "Actual duration {:.2}s significantly exceeds prediction {:.2}s",
+                actual_duration_secs,
+                predicted_latency_secs
             ));
         }
         
@@ -712,43 +713,49 @@ mod tests {
         ];
         let key_terms = vec![
             KeyTerm {
+                id: Uuid::new_v4(),
                 term: "encryption".to_string(),
-                importance: 0.9,
+                normalized: "encryption".to_string(),
+                tfidf_score: 0.8,
                 frequency: 1,
                 category: TermCategory::Technical,
-                ngram_size: 1,
-                tfidf_score: Some(0.8),
-                contexts: vec!["encryption requirements".to_string()],
+                positions: vec![(28, 38)],
+                importance: 0.9,
+                related_terms: vec![],
+                metadata: HashMap::new(),
             },
         ];
         let intent = IntentClassification {
             primary_intent: QueryIntent::Factual,
-            primary_confidence: 0.9,
+            confidence: 0.9,
             secondary_intents: vec![],
-            metadata: ClassificationMetadata {
-                classifier: "test".to_string(),
-                classified_at: Utc::now(),
-                features: vec![],
-                alternatives: vec![],
-            },
+            probabilities: HashMap::new(),
+            method: ClassificationMethod::RuleBased,
+            features: HashMap::new(),
         };
         let strategy = StrategySelection {
-            primary_strategy: SearchStrategy::KeywordSearch,
-            primary_confidence: 0.85,
-            fallback_strategies: vec![],
+            strategy: SearchStrategy::KeywordSearch,
+            confidence: 0.85,
+            fallbacks: vec![],
             reasoning: "Test reasoning".to_string(),
-            predictions: PerformancePrediction {
-                accuracy: 0.9,
-                latency: Duration::from_millis(100),
-                recall: 0.85,
-                precision: 0.90,
-                confidence: 0.8,
+            expected_metrics: PerformanceMetrics {
+                expected_accuracy: 0.9,
+                expected_response_time: Duration::from_millis(100),
+                expected_recall: 0.85,
+                expected_precision: 0.90,
+                resource_usage: ResourceUsage {
+                    memory: 1000,
+                    cpu: 0.5,
+                    api_calls: 1,
+                    cache_hits: 0,
+                    cache_misses: 1,
+                    peak_memory: 2000,
+                },
             },
-            metadata: SelectionMetadata {
-                algorithm: "test".to_string(),
-                selected_at: Utc::now(),
-                factors: vec![],
-                characteristics: HashMap::new(),
+            predictions: StrategyPredictions {
+                latency: 0.1,
+                accuracy: 0.85,
+                resource_usage: 0.5,
             },
         };
         

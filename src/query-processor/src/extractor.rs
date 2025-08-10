@@ -3,17 +3,18 @@
 //! This module provides comprehensive key term extraction using TF-IDF,
 //! N-gram analysis, and domain-specific term identification.
 
-use async_trait::async_trait;
+// use async_trait::async_trait; // Unused
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tracing::{info, instrument};
 
 use crate::config::TermExtractorConfig;
-use crate::error::{ProcessorError, Result};
+use crate::error::Result; // removed unused ProcessorError
 use crate::query::Query;
 use crate::types::*;
 
 /// Key term extractor for identifying important query terms
+#[derive(Debug)]
 pub struct KeyTermExtractor {
     config: Arc<TermExtractorConfig>,
     tfidf_calculator: Option<TfIdfCalculator>,
@@ -78,7 +79,7 @@ impl KeyTermExtractor {
         // Calculate TF-IDF scores if enabled
         if let Some(ref calculator) = self.tfidf_calculator {
             for term in &mut all_terms {
-                term.tfidf_score = Some(calculator.calculate_tfidf(&term.term, query.text()).await?);
+                term.tfidf_score = calculator.calculate_tfidf(&term.term, query.text()).await?;
             }
         }
         
@@ -121,12 +122,15 @@ impl KeyTermExtractor {
                 let category = self.classify_term_category(&term, analysis);
                 
                 terms.push(KeyTerm {
+                    id: uuid::Uuid::new_v4(),
                     term: term.clone(),
-                    importance,
+                    normalized: term.to_lowercase(),
+                    tfidf_score: 0.0, // Will be calculated later if enabled
                     frequency,
                     category,
+                    positions: vec![],  // Will be filled by position extraction if needed
+                    importance,
                     ngram_size: 1,
-                    tfidf_score: None, // Will be calculated later if enabled
                     contexts: self.extract_term_contexts(&term, query.text()),
                 });
             }
@@ -239,8 +243,8 @@ impl KeyTermExtractor {
         
         // Boost terms with TF-IDF scores if available
         for term in &mut terms {
-            if let Some(tfidf) = term.tfidf_score {
-                term.importance = (term.importance + tfidf * 0.3).clamp(0.0, 1.0);
+            if term.tfidf_score > 0.0 {
+                term.importance = (term.importance + term.tfidf_score * 0.3).clamp(0.0, 1.0);
             }
         }
         
@@ -294,6 +298,7 @@ impl KeyTermExtractor {
 }
 
 /// N-gram extractor for multi-word phrases
+#[derive(Debug)]
 pub struct NgramExtractor {
     config: Arc<TermExtractorConfig>,
 }
@@ -344,12 +349,15 @@ impl NgramExtractor {
                 let category = self.classify_ngram_category(&ngram, analysis);
                 
                 ngrams.push(KeyTerm {
+                    id: uuid::Uuid::new_v4(),
                     term: ngram.clone(),
-                    importance,
+                    normalized: ngram.to_lowercase(),
+                    tfidf_score: 0.0,
                     frequency,
                     category,
+                    positions: vec![],  // Position extraction for n-grams would be complex, leaving empty for now
+                    importance,
                     ngram_size: n,
-                    tfidf_score: None,
                     contexts: vec![ngram.clone()], // For n-grams, the term itself is the context
                 });
             }
@@ -415,6 +423,7 @@ impl NgramExtractor {
 }
 
 /// TF-IDF calculator for term importance scoring
+#[derive(Debug)]
 pub struct TfIdfCalculator {
     // In a real implementation, this would maintain document corpus statistics
     // For now, it's a placeholder

@@ -69,6 +69,21 @@ pub enum ApiError {
 
     #[error("Cache error: {0}")]
     CacheError(String),
+
+    #[error("Request timeout: {0}")]
+    Timeout(String),
+
+    #[error("Validation failed for field {field}: {message}")]
+    ValidationFailed { field: String, message: String },
+
+    #[error("External service error - {service}: {message}")]
+    ExternalServiceError { service: String, message: String },
+
+    #[error("Insufficient storage")]
+    InsufficientStorage,
+
+    #[error("Payload too large")]
+    PayloadTooLarge,
 }
 
 impl IntoResponse for ApiError {
@@ -97,6 +112,15 @@ impl IntoResponse for ApiError {
             }
             ApiError::DatabaseError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, "DATABASE_ERROR", msg.clone()),
             ApiError::CacheError(msg) => (StatusCode::INTERNAL_SERVER_ERROR, "CACHE_ERROR", msg.clone()),
+            ApiError::Timeout(msg) => (StatusCode::REQUEST_TIMEOUT, "TIMEOUT", msg.clone()),
+            ApiError::ValidationFailed { field, message } => {
+                (StatusCode::BAD_REQUEST, "VALIDATION_FAILED", format!("Field '{}': {}", field, message))
+            }
+            ApiError::ExternalServiceError { service, message } => {
+                (StatusCode::BAD_GATEWAY, "EXTERNAL_SERVICE_ERROR", format!("{}: {}", service, message))
+            }
+            ApiError::InsufficientStorage => (StatusCode::INSUFFICIENT_STORAGE, "INSUFFICIENT_STORAGE", "Insufficient storage space".to_string()),
+            ApiError::PayloadTooLarge => (StatusCode::PAYLOAD_TOO_LARGE, "PAYLOAD_TOO_LARGE", "Request payload too large".to_string()),
             ApiError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", msg.clone()),
         };
 

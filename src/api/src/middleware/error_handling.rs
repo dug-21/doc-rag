@@ -67,7 +67,7 @@ where
                     get_request_id_from_headers(&parts.headers),
                 );
                 
-                Ok(error_response.into_response())
+                Ok((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)).into_response())
             } else {
                 Ok(response)
             }
@@ -124,8 +124,8 @@ fn get_request_id_from_headers(headers: &HeaderMap) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-/// Convert ApiError to HTTP response
-impl IntoResponse for ApiError {
+// IntoResponse implementation is provided in errors.rs to avoid conflicts
+/* Removed duplicate impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, message, details) = match self {
             ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, "Bad Request", Some(msg)),
@@ -181,7 +181,7 @@ impl IntoResponse for ApiError {
         
         (status, Json(error_response)).into_response()
     }
-}
+} */
 
 /// Type alias for boxed errors
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
@@ -207,13 +207,13 @@ pub fn handle_external_service_error(
     warn!("External service error: service={}, retry={}, error={}", service, retry_count, error);
     
     if retry_count >= 3 {
-        ApiError::ExternalServiceError {
-            service: service.to_string(),
+        ApiError::ComponentError {
+            component: service.to_string(),
             message: format!("Service unavailable after {} retries", retry_count),
         }
     } else {
-        ApiError::ExternalServiceError {
-            service: service.to_string(),
+        ApiError::ComponentError {
+            component: service.to_string(),
             message: error.to_string(),
         }
     }
@@ -222,10 +222,7 @@ pub fn handle_external_service_error(
 /// Handle validation errors with field context
 pub fn handle_validation_error(field: &str, message: &str) -> ApiError {
     debug!("Validation error: field={}, message={}", field, message);
-    ApiError::ValidationFailed {
-        field: field.to_string(),
-        message: message.to_string(),
-    }
+    ApiError::ValidationError(format!("Field '{}': {}", field, message))
 }
 
 /// Handle rate limiting errors
@@ -259,11 +256,11 @@ pub fn handle_file_upload_error(error: impl std::error::Error) -> ApiError {
     let error_str = error.to_string().to_lowercase();
     
     if error_str.contains("size") || error_str.contains("large") {
-        ApiError::PayloadTooLarge
+        ApiError::BadRequest("Request payload too large".to_string())
     } else if error_str.contains("format") || error_str.contains("type") {
         ApiError::BadRequest("Unsupported file format".to_string())
     } else if error_str.contains("storage") || error_str.contains("space") {
-        ApiError::InsufficientStorage
+        ApiError::Internal("Insufficient storage space".to_string())
     } else {
         ApiError::Internal("File upload failed".to_string())
     }

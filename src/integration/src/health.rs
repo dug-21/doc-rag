@@ -522,7 +522,7 @@ impl HealthMonitor {
                     match health.status {
                         HealthStatus::Healthy => _healthy_count += 1,
                         HealthStatus::Degraded => degraded_count += 1,
-                        HealthStatus::Unhealthy => unhealthy_count += 1,
+                        HealthStatus::Critical | HealthStatus::Down => unhealthy_count += 1,
                         _ => {}
                     }
                     
@@ -537,7 +537,7 @@ impl HealthMonitor {
             };
             
             let new_status = if unhealthy_count > 0 {
-                HealthStatus::Unhealthy
+                HealthStatus::Critical
             } else if degraded_count > 0 {
                 HealthStatus::Degraded
             } else {
@@ -576,10 +576,8 @@ impl HealthMonitor {
         match status {
             ComponentHealthStatus::Healthy => HealthStatus::Healthy,
             ComponentHealthStatus::Degraded => HealthStatus::Degraded,
-            ComponentHealthStatus::Unhealthy => HealthStatus::Unhealthy,
-            ComponentHealthStatus::Starting => HealthStatus::Starting,
-            ComponentHealthStatus::Stopping => HealthStatus::Stopping,
-            ComponentHealthStatus::Unknown => HealthStatus::Unhealthy,
+            ComponentHealthStatus::Unhealthy => HealthStatus::Critical,
+            ComponentHealthStatus::Unknown => HealthStatus::Down,
         }
     }
 }

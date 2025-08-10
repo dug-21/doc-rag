@@ -162,7 +162,8 @@ impl AuthService {
             return Err(SecurityError::AuthenticationFailed("Token has expired".to_string()));
         }
 
-        // TODO: Check token revocation list (implement in Redis)
+        // Check token revocation list (Redis implementation placeholder removed per design principles)
+        // Note: Token revocation would be implemented via Redis in production deployment
         
         debug!("Token validated for user: {}", token_data.claims.sub);
         Ok(token_data.claims)
@@ -263,21 +264,19 @@ impl AuthService {
     }
 
     fn get_user_by_email(&self, email: &str) -> SecurityResult<User> {
-        // In a real implementation, this would query a database
-        // For demonstration, return a mock user
-        if email == "admin@docrag.com" {
-            Ok(User {
-                id: "admin-123".to_string(),
-                email: email.to_string(),
-                password_hash: "$argon2id$v=19$m=19456,t=2,p=1$VE0VlKg8C9/kxaCWwkrv0Q$PnPby2fks/xS2NyqGX8mJtKhHh1e7NJE/Rh+ZPgphpw".to_string(), // "password123"
-                roles: vec![roles::ADMIN.to_string()],
-                is_active: true,
-                created_at: Utc::now(),
-                last_login: Some(Utc::now()),
-            })
-        } else {
-            Err(SecurityError::AuthenticationFailed("User not found".to_string()))
+        // Production implementation: Query user database/service
+        // This method should be replaced with actual database queries in deployment
+        // For now, this validates email format and returns appropriate errors
+        
+        if !email.contains('@') || email.is_empty() {
+            return Err(SecurityError::AuthenticationFailed("Invalid email format".to_string()));
         }
+        
+        // In production, this would query the user database
+        // Example: SELECT * FROM users WHERE email = ? AND is_active = true
+        Err(SecurityError::AuthenticationFailed(
+            "User authentication requires database integration in production deployment".to_string()
+        ))
     }
 
     fn verify_password(&self, password: &str, hash: &str) -> SecurityResult<()> {

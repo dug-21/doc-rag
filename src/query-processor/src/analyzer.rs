@@ -3,7 +3,7 @@
 //! This module provides comprehensive query analysis including text preprocessing,
 //! language detection, syntactic parsing, and semantic feature extraction.
 
-use async_trait::async_trait;
+// use async_trait::async_trait; // Unused
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{info, instrument, warn};
@@ -15,6 +15,9 @@ use crate::config::ProcessorConfig;
 use crate::error::{ProcessorError, Result};
 use crate::query::Query;
 use crate::types::*;
+
+#[cfg(feature = "neural")]
+use ruv_fann::NeuralNet;
 
 /// Query analyzer for semantic understanding
 pub struct QueryAnalyzer {
@@ -578,15 +581,98 @@ impl SyntacticAnalyzer {
     }
 }
 
-/// Semantic analysis component  
+/// Semantic analysis component with ruv-FANN neural network integration
 pub struct SemanticAnalyzer {
     config: crate::config::SemanticAnalysisConfig,
+    #[cfg(feature = "neural")]
+    sentiment_neural_net: Option<NeuralNet>,
+    #[cfg(feature = "neural")]
+    topic_neural_net: Option<NeuralNet>,
+    #[cfg(not(feature = "neural"))]
+    _phantom: std::marker::PhantomData<()>,
 }
 
 impl SemanticAnalyzer {
+    /// Initialize sentiment analysis neural network using ruv-FANN
+    #[cfg(feature = "neural")]
+    async fn initialize_sentiment_network() -> Result<Option<NeuralNet>> {
+        info!("Initializing sentiment analysis neural network with ruv-FANN");
+        
+        // Create a simple 3-layer network for sentiment analysis
+        // Input: text features (length 100), Hidden: 50, Output: 3 (positive, negative, neutral)
+        let layers = vec![100, 50, 3];
+        
+        let neural_net = NeuralNet::new(&layers)
+            .map_err(|e| ProcessorError::AnalysisFailed {
+                stage: "sentiment_neural_init".to_string(),
+                reason: format!("Failed to create sentiment neural network: {:?}", e),
+            })?;
+        
+        // Configure the network for sentiment analysis
+        neural_net.set_activation_function_hidden(ruv_fann::ActivationFunc::Sigmoid)
+            .map_err(|e| ProcessorError::AnalysisFailed {
+                stage: "sentiment_neural_config".to_string(),
+                reason: format!("Failed to configure sentiment network: {:?}", e),
+            })?;
+        
+        neural_net.set_activation_function_output(ruv_fann::ActivationFunc::Linear)
+            .map_err(|e| ProcessorError::AnalysisFailed {
+                stage: "sentiment_neural_config".to_string(),
+                reason: format!("Failed to configure sentiment network output: {:?}", e),
+            })?;
+        
+        Ok(Some(neural_net))
+    }
+    
+    /// Initialize topic modeling neural network using ruv-FANN
+    #[cfg(feature = "neural")]
+    async fn initialize_topic_network() -> Result<Option<NeuralNet>> {
+        info!("Initializing topic modeling neural network with ruv-FANN");
+        
+        // Create network for topic classification
+        // Input: text features (length 100), Hidden: 64, 32, Output: 10 (topic categories)
+        let layers = vec![100, 64, 32, 10];
+        
+        let neural_net = NeuralNet::new(&layers)
+            .map_err(|e| ProcessorError::AnalysisFailed {
+                stage: "topic_neural_init".to_string(),
+                reason: format!("Failed to create topic neural network: {:?}", e),
+            })?;
+        
+        // Configure the network for topic modeling
+        neural_net.set_activation_function_hidden(ruv_fann::ActivationFunc::Sigmoid)
+            .map_err(|e| ProcessorError::AnalysisFailed {
+                stage: "topic_neural_config".to_string(),
+                reason: format!("Failed to configure topic network: {:?}", e),
+            })?;
+        
+        neural_net.set_activation_function_output(ruv_fann::ActivationFunc::Linear)
+            .map_err(|e| ProcessorError::AnalysisFailed {
+                stage: "topic_neural_config".to_string(),
+                reason: format!("Failed to configure topic network output: {:?}", e),
+            })?;
+        
+        Ok(Some(neural_net))
+    }
     pub async fn new(config: &crate::config::SemanticAnalysisConfig) -> Result<Self> {
+        #[cfg(feature = "neural")]
+        let (sentiment_neural_net, topic_neural_net) = if config.enable_sentiment_analysis || config.enable_topic_modeling {
+            (
+                Self::initialize_sentiment_network().await?,
+                Self::initialize_topic_network().await?,
+            )
+        } else {
+            (None, None)
+        };
+        
         Ok(Self {
             config: config.clone(),
+            #[cfg(feature = "neural")]
+            sentiment_neural_net,
+            #[cfg(feature = "neural")]
+            topic_neural_net,
+            #[cfg(not(feature = "neural"))]
+            _phantom: std::marker::PhantomData,
         })
     }
 
@@ -765,7 +851,96 @@ impl SemanticAnalyzer {
     }
 
     async fn analyze_sentiment(&self, text: &PreprocessedText) -> Result<Sentiment> {
-        // Simple rule-based sentiment analysis
+        #[cfg(feature = "neural")]
+        {
+            if let Some(ref neural_net) = self.sentiment_neural_net {
+                return self.analyze_sentiment_neural(text, neural_net).await;
+            }
+        }
+        
+        // Fallback to rule-based sentiment analysis when neural is not available
+        self.analyze_sentiment_rule_based(text).await
+    }
+    
+    /// Neural network-based sentiment analysis using ruv-FANN
+    #[cfg(feature = "neural")]
+    async fn analyze_sentiment_neural(
+        &self, 
+        text: &PreprocessedText, 
+        neural_net: &NeuralNet
+    ) -> Result<Sentiment> {
+        info!("Running neural sentiment analysis with ruv-FANN");
+        
+        // Convert text to feature vector for neural network
+        let features = self.text_to_sentiment_features(text)?;
+        
+        // Run neural inference
+        let output = neural_net.run(&features)
+            .map_err(|e| ProcessorError::AnalysisFailed {
+                stage: "sentiment_neural_inference".to_string(),
+                reason: format!("Neural sentiment analysis failed: {:?}", e),
+            })?;
+        
+        // Interpret neural network output
+        let (label, score) = if output.len() >= 3 {
+            let positive_score = output[0];
+            let negative_score = output[1];
+            let neutral_score = output[2];
+            
+            if positive_score > negative_score && positive_score > neutral_score {
+                ("positive", positive_score as f64)
+            } else if negative_score > neutral_score {
+                ("negative", negative_score as f64)
+            } else {
+                ("neutral", neutral_score as f64)
+            }
+        } else {
+            ("neutral", 0.0)
+        };
+        
+        let mut emotions = std::collections::HashMap::new();
+        emotions.insert(label.to_string(), score.abs());
+        
+        Ok(Sentiment {
+            label: label.to_string(),
+            score,
+            emotions,
+        })
+    }
+    
+    /// Convert text to feature vector for sentiment neural network
+    #[cfg(feature = "neural")]
+    fn text_to_sentiment_features(&self, text: &PreprocessedText) -> Result<Vec<f32>> {
+        let mut features = vec![0.0; 100]; // Fixed size feature vector
+        
+        // Basic text features for sentiment analysis
+        features[0] = text.tokens.len() as f32 / 100.0; // Normalized length
+        
+        // Word type features
+        let positive_words = ["good", "great", "excellent", "secure", "compliant", "effective"];
+        let negative_words = ["bad", "poor", "insecure", "vulnerable", "non-compliant", "risky"];
+        
+        let text_lower = text.normalized.to_lowercase();
+        let positive_count = positive_words.iter()
+            .map(|word| text_lower.matches(word).count())
+            .sum::<usize>() as f32;
+        let negative_count = negative_words.iter()
+            .map(|word| text_lower.matches(word).count())
+            .sum::<usize>() as f32;
+        
+        features[1] = positive_count / text.tokens.len().max(1) as f32;
+        features[2] = negative_count / text.tokens.len().max(1) as f32;
+        
+        // Character-level features
+        features[3] = text.normalized.chars().filter(|c| c.is_uppercase()).count() as f32 / text.normalized.len().max(1) as f32;
+        features[4] = text.normalized.chars().filter(|c| *c == '!').count() as f32;
+        features[5] = text.normalized.chars().filter(|c| *c == '?').count() as f32;
+        
+        Ok(features)
+    }
+    
+    /// Rule-based sentiment analysis (fallback)
+    async fn analyze_sentiment_rule_based(&self, text: &PreprocessedText) -> Result<Sentiment> {
         let positive_words = ["good", "great", "excellent", "secure", "compliant", "effective"];
         let negative_words = ["bad", "poor", "insecure", "vulnerable", "non-compliant", "risky"];
         

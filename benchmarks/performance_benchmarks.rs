@@ -199,7 +199,7 @@ impl BenchmarkSuite {
                 tokio::spawn(async move {
                     let _permit = sem.acquire().await.unwrap();
                     
-                    let result = Self::execute_mock_query(&query).await;
+                    let result = Self::execute_real_query(&query).await;
                     (i, result)
                 })
             })
@@ -290,13 +290,107 @@ impl BenchmarkSuite {
         }
     }
     
-    /// Mock query processing execution
-    async fn execute_mock_query(query: &TestQuery) -> BenchmarkResult {
+    /// Real query processing execution with actual system components
+    async fn execute_real_query(query: &TestQuery) -> BenchmarkResult {
         let start_time = Instant::now();
         
-        // Simulate processing delay based on query complexity
-        let processing_delay = Duration::from_millis((query.complexity_level * 50.0) as u64);
-        tokio::time::sleep(processing_delay).await;
+        // Initialize real system components for benchmarking
+        let query_processor = match Self::create_real_query_processor().await {
+            Ok(processor) => processor,
+            Err(e) => {
+                return BenchmarkResult {
+                    query_id: query.id.clone(),
+                    query_text: query.text.clone(),
+                    latency_ms: start_time.elapsed().as_millis() as u64,
+                    success: false,
+                    confidence_score: 0.0,
+                    processing_time_ms: 0,
+                    generation_time_ms: 0,
+                    validation_time_ms: 0,
+                    response_length: 0,
+                    citation_count: 0,
+                    error_message: Some(format!("Failed to initialize query processor: {}", e)),
+                };
+            }
+        };
+        
+        // Process the query using real components
+        let processing_start = Instant::now();
+        let processing_result = match query_processor.process_query(&query.text).await {
+            Ok(result) => result,
+            Err(e) => {
+                return BenchmarkResult {
+                    query_id: query.id.clone(),
+                    query_text: query.text.clone(),
+                    latency_ms: start_time.elapsed().as_millis() as u64,
+                    success: false,
+                    confidence_score: 0.0,
+                    processing_time_ms: processing_start.elapsed().as_millis() as u64,
+                    generation_time_ms: 0,
+                    validation_time_ms: 0,
+                    response_length: 0,
+                    citation_count: 0,
+                    error_message: Some(format!("Query processing failed: {}", e)),
+                };
+            }
+        };
+        let processing_time = processing_start.elapsed();
+        
+        // Generate response using real response generator
+        let generation_start = Instant::now();
+        let response_result = match Self::create_real_response_generator().await {
+            Ok(generator) => {
+                match generator.generate_response(&query.text, &processing_result.context).await {
+                    Ok(response) => response,
+                    Err(e) => {
+                        return BenchmarkResult {
+                            query_id: query.id.clone(),
+                            query_text: query.text.clone(),
+                            latency_ms: start_time.elapsed().as_millis() as u64,
+                            success: false,
+                            confidence_score: processing_result.confidence,
+                            processing_time_ms: processing_time.as_millis() as u64,
+                            generation_time_ms: generation_start.elapsed().as_millis() as u64,
+                            validation_time_ms: 0,
+                            response_length: 0,
+                            citation_count: 0,
+                            error_message: Some(format!("Response generation failed: {}", e)),
+                        };
+                    }
+                }
+            }
+            Err(e) => {
+                return BenchmarkResult {
+                    query_id: query.id.clone(),
+                    query_text: query.text.clone(),
+                    latency_ms: start_time.elapsed().as_millis() as u64,
+                    success: false,
+                    confidence_score: processing_result.confidence,
+                    processing_time_ms: processing_time.as_millis() as u64,
+                    generation_time_ms: 0,
+                    validation_time_ms: 0,
+                    response_length: 0,
+                    citation_count: 0,
+                    error_message: Some(format!("Failed to create response generator: {}", e)),
+                };
+            }
+        };
+        let generation_time = generation_start.elapsed();
+        
+        // Validate response using real validator
+        let validation_start = Instant::now();
+        let validation_result = match Self::validate_real_response(&response_result).await {
+            Ok(validation) => validation,
+            Err(e) => {
+                warn!("Response validation failed: {}", e);
+                ResponseValidation {
+                    is_valid: false,
+                    confidence: 0.0,
+                    issues: vec![format!("Validation error: {}", e)],
+                }
+            }
+        };
+        let validation_time = validation_start.elapsed();
         
         let total_latency = start_time.elapsed();
         
@@ -304,15 +398,90 @@ impl BenchmarkSuite {
             query_id: query.id.clone(),
             query_text: query.text.clone(),
             latency_ms: total_latency.as_millis() as u64,
-            success: true,
-            confidence_score: 0.85,
-            processing_time_ms: processing_delay.as_millis() as u64,
-            generation_time_ms: 30,
-            validation_time_ms: 10,
-            response_length: query.text.len() * 3, // Simulate response expansion
-            citation_count: query.expected_entities.len(),
-            error_message: None,
+            success: validation_result.is_valid,
+            confidence_score: processing_result.confidence.min(validation_result.confidence),
+            processing_time_ms: processing_time.as_millis() as u64,
+            generation_time_ms: generation_time.as_millis() as u64,
+            validation_time_ms: validation_time.as_millis() as u64,
+            response_length: response_result.content.len(),
+            citation_count: response_result.citations.len(),
+            error_message: if validation_result.issues.is_empty() { None } else { Some(validation_result.issues.join("; ")) },
         }
+    }
+    
+    /// Create real query processor for benchmarking
+    async fn create_real_query_processor() -> Result<QueryProcessor, Box<dyn std::error::Error + Send + Sync>> {
+        let config = QueryProcessorConfig {
+            enable_neural_classification: true,
+            neural_model_path: Some("models/query_classifier.fann".to_string()),
+            confidence_threshold: 0.7,
+            max_processing_time: Duration::from_millis(500),
+            cache_size: 1000,
+            enable_parallel_processing: true,
+        };
+        
+        QueryProcessor::new(config).await
+    }
+    
+    /// Create real response generator for benchmarking
+    async fn create_real_response_generator() -> Result<ResponseGenerator, Box<dyn std::error::Error + Send + Sync>> {
+        let config = ResponseGeneratorConfig {
+            max_response_length: 2000,
+            min_confidence_threshold: 0.6,
+            enable_citation_generation: true,
+            enable_fact_checking: true,
+            response_format: ResponseFormat::Structured,
+            performance_target: Duration::from_millis(100),
+        };
+        
+        ResponseGenerator::new(config).await
+    }
+    
+    /// Validate real response for benchmarking
+    async fn validate_real_response(response: &GeneratedResponse) -> Result<ResponseValidation, Box<dyn std::error::Error + Send + Sync>> {
+        let mut issues = Vec::new();
+        
+        // Check response length
+        if response.content.trim().is_empty() {
+            issues.push("Response content is empty".to_string());
+        }
+        
+        // Check confidence score
+        if response.confidence_score < 0.5 {
+            issues.push(format!("Low confidence score: {:.3}", response.confidence_score));
+        }
+        
+        // Check citations
+        if response.citations.is_empty() && response.content.len() > 200 {
+            issues.push("Long response without citations".to_string());
+        }
+        
+        // Validate citation quality
+        for (i, citation) in response.citations.iter().enumerate() {
+            if citation.source.url.is_none() && citation.source.title.trim().is_empty() {
+                issues.push(format!("Citation {} has no source information", i + 1));
+            }
+        }
+        
+        // Check response structure
+        if response.format == ResponseFormat::Structured {
+            if !response.content.contains('\n') && response.content.len() > 500 {
+                issues.push("Structured response appears to be unformatted".to_string());
+            }
+        }
+        
+        let is_valid = issues.is_empty();
+        let confidence = if is_valid { 
+            response.confidence_score 
+        } else { 
+            response.confidence_score * 0.5 
+        };
+        
+        Ok(ResponseValidation {
+            is_valid,
+            confidence,
+            issues,
+        })
     }
     
     /// Calculate comprehensive benchmark statistics

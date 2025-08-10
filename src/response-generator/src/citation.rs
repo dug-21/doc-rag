@@ -688,16 +688,145 @@ impl CitationTracker {
         }
     }
 
-    /// Assess author authority
-    async fn assess_author_authority(&self, _author: &str) -> Result<f64> {
-        // Placeholder: would check author credentials, publications, etc.
-        Ok(0.5)
+    /// Assess author authority based on real metrics
+    async fn assess_author_authority(&self, author: &str) -> Result<f64> {
+        let mut authority_score = 0.0;
+        let mut score_components = 0;
+        
+        // Check for academic credentials indicators
+        let academic_indicators = [
+            "Ph.D.", "PhD", "Dr.", "Professor", "Prof.", "M.D.", "MD", 
+            "Ph.D", "D.Phil", "Sc.D", "Ed.D"
+        ];
+        
+        for indicator in &academic_indicators {
+            if author.contains(indicator) {
+                authority_score += 0.3;
+                score_components += 1;
+                break;
+            }
+        }
+        
+        // Check for institutional affiliations
+        let institution_indicators = [
+            "University", "Institute", "College", "Academy", "Research Center",
+            "Laboratory", "Foundation", "Corporation", "Ltd", "Inc"
+        ];
+        
+        for indicator in &institution_indicators {
+            if author.contains(indicator) {
+                authority_score += 0.2;
+                score_components += 1;
+                break;
+            }
+        }
+        
+        // Assess based on name structure and formatting
+        let parts: Vec<&str> = author.split_whitespace().collect();
+        if parts.len() >= 2 {
+            // Full name suggests more authoritative source
+            authority_score += 0.1;
+            score_components += 1;
+            
+            // Check for middle initials (common in academic writing)
+            if parts.len() >= 3 && parts[1].len() <= 2 && parts[1].ends_with('.') {
+                authority_score += 0.1;
+                score_components += 1;
+            }
+        }
+        
+        // Check for multiple authors (collaboration often indicates authority)
+        if author.contains(" and ") || author.contains(", ") {
+            authority_score += 0.15;
+            score_components += 1;
+        }
+        
+        // Normalize score based on components found
+        let final_score = if score_components > 0 {
+            (authority_score / score_components as f64).max(0.1).min(1.0)
+        } else {
+            0.2 // Base score for any named author
+        };
+        
+        Ok(final_score)
     }
 
-    /// Assess publication authority
-    async fn assess_publication_authority(&self, _publication: &str) -> Result<f64> {
-        // Placeholder: would check publication reputation, impact factor, etc.
-        Ok(0.5)
+    /// Assess publication authority based on real publication indicators
+    async fn assess_publication_authority(&self, publication: &str) -> Result<f64> {
+        let mut authority_score = 0.0;
+        let mut score_components = 0;
+        
+        // High-authority publication types
+        let high_authority_pubs = [
+            "Nature", "Science", "Cell", "The Lancet", "NEJM", "PNAS",
+            "Journal of", "IEEE", "ACM", "Proceedings of", "Annual Review"
+        ];
+        
+        for pub_type in &high_authority_pubs {
+            if publication.to_lowercase().contains(&pub_type.to_lowercase()) {
+                authority_score += 0.8;
+                score_components += 1;
+                break;
+            }
+        }
+        
+        // Medium-authority publication indicators
+        let medium_authority_indicators = [
+            "International", "European", "American", "British", "Conference",
+            "Symposium", "Workshop", "Review", "Letters", "Communications"
+        ];
+        
+        for indicator in &medium_authority_indicators {
+            if publication.to_lowercase().contains(&indicator.to_lowercase()) {
+                authority_score += 0.6;
+                score_components += 1;
+                break;
+            }
+        }
+        
+        // Academic/research publication indicators
+        let academic_indicators = [
+            "University", "Press", "Academic", "Research", "Institute",
+            "Laboratory", "Department", "School of"
+        ];
+        
+        for indicator in &academic_indicators {
+            if publication.to_lowercase().contains(&indicator.to_lowercase()) {
+                authority_score += 0.7;
+                score_components += 1;
+                break;
+            }
+        }
+        
+        // Check for volume/issue numbers (indicates peer-reviewed journal)
+        if publication.to_lowercase().contains("vol") || publication.to_lowercase().contains("issue") {
+            authority_score += 0.4;
+            score_components += 1;
+        }
+        
+        // Check for DOI (indicates formal publication)
+        if publication.to_lowercase().contains("doi") || publication.contains("10.") {
+            authority_score += 0.3;
+            score_components += 1;
+        }
+        
+        // Check for recent years (more relevant)
+        if publication.contains("2023") || publication.contains("2024") {
+            authority_score += 0.2;
+            score_components += 1;
+        } else if publication.contains("202") { // Any 2020s year
+            authority_score += 0.1;
+            score_components += 1;
+        }
+        
+        // Normalize score
+        let final_score = if score_components > 0 {
+            (authority_score / score_components as f64).max(0.1).min(1.0)
+        } else {
+            0.3 // Base score for any publication
+        };
+        
+        Ok(final_score)
     }
 
     // Citation formatting methods

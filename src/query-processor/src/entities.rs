@@ -3,15 +3,15 @@
 //! This module provides comprehensive entity extraction capabilities including
 //! named entity recognition, compliance-specific entities, and technical terms.
 
-use async_trait::async_trait;
+// use async_trait::async_trait; // Unused
 use chrono::Utc;
 use regex::Regex;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tracing::{info, instrument, warn};
+use tracing::{info, instrument}; // removed unused warn
 
 use crate::config::EntityExtractorConfig;
-use crate::error::{ProcessorError, Result};
+use crate::error::Result; // removed unused ProcessorError
 use crate::query::Query;
 use crate::types::*;
 

@@ -21,7 +21,7 @@ use chrono::{DateTime, Utc};
 use anyhow::{Result, Context, anyhow};
 use async_trait::async_trait;
 use tracing::{info, warn, error, debug, instrument};
-// use ndarray::{Array1, Array2}; // TODO: Add ndarray dependency if needed
+use ndarray::{Array1, Array2};
 
 use crate::{VectorStorage, ChunkDocument, ChunkMetadata};
 use crate::error::StorageError;

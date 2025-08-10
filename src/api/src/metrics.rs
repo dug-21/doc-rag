@@ -26,9 +26,11 @@ impl ApiMetrics {
             "Total number of HTTP requests"
         )?;
         
-        let http_request_duration_seconds = Histogram::new(
-            "api_http_request_duration_seconds",
-            "HTTP request duration in seconds"
+        let http_request_duration_seconds = Histogram::with_opts(
+            prometheus::HistogramOpts::new(
+                "api_http_request_duration_seconds",
+                "HTTP request duration in seconds"
+            )
         )?;
         
         let active_connections = Gauge::new(

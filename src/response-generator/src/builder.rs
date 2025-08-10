@@ -3,7 +3,9 @@
 use crate::{
     error::{Result, ResponseError},
     GenerationRequest, ContextChunk, IntermediateResponse,
+    citation::Source,
 };
+use serde_json;
 use std::collections::{HashMap, HashSet};
 use tokio::time::{Duration, Instant};
 use tracing::{debug, instrument, warn};
@@ -14,6 +16,9 @@ use uuid::Uuid;
 pub struct ResponseBuilder {
     /// Request being processed
     request: GenerationRequest,
+    
+    /// Optimized query (may differ from original)
+    optimized_query: Option<String>,
     
     /// Current response content
     content: String,
@@ -30,8 +35,8 @@ pub struct ResponseBuilder {
     /// Warnings accumulated during building
     warnings: Vec<String>,
     
-    /// Metadata for the response
-    metadata: HashMap<String, String>,
+    /// Metadata for the response (including FACT analysis)
+    metadata: HashMap<String, serde_json::Value>,
     
     /// Content sections for structured building
     sections: Vec<ContentSection>,
@@ -112,6 +117,7 @@ impl ResponseBuilder {
     pub fn new(request: GenerationRequest) -> Self {
         Self {
             request,
+            optimized_query: None,
             content: String::new(),
             confidence_factors: Vec::new(),
             source_references: Vec::new(),
@@ -124,8 +130,29 @@ impl ResponseBuilder {
 
     /// Set building strategy
     pub fn with_strategy(mut self, strategy: BuildingStrategy) -> Self {
-        self.metadata.insert("building_strategy".to_string(), format!("{:?}", strategy));
+        self.metadata.insert("building_strategy".to_string(), 
+                           serde_json::json!(format!("{:?}", strategy)));
         self
+    }
+    
+    /// Set optimized query from FACT preprocessing
+    pub fn set_optimized_query(&mut self, optimized_query: String) {
+        self.optimized_query = Some(optimized_query);
+    }
+    
+    /// Get optimized query or original query
+    pub fn get_query(&self) -> &str {
+        self.optimized_query.as_ref().unwrap_or(&self.request.query)
+    }
+    
+    /// Set metadata value (used by FACT preprocessing)
+    pub fn set_metadata(&mut self, key: &str, value: serde_json::Value) {
+        self.metadata.insert(key.to_string(), value);
+    }
+    
+    /// Get metadata value
+    pub fn get_metadata(&self, key: &str) -> Option<&serde_json::Value> {
+        self.metadata.get(key)
     }
 
     /// Rank and prepare context for response building

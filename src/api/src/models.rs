@@ -26,7 +26,7 @@ pub struct IngestResponse {
     pub processing_time_ms: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct BatchIngestRequest {
     #[validate(length(min = 1, max = 100, message = "Batch must contain 1-100 documents"))]
     pub documents: Vec<IngestRequest>,

@@ -2,7 +2,7 @@ use axum::{
     extract::{Request, State},
     http::{HeaderValue, StatusCode},
     middleware::Next,
-    response::Response,
+    response::{IntoResponse, Response},
 };
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 use serde::{Deserialize, Serialize};
@@ -105,30 +105,39 @@ pub async fn auth_middleware(
     State(auth_middleware): State<AuthMiddleware>,
     mut request: Request,
     next: Next,
-) -> Result<Response, ApiError> {
+) -> Response {
     let path = request.uri().path();
 
     // Skip authentication for public endpoints
     if !auth_middleware.requires_auth(path) {
         debug!("Skipping auth for public path: {}", path);
-        return Ok(next.run(request).await);
+        return next.run(request).await;
     }
 
     // Extract and validate token
-    let claims = auth_middleware.extract_and_validate_token(&request).await?;
+    let claims = match auth_middleware.extract_and_validate_token(&request).await {
+        Ok(claims) => claims,
+        Err(err) => {
+            return err.into_response();
+        }
+    };
 
     // Check admin access for admin endpoints
     if !auth_middleware.check_admin_access(path, &claims.role) {
         warn!("Admin access denied for user {} on path {}", claims.email, path);
-        return Err(ApiError::Forbidden(
+        return ApiError::Forbidden(
             "Insufficient permissions for this endpoint".to_string(),
-        ));
+        ).into_response();
     }
 
     // Create auth context and add to request extensions
     let auth_context = AuthContext {
-        user_id: Uuid::parse_str(&claims.sub)
-            .map_err(|_| ApiError::Unauthorized("Invalid user ID in token".to_string()))?,
+        user_id: match Uuid::parse_str(&claims.sub) {
+            Ok(id) => id,
+            Err(_) => {
+                return ApiError::Unauthorized("Invalid user ID in token".to_string()).into_response();
+            }
+        },
         email: claims.email.clone(),
         role: claims.role.clone(),
         token_id: claims.jti.clone(),
@@ -139,7 +148,7 @@ pub async fn auth_middleware(
     debug!("Authentication successful for user: {} ({})", claims.email, claims.role);
 
     // Continue to next middleware/handler
-    Ok(next.run(request).await)
+    next.run(request).await
 }
 
 /// Axum extension trait to extract auth context from request

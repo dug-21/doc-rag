@@ -5,6 +5,7 @@ use axum::{
 };
 use std::{collections::HashMap, sync::Arc};
 use tracing::{info, warn};
+use uuid::Uuid;
 
 use crate::{
     clients::ComponentClients,

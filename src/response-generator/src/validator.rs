@@ -1047,7 +1047,7 @@ impl ValidationLayer for ConsistencyValidationLayer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{GenerationRequest, ContextChunk, Source};
+    use crate::GenerationRequest;
 
     #[tokio::test]
     async fn test_validator_creation() {

@@ -39,6 +39,9 @@ prometheus = "0.13"
 # Test containers (optional)
 testcontainers = { version = "0.15", optional = true }
 
+# Neural network arrays
+ndarray = "0.15"
+
 [dev-dependencies]
 criterion = { workspace = true }
 proptest = { workspace = true }

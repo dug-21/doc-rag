@@ -4,18 +4,22 @@
 //! rule-based classification, neural network integration, ensemble methods,
 //! and multi-label classification support.
 
-use async_trait::async_trait;
+// use async_trait::async_trait; // Unused
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tracing::{info, instrument, warn};
-use uuid::Uuid;
+// use uuid::Uuid; // Unused
 
 use crate::config::ProcessorConfig;
 use crate::error::{ProcessorError, Result};
 use crate::query::Query;
 use crate::types::*;
 
+#[cfg(feature = "neural")]
+use ruv_fann::NeuralNet;
+
 /// Intent classifier for determining query intentions
+#[derive(Debug)]
 pub struct IntentClassifier {
     config: Arc<ProcessorConfig>,
     rule_classifier: RuleBasedClassifier,
@@ -150,6 +154,7 @@ impl IntentClassifier {
 }
 
 /// Rule-based intent classifier
+#[derive(Debug)]
 pub struct RuleBasedClassifier {
     rules: Vec<ClassificationRule>,
     intent_patterns: HashMap<QueryIntent, Vec<IntentPattern>>,
@@ -181,7 +186,7 @@ impl RuleBasedClassifier {
             
             for pattern in patterns {
                 let score = pattern.calculate_score(&text, analysis, features)?;
-                max_score = max_score.max(score);
+                max_score = f64::max(max_score, score);
             }
             
             if max_score > 0.0 {
@@ -197,6 +202,9 @@ impl RuleBasedClassifier {
             }
         }
 
+        // Store probabilities before moving intent_scores
+        let probabilities = intent_scores.clone();
+        
         // Determine primary and secondary intents
         let mut sorted_intents: Vec<_> = intent_scores.into_iter().collect();
         sorted_intents.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -221,8 +229,6 @@ impl RuleBasedClassifier {
             .take(2)
             .map(|(intent, _)| intent)
             .collect();
-
-        let probabilities = intent_scores.clone();
 
         Ok(IntentClassification {
             primary_intent,
@@ -488,37 +494,263 @@ impl IntentPattern {
 }
 
 /// Neural network classifier using ruv-FANN integration
+#[derive(Debug)]
 pub struct NeuralClassifier {
     model_config: NeuralModelConfig,
     feature_dimension: usize,
+    #[cfg(feature = "neural")]
+    neural_net: Option<NeuralNet>,
+    #[cfg(not(feature = "neural"))]
+    _phantom: std::marker::PhantomData<()>,
 }
 
 impl NeuralClassifier {
+    /// Get pattern recognition results using ruv-FANN for semantic analysis
+    #[cfg(feature = "neural")]
+    pub async fn recognize_patterns(&self, features: &ClassificationFeatures) -> Result<Vec<PatternMatch>> {
+        info!("Running pattern recognition with ruv-FANN");
+        
+        let input_vector = self.features_to_vector(features)?;
+        let output = self.run_inference(&input_vector).await?;
+        
+        // Convert neural output to pattern matches
+        let mut patterns = Vec::new();
+        
+        // Analyze output patterns for semantic features
+        for (i, &score) in output.iter().enumerate() {
+            if score > 0.1 { // Threshold for pattern detection
+                let pattern = match i {
+                    0 => PatternMatch {
+                        pattern_type: "factual_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.9,
+                    },
+                    1 => PatternMatch {
+                        pattern_type: "comparison_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.8,
+                    },
+                    2 => PatternMatch {
+                        pattern_type: "analytical_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.85,
+                    },
+                    3 => PatternMatch {
+                        pattern_type: "summary_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.7,
+                    },
+                    4 => PatternMatch {
+                        pattern_type: "procedural_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.8,
+                    },
+                    5 => PatternMatch {
+                        pattern_type: "definition_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.9,
+                    },
+                    6 => PatternMatch {
+                        pattern_type: "causal_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.75,
+                    },
+                    7 => PatternMatch {
+                        pattern_type: "temporal_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.7,
+                    },
+                    8 => PatternMatch {
+                        pattern_type: "compliance_query".to_string(),
+                        confidence: score as f64,
+                        semantic_weight: 0.95,
+                    },
+                    _ => continue,
+                };
+                patterns.push(pattern);
+            }
+        }
+        
+        // Sort by confidence
+        patterns.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal));
+        
+        Ok(patterns)
+    }
+    
+    /// Train the neural network with provided training data
+    #[cfg(feature = "neural")]
+    pub async fn train(&mut self, training_data: &[(Vec<f32>, Vec<f32>)]) -> Result<()> {
+        if let Some(ref neural_net) = self.neural_net {
+            info!("Training ruv-FANN neural network with {} samples", training_data.len());
+            
+            // Prepare training data in ruv-FANN format
+            let inputs: Vec<Vec<f32>> = training_data.iter().map(|(input, _)| input.clone()).collect();
+            let outputs: Vec<Vec<f32>> = training_data.iter().map(|(_, output)| output.clone()).collect();
+            
+            // Configure training parameters
+            neural_net.set_learning_rate(self.model_config.learning_rate)
+                .map_err(|e| ProcessorError::IntentClassificationFailed {
+                    reason: format!("Failed to set learning rate: {:?}", e),
+                })?;
+            
+            // Set training algorithm
+            let training_algo = match self.model_config.training_algorithm.as_str() {
+                "incremental" => ruv_fann::TrainingAlgorithm::Incremental,
+                "batch" => ruv_fann::TrainingAlgorithm::Batch,
+                "rprop" => ruv_fann::TrainingAlgorithm::Rprop,
+                "quickprop" => ruv_fann::TrainingAlgorithm::Quickprop,
+                _ => ruv_fann::TrainingAlgorithm::Rprop, // Default
+            };
+            
+            neural_net.set_training_algorithm(training_algo)
+                .map_err(|e| ProcessorError::IntentClassificationFailed {
+                    reason: format!("Failed to set training algorithm: {:?}", e),
+                })?;
+            
+            // Train the network
+            neural_net.train_on_data(
+                &inputs,
+                &outputs,
+                self.model_config.max_epochs,
+                0, // Reports every epoch (0 = no reports during training)
+                self.model_config.desired_error
+            ).map_err(|e| ProcessorError::IntentClassificationFailed {
+                reason: format!("Training failed: {:?}", e),
+            })?;
+            
+            info!("Neural network training completed successfully");
+            Ok(())
+        } else {
+            Err(ProcessorError::IntentClassificationFailed {
+                reason: "Neural network not initialized".to_string(),
+            })
+        }
+    }
+    
+    /// Save the trained neural network to file
+    #[cfg(feature = "neural")]
+    pub async fn save_model(&self, path: &str) -> Result<()> {
+        if let Some(ref neural_net) = self.neural_net {
+            info!("Saving ruv-FANN neural network to: {}", path);
+            neural_net.save(path)
+                .map_err(|e| ProcessorError::IntentClassificationFailed {
+                    reason: format!("Failed to save neural network to {}: {:?}", path, e),
+                })?;
+            info!("Neural network saved successfully");
+            Ok(())
+        } else {
+            Err(ProcessorError::IntentClassificationFailed {
+                reason: "Neural network not initialized".to_string(),
+            })
+        }
+    }
+    
+    #[cfg(feature = "neural")]
+    fn initialize_neural_network(config: &NeuralModelConfig) -> Result<Option<NeuralNet>> {
+        info!("Initializing ruv-FANN neural network");
+        
+        match &config.model_path {
+            Some(path) => {
+                // Load pre-trained model
+                info!("Loading neural network from: {}", path);
+                let neural_net = NeuralNet::new_from_file(path)
+                    .map_err(|e| ProcessorError::IntentClassificationFailed {
+                        reason: format!("Failed to load neural network from {}: {:?}", path, e),
+                    })?;
+                Ok(Some(neural_net))
+            },
+            None => {
+                // Create new neural network with specified architecture
+                info!("Creating new neural network with architecture: input={}, hidden={:?}, output={}", 
+                      config.input_size, config.hidden_layers, config.output_size);
+                
+                let mut layers = vec![config.input_size];
+                layers.extend(&config.hidden_layers);
+                layers.push(config.output_size);
+                
+                let neural_net = NeuralNet::new(&layers)
+                    .map_err(|e| ProcessorError::IntentClassificationFailed {
+                        reason: format!("Failed to create neural network: {:?}", e),
+                    })?;
+                
+                // Configure activation functions
+                neural_net.set_activation_function_hidden(
+                    Self::parse_activation_function(&config.activation_function)
+                ).map_err(|e| ProcessorError::IntentClassificationFailed {
+                    reason: format!("Failed to set activation function: {:?}", e),
+                })?;
+                
+                neural_net.set_activation_function_output(
+                    ruv_fann::ActivationFunc::Linear
+                ).map_err(|e| ProcessorError::IntentClassificationFailed {
+                    reason: format!("Failed to set output activation function: {:?}", e),
+                })?;
+                
+                Ok(Some(neural_net))
+            }
+        }
+    }
+    
+    #[cfg(feature = "neural")]
+    fn parse_activation_function(activation: &str) -> ruv_fann::ActivationFunc {
+        match activation.to_lowercase().as_str() {
+            "sigmoid" => ruv_fann::ActivationFunc::Sigmoid,
+            "sigmoid_symmetric" => ruv_fann::ActivationFunc::SigmoidSymmetric,
+            "linear" => ruv_fann::ActivationFunc::Linear,
+            "threshold" => ruv_fann::ActivationFunc::Threshold,
+            "threshold_symmetric" => ruv_fann::ActivationFunc::ThresholdSymmetric,
+            "gaussian" => ruv_fann::ActivationFunc::Gaussian,
+            "gaussian_symmetric" => ruv_fann::ActivationFunc::GaussianSymmetric,
+            "elliot" => ruv_fann::ActivationFunc::Elliot,
+            "elliot_symmetric" => ruv_fann::ActivationFunc::ElliotSymmetric,
+            "sin_symmetric" => ruv_fann::ActivationFunc::SinSymmetric,
+            "cos_symmetric" => ruv_fann::ActivationFunc::CosSymmetric,
+            "sin" => ruv_fann::ActivationFunc::Sin,
+            "cos" => ruv_fann::ActivationFunc::Cos,
+            _ => ruv_fann::ActivationFunc::Sigmoid, // Default fallback
+        }
+    }
     pub async fn new(config: &crate::config::IntentClassifierConfig) -> Result<Self> {
-        info!("Initializing Neural Classifier");
+        info!("Initializing Neural Classifier with ruv-FANN");
         
         let model_config = NeuralModelConfig::default();
         let feature_dimension = 128; // Standard feature vector size
         
-        // In a real implementation, this would load a pre-trained model
-        // or initialize training with ruv-FANN
+        #[cfg(feature = "neural")]
+        let neural_net = Self::initialize_neural_network(&model_config)?;
         
         Ok(Self {
             model_config,
             feature_dimension,
+            #[cfg(feature = "neural")]
+            neural_net,
+            #[cfg(not(feature = "neural"))]
+            _phantom: std::marker::PhantomData,
         })
     }
 
     pub async fn classify(
         &self,
-        _query: &Query,
-        _analysis: &SemanticAnalysis,
+        query: &Query,
+        analysis: &SemanticAnalysis,
         features: &ClassificationFeatures,
     ) -> Result<IntentClassification> {
+        info!("Running neural classification with ruv-FANN for query: {}", query.id());
+        
         // Convert features to neural network input
         let input_vector = self.features_to_vector(features)?;
         
-        // Run neural network inference
+        // Validate input vector dimension
+        if input_vector.len() != self.feature_dimension {
+            return Err(ProcessorError::IntentClassificationFailed {
+                reason: format!(
+                    "Input vector dimension mismatch: expected {}, got {}", 
+                    self.feature_dimension, input_vector.len()
+                ),
+            });
+        }
+        
+        // Run neural network inference using ruv-FANN
         let output = self.run_inference(&input_vector).await?;
         
         // Convert output to intent classification
@@ -543,25 +775,30 @@ impl NeuralClassifier {
         Ok(vector)
     }
 
-    async fn run_inference(&self, _input: &[f32]) -> Result<Vec<f32>> {
-        // Placeholder for ruv-FANN neural network inference
-        // In practice, this would run the actual neural network
+    async fn run_inference(&self, input: &[f32]) -> Result<Vec<f32>> {
+        #[cfg(feature = "neural")]
+        {
+            if let Some(ref neural_net) = self.neural_net {
+                // Use ruv-FANN for actual neural network inference
+                let output = neural_net.run(input)
+                    .map_err(|e| ProcessorError::IntentClassificationFailed {
+                        reason: format!("ruv-FANN inference failed: {:?}", e),
+                    })?;
+                Ok(output)
+            } else {
+                return Err(ProcessorError::IntentClassificationFailed {
+                    reason: "Neural network not properly initialized".to_string(),
+                });
+            }
+        }
         
-        // Mock output for different intents
-        let mock_output = vec![
-            0.1, // Factual
-            0.05, // Comparison
-            0.05, // Analytical
-            0.1, // Summary
-            0.3, // Procedural
-            0.2, // Definition
-            0.05, // Causal
-            0.05, // Temporal
-            0.1, // Compliance
-            0.0, // Unknown
-        ];
-        
-        Ok(mock_output)
+        #[cfg(not(feature = "neural"))]
+        {
+            // Fallback when neural feature is not enabled
+            Err(ProcessorError::IntentClassificationFailed {
+                reason: "Neural classification requires 'neural' feature to be enabled".to_string(),
+            })
+        }
     }
 
     fn output_to_classification(
@@ -631,7 +868,7 @@ impl NeuralClassifier {
     }
 }
 
-/// Neural model configuration
+/// Neural model configuration for ruv-FANN integration
 #[derive(Debug, Clone)]
 pub struct NeuralModelConfig {
     pub model_path: Option<String>,
@@ -639,6 +876,10 @@ pub struct NeuralModelConfig {
     pub hidden_layers: Vec<usize>,
     pub output_size: usize,
     pub activation_function: String,
+    pub learning_rate: f32,
+    pub training_algorithm: String,
+    pub max_epochs: u32,
+    pub desired_error: f32,
 }
 
 impl Default for NeuralModelConfig {
@@ -648,12 +889,17 @@ impl Default for NeuralModelConfig {
             input_size: 128,
             hidden_layers: vec![64, 32],
             output_size: 10, // Number of intent classes
-            activation_function: "relu".to_string(),
+            activation_function: "sigmoid".to_string(),
+            learning_rate: 0.01,
+            training_algorithm: "rprop".to_string(),
+            max_epochs: 1000,
+            desired_error: 0.001,
         }
     }
 }
 
 /// Ensemble classifier combining multiple approaches
+#[derive(Debug)]
 pub struct EnsembleClassifier {
     rule_weight: f64,
     neural_weight: f64,
@@ -701,6 +947,7 @@ pub enum EnsembleCombination {
 }
 
 /// Feature extractor for intent classification
+#[derive(Debug)]
 pub struct FeatureExtractor {
     stop_words: std::collections::HashSet<String>,
 }
@@ -837,32 +1084,42 @@ pub struct ExtractedSemanticFeatures {
 }
 
 /// Classification cache for performance
+#[derive(Debug)]
 pub struct ClassificationCache {
-    cache: std::collections::HashMap<String, IntentClassification>,
+    cache: Mutex<std::collections::HashMap<String, IntentClassification>>,
     max_size: usize,
 }
 
 impl ClassificationCache {
     pub fn new(max_size: usize) -> Result<Self> {
         Ok(Self {
-            cache: HashMap::new(),
+            cache: Mutex::new(HashMap::new()),
             max_size,
         })
     }
 
     pub fn get(&self, key: &str) -> Option<IntentClassification> {
-        self.cache.get(key).cloned()
+        self.cache.lock().unwrap().get(key).cloned()
     }
 
-    pub fn put(&mut self, key: String, value: IntentClassification) {
-        if self.cache.len() >= self.max_size {
+    pub fn put(&self, key: String, value: IntentClassification) {
+        let mut cache = self.cache.lock().unwrap();
+        if cache.len() >= self.max_size {
             // Simple eviction: remove first entry
-            if let Some(first_key) = self.cache.keys().next().cloned() {
-                self.cache.remove(&first_key);
+            if let Some(first_key) = cache.keys().next().cloned() {
+                cache.remove(&first_key);
             }
         }
-        self.cache.insert(key, value);
+        cache.insert(key, value);
     }
+}
+
+/// Pattern match result from neural pattern recognition
+#[derive(Debug, Clone)]
+pub struct PatternMatch {
+    pub pattern_type: String,
+    pub confidence: f64,
+    pub semantic_weight: f64,
 }
 
 #[cfg(test)]

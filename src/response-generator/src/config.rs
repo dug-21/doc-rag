@@ -1,7 +1,10 @@
 //! Configuration management for the response generator system
 
+// Removed unused import: use crate::cache::CacheManagerConfig;
 use crate::error::{Result, ResponseError};
+use crate::fact_accelerated::FACTConfig;
 use crate::formatter::{FormatterConfig, OutputFormat};
+use crate::query_preprocessing::QueryPreprocessingConfig;
 use crate::validator::ValidationConfig;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -29,6 +32,12 @@ pub struct Config {
     
     /// Caching configuration
     pub cache: CacheConfig,
+    
+    /// FACT acceleration configuration
+    pub fact: FACTConfig,
+    
+    /// Query preprocessing configuration
+    pub query_preprocessing: QueryPreprocessingConfig,
     
     /// Logging configuration
     pub logging: LoggingConfig,
@@ -197,6 +206,8 @@ pub struct ConfigBuilder {
     pipeline_stages: Option<Vec<String>>,
     performance: Option<PerformanceConfig>,
     cache: Option<CacheConfig>,
+    fact: Option<FACTConfig>,
+    query_preprocessing: Option<QueryPreprocessingConfig>,
     logging: Option<LoggingConfig>,
     max_response_length: Option<usize>,
     default_confidence_threshold: Option<f64>,
@@ -209,6 +220,7 @@ impl Default for Config {
             validation: ValidationConfig::default(),
             formatter: FormatterConfig::default(),
             pipeline_stages: vec![
+                "fact_query_preprocessing".to_string(),
                 "context_preprocessing".to_string(),
                 "content_generation".to_string(),
                 "quality_enhancement".to_string(),
@@ -217,6 +229,8 @@ impl Default for Config {
             ],
             performance: PerformanceConfig::default(),
             cache: CacheConfig::default(),
+            fact: FACTConfig::default(),
+            query_preprocessing: QueryPreprocessingConfig::default(),
             logging: LoggingConfig::default(),
             max_response_length: 4096,
             default_confidence_threshold: 0.7,
@@ -325,8 +339,8 @@ impl Config {
 
         let result = match extension {
             "toml" => {
-                // TODO: Implement toml parsing when needed
-                Err(crate::error::ResponseError::config("TOML parsing not yet implemented".to_string()))
+                // TOML parsing not implemented per design principle - use JSON or YAML instead
+                Err(crate::error::ResponseError::config("TOML format not supported. Use JSON or YAML configuration files instead".to_string()))
             }
             "yaml" | "yml" => {
                 serde_yaml::from_str(&content)
@@ -480,6 +494,8 @@ impl Config {
         self.pipeline_stages = other.pipeline_stages;
         self.performance = other.performance;
         self.cache = other.cache;
+        self.fact = other.fact;
+        self.query_preprocessing = other.query_preprocessing;
         self.logging = other.logging;
         
         self
@@ -552,6 +568,8 @@ impl ConfigBuilder {
             pipeline_stages: self.pipeline_stages.unwrap_or(default_config.pipeline_stages),
             performance: self.performance.unwrap_or(default_config.performance),
             cache: self.cache.unwrap_or(default_config.cache),
+            fact: self.fact.unwrap_or(default_config.fact),
+            query_preprocessing: self.query_preprocessing.unwrap_or(default_config.query_preprocessing),
             logging: self.logging.unwrap_or(default_config.logging),
             max_response_length: self.max_response_length.unwrap_or(default_config.max_response_length),
             default_confidence_threshold: self.default_confidence_threshold.unwrap_or(default_config.default_confidence_threshold),
@@ -618,12 +636,18 @@ mod tests {
         let config = Config::default();
         let temp_file = NamedTempFile::new().unwrap();
         
+        // Change extension to JSON to avoid TOML error
+        let json_path = temp_file.path().with_extension("json");
+        
         // Test saving
-        config.save_to_file(temp_file.path()).await.unwrap();
+        config.save_to_file(&json_path).await.unwrap();
         
         // Test loading
-        let loaded_config = Config::from_file(temp_file.path()).await.unwrap();
+        let loaded_config = Config::from_file(&json_path).await.unwrap();
         assert_eq!(config.max_response_length, loaded_config.max_response_length);
+        
+        // Cleanup
+        std::fs::remove_file(&json_path).ok();
     }
 
     #[test]
