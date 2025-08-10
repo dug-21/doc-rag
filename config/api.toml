@@ -1,0 +1,109 @@
+# Doc-RAG API Gateway Configuration
+
+[server]
+bind_address = "0.0.0.0"
+port = 8080
+worker_threads = 8
+max_connections = 1000
+request_timeout_secs = 30
+idle_timeout_secs = 60
+max_request_size = 16777216  # 16MB
+cors_origins = ["*"]
+
+[database]
+url = "postgres://docrag:docrag_secret@postgres:5432/docrag"
+max_connections = 100
+min_connections = 10
+connect_timeout_secs = 30
+idle_timeout_secs = 600
+
+[redis]
+url = "redis://redis:6379"
+max_connections = 50
+connection_timeout_secs = 5
+command_timeout_secs = 10
+
+[security]
+jwt_secret = "your-production-secret-key-must-be-at-least-32-characters-long"
+jwt_expiration_hours = 24
+password_min_length = 8
+rate_limit_requests = 100
+rate_limit_window_secs = 60
+session_timeout_hours = 24
+enable_cors = true
+enable_csrf = true
+
+[components.chunker]
+url = "http://chunker:8080"
+timeout_secs = 30
+max_retries = 3
+retry_delay_ms = 1000
+health_check_interval_secs = 30
+
+[components.embedder]
+url = "http://embedder:8082"
+timeout_secs = 60
+max_retries = 3
+retry_delay_ms = 1000
+health_check_interval_secs = 30
+
+[components.storage]
+url = "http://storage:8083"
+timeout_secs = 30
+max_retries = 3
+retry_delay_ms = 1000
+health_check_interval_secs = 30
+
+[components.retriever]
+url = "http://retriever:8084"
+timeout_secs = 30
+max_retries = 3
+retry_delay_ms = 1000
+health_check_interval_secs = 30
+
+[components.query_processor]
+url = "http://query-processor:8084"
+timeout_secs = 30
+max_retries = 3
+retry_delay_ms = 1000
+health_check_interval_secs = 30
+
+[components.response_generator]
+url = "http://response-generator:8085"
+timeout_secs = 60
+max_retries = 3
+retry_delay_ms = 1000
+health_check_interval_secs = 30
+
+[components.mcp_adapter]
+url = "http://mcp-adapter:8081"
+timeout_secs = 30
+max_retries = 3
+retry_delay_ms = 1000
+health_check_interval_secs = 30
+
+[observability]
+metrics_enabled = true
+metrics_port = 9090
+tracing_enabled = true
+jaeger_endpoint = "http://jaeger:14268/api/traces"
+log_level = "info"
+request_logging = true
+
+[features]
+enable_streaming = true
+enable_batch_processing = true
+enable_websockets = true
+enable_file_uploads = true
+max_file_size_mb = 100
+supported_formats = [
+    "application/pdf",
+    "text/plain", 
+    "text/markdown",
+    "application/json",
+    "text/html",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+    "text/csv",
+    "application/rtf"
+]

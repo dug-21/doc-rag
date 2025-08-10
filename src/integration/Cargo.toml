@@ -1,0 +1,94 @@
+[package]
+name = "integration"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "System Integration Orchestrator for Doc-RAG Components"
+keywords = ["integration", "orchestration", "microservices", "coordination"]
+categories = ["web-programming", "network-programming"]
+
+[lib]
+name = "integration"
+path = "src/lib.rs"
+
+[dependencies]
+# Core async runtime
+tokio = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# HTTP and networking
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { version = "0.5", features = ["fs", "cors", "trace", "compression-gzip", "add-extension", "timeout"] }
+hyper = { workspace = true }
+reqwest = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+toml = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+eyre = { workspace = true }
+
+# Logging and tracing
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-opentelemetry = { workspace = true, optional = true }
+opentelemetry = { version = "0.21", optional = true }
+opentelemetry-jaeger = { version = "0.20", optional = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+url = { workspace = true }
+bytes = { workspace = true }
+dashmap = { workspace = true }
+arc-swap = { workspace = true }
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+rand = { workspace = true }
+
+# System information
+sys-info = "0.9"
+
+# Monitoring and metrics
+prometheus = { workspace = true }
+metrics = { workspace = true }
+metrics-exporter-prometheus = { workspace = true }
+
+# Circuit breaker and resilience
+tokio-util = { workspace = true }
+
+# Component dependencies (temporarily disabled for compilation check)
+# mcp-adapter = { path = "../mcp-adapter", package = "mcp-adapter" }
+# chunker = { path = "../chunker" }
+# embedder = { path = "../embedder" }
+# storage = { path = "../storage" }
+# query-processor = { path = "../query-processor" }
+# response-generator = { path = "../response-generator" }
+
+[dev-dependencies]
+tempfile = "3.8"
+tokio-test = { workspace = true }
+criterion = { workspace = true }
+mockall = { workspace = true }
+rand = { workspace = true }
+
+[[bin]]
+name = "integration-server"
+path = "src/main.rs"
+
+[features]
+default = ["health-checks", "metrics", "tracing"]
+health-checks = []
+metrics = []
+tracing = ["tracing-opentelemetry", "opentelemetry", "opentelemetry-jaeger"]
+resiliency = []
+development = ["tokio/test-util"]

@@ -1,0 +1,109 @@
+[package]
+name = "api"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "HTTP API Gateway for Doc-RAG System - External Interface"
+keywords = ["api", "gateway", "http", "microservices", "rag"]
+categories = ["web-programming", "api-bindings"]
+
+[lib]
+name = "api"
+path = "src/lib.rs"
+
+[[bin]]
+name = "api-server"
+path = "src/main.rs"
+
+[dependencies]
+# Core async runtime
+tokio = { workspace = true, features = ["full", "tracing", "macros"] }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# HTTP framework and middleware
+axum = { workspace = true, features = ["ws", "multipart", "macros"] }
+tower = { workspace = true, features = ["full", "util", "timeout", "limit", "load-shed"] }
+tower-http = { version = "0.5", features = ["fs", "cors", "trace", "compression-gzip", "add-extension", "timeout", "limit", "request-id", "sensitive-headers", "auth"] }
+hyper = { workspace = true }
+reqwest = { workspace = true, features = ["json", "stream", "multipart"] }
+
+# Serialization and validation
+serde = { workspace = true }
+serde_json = { workspace = true }
+validator = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+eyre = { workspace = true }
+
+# Authentication and security
+jsonwebtoken = { workspace = true }
+tower-sessions = { workspace = true }
+tower-sessions-redis-store = { workspace = true }
+argon2 = { workspace = true }
+
+# Rate limiting and security
+# tower-governor = { workspace = true }
+# tower-request-id = { workspace = true }
+
+# Configuration
+config = { workspace = true }
+clap = { workspace = true, features = ["derive", "env"] }
+toml = { workspace = true }
+
+# Observability
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
+tracing-opentelemetry = { workspace = true, optional = true }
+opentelemetry = { workspace = true, optional = true }
+opentelemetry-jaeger = { workspace = true, optional = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+url = { workspace = true }
+mime = { workspace = true }
+bytes = { workspace = true }
+dashmap = { workspace = true }
+arc-swap = { workspace = true }
+once_cell = { workspace = true }
+parking_lot = { workspace = true }
+
+# Metrics and monitoring
+prometheus = { workspace = true }
+metrics = { workspace = true }
+metrics-exporter-prometheus = { workspace = true }
+
+# Database connections
+sqlx = { workspace = true, features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager", "streams"] }
+
+# Component integration clients
+# Component communication
+http = "1.0"
+http-body = "1.0"
+base64 = { workspace = true }
+regex = { workspace = true }
+num_cpus = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.8"
+tokio-test = { workspace = true }
+criterion = { workspace = true }
+mockall = { workspace = true }
+rand = { workspace = true }
+wiremock = "0.5"
+
+[features]
+default = ["metrics", "tracing", "security", "rate-limiting"]
+metrics = []
+tracing = ["tracing-opentelemetry", "opentelemetry", "opentelemetry-jaeger"]
+security = []
+rate-limiting = []
+development = ["tokio/test-util"]
+production = []
+

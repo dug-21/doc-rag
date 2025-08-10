@@ -6,7 +6,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tracing::{debug, info, warn};
-use crate::EmbedderError;
+// Removed unused import: use crate::EmbedderError;
 
 /// Batch processor for managing text batching and memory efficiency
 pub struct BatchProcessor {

@@ -11,7 +11,7 @@ license = "MIT"
 candle-core = "0.8"
 candle-nn = "0.8"
 candle-transformers = "0.8"
-ort = "1.16"
+ort = { version = "2.0.0-rc.10", features = ["cuda", "tensorrt"], optional = true }
 ndarray = "0.15"
 
 # Async runtime and utilities
@@ -43,6 +43,7 @@ reqwest = { version = "0.11", features = ["json", "stream"] }
 # File operations
 tokio-util = { version = "0.7", features = ["codec"] }
 bytes = "1.5"
+safetensors = "0.4"
 
 # Path utilities
 path-slash = "0.2"
@@ -76,3 +77,8 @@ path = "examples/batch_processing.rs"
 [[example]]
 name = "model_comparison"
 path = "examples/model_comparison.rs"
+
+[features]
+default = ["validation"]
+validation = []
+onnx = ["ort"]

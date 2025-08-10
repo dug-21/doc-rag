@@ -80,8 +80,11 @@ pub enum EmbedderError {
     TimeoutError { timeout_ms: u64 },
 }
 
-impl From<ort::OrtError> for EmbedderError {
-    fn from(err: ort::OrtError) -> Self {
+// Note: SessionError may not exist in ORT 2.0, using general Error type
+
+#[cfg(feature = "ort")]
+impl From<ort::Error> for EmbedderError {
+    fn from(err: ort::Error) -> Self {
         EmbedderError::OnnxError {
             message: err.to_string(),
         }

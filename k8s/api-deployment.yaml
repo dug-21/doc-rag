@@ -1,0 +1,231 @@
+# API Service Kubernetes Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  namespace: doc-rag-prod
+  labels:
+    app.kubernetes.io/name: doc-rag
+    app.kubernetes.io/component: api
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: doc-rag
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: doc-rag
+        app.kubernetes.io/component: api
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      serviceAccountName: doc-rag-api
+      containers:
+      - name: api
+        image: doc-rag/api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        env:
+        - name: RUST_LOG
+          valueFrom:
+            configMapKeyRef:
+              name: doc-rag-config
+              key: RUST_LOG
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: doc-rag-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: doc-rag-secrets
+              key: redis-url
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: doc-rag-secrets
+              key: jwt-secret
+        - name: QDRANT_URL
+          value: "http://$(QDRANT_HOST):$(QDRANT_PORT)"
+        - name: QDRANT_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: doc-rag-config
+              key: QDRANT_HOST
+        - name: QDRANT_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: doc-rag-config
+              key: QDRANT_PORT
+        - name: PROMETHEUS_ENDPOINT
+          value: "http://$(PROMETHEUS_HOST):$(PROMETHEUS_PORT)"
+        - name: PROMETHEUS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: doc-rag-config
+              key: PROMETHEUS_HOST
+        - name: PROMETHEUS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: doc-rag-config
+              key: PROMETHEUS_PORT
+        - name: JAEGER_AGENT_ENDPOINT
+          value: "http://$(JAEGER_HOST):$(JAEGER_PORT)"
+        - name: JAEGER_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: doc-rag-config
+              key: JAEGER_HOST
+        - name: JAEGER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: doc-rag-config
+              key: JAEGER_PORT
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: doc-rag-config
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                  - api
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: "app"
+        operator: "Equal"
+        value: "doc-rag"
+        effect: "NoSchedule"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: doc-rag-prod
+  labels:
+    app.kubernetes.io/name: doc-rag
+    app.kubernetes.io/component: api
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: metrics
+  selector:
+    app.kubernetes.io/name: doc-rag
+    app.kubernetes.io/component: api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: doc-rag-api
+  namespace: doc-rag-prod
+  labels:
+    app.kubernetes.io/name: doc-rag
+    app.kubernetes.io/component: api
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: doc-rag-api-role
+  namespace: doc-rag-prod
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: doc-rag-api-rolebinding
+  namespace: doc-rag-prod
+subjects:
+- kind: ServiceAccount
+  name: doc-rag-api
+  namespace: doc-rag-prod
+roleRef:
+  kind: Role
+  name: doc-rag-api-role
+  apiGroup: rbac.authorization.k8s.io

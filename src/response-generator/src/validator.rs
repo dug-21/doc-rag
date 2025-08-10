@@ -135,7 +135,7 @@ pub trait ValidationLayer: Send + Sync + std::fmt::Debug {
     async fn validate(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
         config: &ValidationConfig,
     ) -> Result<ValidationResult>;
     
@@ -219,18 +219,16 @@ impl Validator {
     pub async fn validate(
         &mut self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
     ) -> Result<Vec<ValidationResult>> {
         let start_time = Instant::now();
         debug!("Starting validation with {} layers", self.layers.len());
 
-        let _results = Vec::new();
-
-        if self.config.parallel_validation {
-            results = self.validate_parallel(response, request).await?;
+        let results = if self.config.parallel_validation {
+            self.validate_parallel(response, request).await?
         } else {
-            results = self.validate_sequential(response, request).await?;
-        }
+            self.validate_sequential(response, request).await?
+        };
 
         let validation_time = start_time.elapsed();
         
@@ -298,7 +296,7 @@ impl Validator {
     async fn validate_parallel(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
     ) -> Result<Vec<ValidationResult>> {
         use futures::future::join_all;
 
@@ -347,9 +345,9 @@ impl Validator {
     async fn validate_sequential(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
     ) -> Result<Vec<ValidationResult>> {
-        let _results = Vec::new();
+        let mut results = Vec::new();
 
         for layer in &self.layers {
             match layer.validate(response, request, &self.config).await {
@@ -477,7 +475,7 @@ impl ValidationLayer for FactualAccuracyLayer {
     async fn validate(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
         _config: &ValidationConfig,
     ) -> Result<ValidationResult> {
         let start_time = Instant::now();
@@ -569,7 +567,7 @@ impl ValidationLayer for CitationValidationLayer {
     async fn validate(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
         _config: &ValidationConfig,
     ) -> Result<ValidationResult> {
         let start_time = Instant::now();
@@ -655,7 +653,7 @@ impl ValidationLayer for CoherenceValidationLayer {
     async fn validate(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
         _config: &ValidationConfig,
     ) -> Result<ValidationResult> {
         let start_time = Instant::now();
@@ -760,7 +758,7 @@ impl ValidationLayer for CompletenessValidationLayer {
     async fn validate(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
         _config: &ValidationConfig,
     ) -> Result<ValidationResult> {
         let start_time = Instant::now();
@@ -849,7 +847,7 @@ impl ValidationLayer for BiasDetectionLayer {
     async fn validate(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
         _config: &ValidationConfig,
     ) -> Result<ValidationResult> {
         let start_time = Instant::now();
@@ -917,7 +915,7 @@ impl ValidationLayer for HallucinationDetectionLayer {
     async fn validate(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
         _config: &ValidationConfig,
     ) -> Result<ValidationResult> {
         let start_time = Instant::now();
@@ -1001,7 +999,7 @@ impl ValidationLayer for ConsistencyValidationLayer {
     async fn validate(
         &self,
         response: &IntermediateResponse,
-        _request: &GenerationRequest,
+        request: &GenerationRequest,
         _config: &ValidationConfig,
     ) -> Result<ValidationResult> {
         let start_time = Instant::now();

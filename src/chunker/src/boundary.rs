@@ -11,6 +11,7 @@ use once_cell::sync::Lazy;
 #[derive(Debug, Clone)]
 pub struct BoundaryDetector {
     /// Feature extractor for text analysis
+    #[allow(dead_code)]
     feature_extractor: FeatureExtractor,
     /// Configuration parameters
     config: BoundaryConfig,
@@ -232,7 +233,7 @@ impl BoundaryDetector {
         let mut current_pos = 0;
         let mut in_table = false;
         
-        for (i, line) in lines.iter().enumerate() {
+        for (_i, line) in lines.iter().enumerate() {
             let is_table_line = self.patterns.tables.is_match(line);
             
             if is_table_line && !in_table && current_pos > 0 {

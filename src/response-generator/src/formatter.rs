@@ -201,10 +201,10 @@ impl ResponseFormatter {
 
         if self.config.indent_size > 0 {
             serde_json::to_string_pretty(&json_response)
-                .map_err(|e| ResponseError::formatting("json", e.to_string()))
+                .map_err(|e| ResponseError::formatting("json", &e.to_string()))
         } else {
             serde_json::to_string(&json_response)
-                .map_err(|e| ResponseError::formatting("json", e.to_string()))
+                .map_err(|e| ResponseError::formatting("json", &e.to_string()))
         }
     }
 
@@ -289,7 +289,7 @@ impl ResponseFormatter {
         xml.push_str("<response>\n");
         
         // Escape XML content
-        let escaped_content = xml_escape::encode_text(content);
+        let _escaped_content = xml_escape::encode_text(content);
         
         // Split into paragraphs for better structure
         let paragraphs: Vec<&str> = content.split("\n\n").collect();
@@ -350,7 +350,7 @@ impl ResponseFormatter {
 
         let yaml_value = serde_yaml::Value::Mapping(data);
         serde_yaml::to_string(&yaml_value)
-            .map_err(|e| ResponseError::formatting("yaml", e.to_string()))
+            .map_err(|e| ResponseError::formatting("yaml", &e.to_string()))
     }
 
     /// Format as CSV (for structured data)

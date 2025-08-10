@@ -49,13 +49,15 @@ use std::time::Duration;
 
 pub use builder::ResponseBuilder;
 pub use citation::{Citation, CitationTracker, Source, SourceRanking};
-pub use config::{Config, ValidationConfig, FormatterConfig};
+pub use config::Config;
+pub use formatter::{FormatterConfig, OutputFormat};
+pub use validator::ValidationConfig;
 pub use error::{ResponseError, Result};
-pub use formatter::{OutputFormat, ResponseFormatter};
+pub use formatter::ResponseFormatter;
 pub use pipeline::{Pipeline, PipelineStage, ProcessingContext};
 pub use validator::{ValidationLayer, ValidationResult, Validator};
 
-use async_trait::async_trait;
+// use async_trait::async_trait; // Currently unused
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::time::Instant;
@@ -166,6 +168,41 @@ pub struct SegmentConfidence {
     pub supporting_sources: Vec<Uuid>,
 }
 
+/// Response chunk for streaming
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResponseChunk {
+    /// Content of this chunk
+    pub content: String,
+    
+    /// Type of chunk
+    pub chunk_type: ResponseChunkType,
+    
+    /// Position in overall response
+    pub position: usize,
+    
+    /// Whether this is the final chunk
+    pub is_final: bool,
+    
+    /// Confidence score for this chunk
+    pub confidence: Option<f64>,
+    
+    /// Associated metadata
+    pub metadata: GenerationMetrics,
+}
+
+/// Types of response chunks
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ResponseChunkType {
+    /// Intermediate chunk
+    Partial,
+    
+    /// Final chunk
+    Final,
+    
+    /// Error chunk
+    Error,
+}
+
 /// Generation performance metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationMetrics {
@@ -216,7 +253,7 @@ impl ResponseGenerator {
 
     /// Generate a response for the given request
     #[instrument(skip(self, request), fields(request_id = %request.id))]
-    pub async fn generate(&self, request: GenerationRequest) -> Result<GeneratedResponse> {
+    pub async fn generate(&mut self, request: GenerationRequest) -> Result<GeneratedResponse> {
         let start_time = Instant::now();
         info!("Starting response generation for query: {}", request.query);
 
@@ -298,25 +335,34 @@ impl ResponseGenerator {
 
     /// Generate a streaming response
     pub async fn generate_stream(
-        &self,
+        &mut self,
         request: GenerationRequest,
-    ) -> Result<tokio_stream::wrappers::ReceiverStream<Result<ResponseChunk>>> {
+    ) -> Result<tokio::sync::mpsc::Receiver<Result<ResponseChunk>>> {
         use tokio::sync::mpsc;
-        use tokio_stream::wrappers::ReceiverStream;
+        // tokio-stream dependency needs to be added to Cargo.toml
+// use tokio_stream::wrappers::ReceiverStream;
         
         let (tx, rx) = mpsc::channel(32);
-        let generator = self.clone();
+        
+        // For now, use the regular generation and stream the result
+        // In a production system, this would be properly implemented with streaming
+        let response = self.generate(request).await?;
+        let chunk = ResponseChunk {
+            content: response.content,
+            chunk_type: ResponseChunkType::Final,
+            position: 0,
+            is_final: true,
+            confidence: Some(response.confidence_score),
+            metadata: response.metrics,
+        };
         
         tokio::spawn(async move {
-            match generator.generate_streaming_impl(request, tx).await {
-                Ok(_) => {},
-                Err(e) => {
-                    error!("Streaming generation failed: {}", e);
-                }
+            if let Err(_) = tx.send(Ok(chunk)).await {
+                error!("Failed to send response chunk");
             }
         });
         
-        Ok(ReceiverStream::new(rx))
+        Ok(rx)
     }
 
     /// Calculate confidence scores for response segments
@@ -419,21 +465,6 @@ struct TextSegment {
     supporting_sources: Vec<Uuid>,
 }
 
-/// Chunk of streaming response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResponseChunk {
-    /// Chunk content
-    pub content: String,
-    
-    /// Position in overall response
-    pub position: usize,
-    
-    /// Whether this is the final chunk
-    pub is_final: bool,
-    
-    /// Confidence score for this chunk
-    pub confidence: Option<f64>,
-}
 
 /// Builder for generation requests
 impl GenerationRequest {

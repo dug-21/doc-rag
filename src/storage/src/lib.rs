@@ -111,7 +111,7 @@ impl VectorStorage {
         client_options.app_name = Some("rag-vector-storage".to_string());
         client_options.server_selection_timeout = Some(Duration::from_secs(10));
         client_options.connect_timeout = Some(Duration::from_secs(10));
-        client_options.socket_timeout = Some(Duration::from_secs(30));
+        // client_options.socket_timeout = Some(Duration::from_secs(30)); // Use options builder pattern
         client_options.max_pool_size = Some(config.max_pool_size);
         client_options.min_pool_size = Some(config.min_pool_size);
         

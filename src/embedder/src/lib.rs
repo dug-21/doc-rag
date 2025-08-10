@@ -136,8 +136,10 @@ impl EmbeddingGenerator {
         let start_time = std::time::Instant::now();
         generator.ensure_model_loaded().await?;
         
-        let mut stats = generator.stats.write().await;
-        stats.model_load_time_ms = start_time.elapsed().as_millis() as f64;
+        {
+            let mut stats = generator.stats.write().await;
+            stats.model_load_time_ms = start_time.elapsed().as_millis() as f64;
+        }
         
         info!("Embedding generator initialized successfully");
         Ok(generator)

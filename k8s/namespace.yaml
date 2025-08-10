@@ -1,0 +1,65 @@
+# Kubernetes namespace for Doc-RAG production deployment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: doc-rag-prod
+  labels:
+    name: doc-rag-prod
+    environment: production
+    team: platform
+  annotations:
+    description: "Production namespace for Doc-RAG system"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: doc-rag-monitoring
+  labels:
+    name: doc-rag-monitoring
+    environment: production
+    team: sre
+  annotations:
+    description: "Monitoring namespace for Doc-RAG system"
+---
+# Network policies for security isolation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: doc-rag-network-policy
+  namespace: doc-rag-prod
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: doc-rag-monitoring
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: doc-rag
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: doc-rag
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443  # HTTPS outbound
+    - protocol: TCP
+      port: 80   # HTTP outbound

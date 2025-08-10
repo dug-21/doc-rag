@@ -8,8 +8,9 @@ use std::time::{Duration, Instant};
 use std::collections::HashMap;
 
 use mongodb::bson::doc;
-use testcontainers::{clients, Container, Docker};
-use testcontainers_modules::mongo::Mongo;
+// Testcontainers not available - integration tests disabled
+// use testcontainers::{clients, Container, Docker};
+// use testcontainers_modules::mongo::Mongo;
 use uuid::Uuid;
 use tokio_test;
 
@@ -22,16 +23,17 @@ use storage::{
 
 /// Test configuration with MongoDB testcontainer
 struct TestEnvironment {
-    _container: Container<'static, clients::Cli, Mongo>,
+    // _container: Container<'static, clients::Cli, Mongo>,
     storage: VectorStorage,
 }
 
 impl TestEnvironment {
     /// Setup test environment with MongoDB container
     async fn setup() -> Result<Self, Box<dyn std::error::Error>> {
-        let docker = clients::Cli::default();
-        let container = docker.run(Mongo::default());
-        let port = container.get_host_port_ipv4(27017);
+        // Disabled testcontainers - using local MongoDB for now
+        // let docker = clients::Cli::default();
+        // let container = docker.run(Mongo::default());
+        let port = 27017; // Use default MongoDB port
         
         let config = StorageConfig {
             connection_string: format!("mongodb://localhost:{}", port),
@@ -49,7 +51,7 @@ impl TestEnvironment {
         let storage = VectorStorage::new(config).await?;
         
         Ok(Self {
-            _container: container,
+            // _container: container,
             storage,
         })
     }

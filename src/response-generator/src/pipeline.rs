@@ -92,14 +92,14 @@ pub trait PipelineStage: Send + Sync + std::fmt::Debug {
     async fn process(
         &self,
         builder: ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<ResponseBuilder>;
     
     /// Process with streaming support
     async fn process_streaming(
         &self,
         _builder: &mut ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<Option<ResponseChunk>> {
         // Default implementation: no streaming support
         Ok(None)
@@ -116,12 +116,12 @@ pub trait PipelineStage: Send + Sync + std::fmt::Debug {
     }
     
     /// Validate stage preconditions
-    async fn validate_preconditions(&self, _context: &ProcessingContext) -> Result<()> {
+    async fn validate_preconditions(&self, context: &ProcessingContext) -> Result<()> {
         Ok(())
     }
     
     /// Cleanup after stage completion
-    async fn cleanup(&self, _context: &ProcessingContext) -> Result<()> {
+    async fn cleanup(&self, context: &ProcessingContext) -> Result<()> {
         Ok(())
     }
 }
@@ -223,7 +223,7 @@ impl Pipeline {
     pub async fn process(
         &mut self,
         builder: ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<ResponseBuilder> {
         let start_time = Instant::now();
         debug!("Starting pipeline processing with {} stages", self.stages.len());
@@ -309,7 +309,7 @@ impl Pipeline {
     }
 
     /// Validate pipeline configuration and dependencies
-    async fn validate_pipeline(&self, _context: &ProcessingContext) -> Result<()> {
+    async fn validate_pipeline(&self, context: &ProcessingContext) -> Result<()> {
         // Check for dependency cycles
         let mut dependencies: HashMap<String, Vec<String>> = HashMap::new();
         
@@ -339,7 +339,7 @@ impl Pipeline {
         &self,
         stage: &dyn PipelineStage,
         builder: ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<ResponseBuilder> {
         let mut attempts = 0;
         let mut last_error = None;
@@ -383,7 +383,7 @@ impl Pipeline {
     /// Update pipeline metrics
     async fn update_metrics(
         &mut self,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
         total_duration: Duration,
         success: bool,
     ) -> Result<()> {
@@ -496,7 +496,7 @@ impl PipelineStage for ContextPreprocessingStage {
     async fn process(
         &self,
         mut builder: ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<ResponseBuilder> {
         debug!("Processing context preprocessing stage");
         
@@ -538,7 +538,7 @@ impl PipelineStage for ContentGenerationStage {
     async fn process(
         &self,
         mut builder: ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<ResponseBuilder> {
         debug!("Processing content generation stage");
         
@@ -551,15 +551,25 @@ impl PipelineStage for ContentGenerationStage {
     async fn process_streaming(
         &self,
         _builder: &mut ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<Option<ResponseChunk>> {
         // Generate a chunk of content for streaming
         // This is a simplified implementation
         Ok(Some(ResponseChunk {
             content: "Generated content chunk".to_string(),
+            chunk_type: crate::ResponseChunkType::Partial,
             position: 0,
             is_final: false,
             confidence: Some(0.8),
+            metadata: crate::GenerationMetrics {
+                total_duration: std::time::Duration::from_millis(0),
+                validation_duration: std::time::Duration::from_millis(0),
+                formatting_duration: std::time::Duration::from_millis(0),
+                citation_duration: std::time::Duration::from_millis(0),
+                validation_passes: 0,
+                sources_used: 0,
+                response_length: 0,
+            },
         }))
     }
 }
@@ -595,7 +605,7 @@ impl PipelineStage for QualityEnhancementStage {
     async fn process(
         &self,
         mut builder: ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<ResponseBuilder> {
         debug!("Processing quality enhancement stage");
         
@@ -637,7 +647,7 @@ impl PipelineStage for CitationProcessingStage {
     async fn process(
         &self,
         mut builder: ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<ResponseBuilder> {
         debug!("Processing citation stage");
         
@@ -679,7 +689,7 @@ impl PipelineStage for FinalOptimizationStage {
     async fn process(
         &self,
         builder: ResponseBuilder,
-        _context: &ProcessingContext,
+        context: &ProcessingContext,
     ) -> Result<ResponseBuilder> {
         debug!("Processing final optimization stage");
         

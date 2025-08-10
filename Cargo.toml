@@ -1,10 +1,12 @@
 [workspace]
 members = [
+    "src/api",
     "src/chunker",
     "src/embedder", 
     "src/storage",
     "src/query-processor",
     "src/response-generator",
+    "src/integration",
 ]
 exclude = [
     "src/mcp-adapter",
@@ -52,7 +54,7 @@ eyre = "0.6"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-opentelemetry = "0.22"
-opentelemetry = { version = "0.21", features = ["rt-tokio"] }
+opentelemetry = "0.21"
 opentelemetry-jaeger = { version = "0.20", features = ["rt-tokio"] }
 
 # Configuration
@@ -72,7 +74,7 @@ candle-nn = "0.4"
 candle-transformers = "0.4"
 hf-hub = "0.3"
 tokenizers = "0.15"
-ort = { version = "2.0", features = ["cuda", "tensorrt"] }
+ort = { version = "2.0.0-rc.10", features = ["cuda", "tensorrt"] }
 sha2 = "0.10"
 ndarray = { version = "0.15", features = ["serde"] }
 
@@ -104,12 +106,21 @@ parking_lot = "0.12"
 # Monitoring and metrics
 prometheus = "0.13"
 metrics = "0.22"
-metrics-exporter-prometheus = "0.13"
+metrics-exporter-prometheus = "0.12"
 
 # Security
 jsonwebtoken = "9.2"
 argon2 = "0.5"
 ring = "0.17"
+
+# Additional API Gateway dependencies
+validator = { version = "0.16", features = ["derive"] }
+tower-sessions = "0.10"
+tower-sessions-redis-store = "0.10"
+tower-governor = "0.6.2"
+tower-request-id = "0.2"
+num_cpus = "1.16"
+base64 = "0.22"
 
 # Development and testing
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -117,6 +128,7 @@ proptest = "1.4"
 mockall = "0.12"
 tokio-test = "0.4"
 rand = "0.8"
+tempfile = "3.8"
 
 [profile.release]
 opt-level = 3

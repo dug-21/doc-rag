@@ -21,7 +21,7 @@ use chrono::{DateTime, Utc};
 use anyhow::{Result, Context, anyhow};
 use async_trait::async_trait;
 use tracing::{info, warn, error, debug, instrument};
-use ndarray::{Array1, Array2};
+// use ndarray::{Array1, Array2}; // TODO: Add ndarray dependency if needed
 
 use crate::{VectorStorage, ChunkDocument, ChunkMetadata};
 use crate::error::StorageError;
@@ -263,12 +263,13 @@ impl VectorSimilarity {
             return Err(anyhow!("Vector dimensions must match: {} vs {}", a.len(), b.len()));
         }
         
-        let a_array = Array1::from_vec(a.to_vec());
-        let b_array = Array1::from_vec(b.to_vec());
+        // Simplified dot product without ndarray for now
+        let a_vec = a.to_vec();
+        let b_vec = b.to_vec();
         
-        let dot_product = a_array.dot(&b_array);
-        let norm_a = a_array.dot(&a_array).sqrt();
-        let norm_b = b_array.dot(&b_array).sqrt();
+        let dot_product: f64 = a_vec.iter().zip(b_vec.iter()).map(|(x, y)| x * y).sum();
+        let norm_a: f64 = a_vec.iter().map(|x| x * x).sum::<f64>().sqrt();
+        let norm_b: f64 = b_vec.iter().map(|x| x * x).sum::<f64>().sqrt();
         
         if norm_a == 0.0 || norm_b == 0.0 {
             return Ok(0.0);

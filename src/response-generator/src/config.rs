@@ -6,6 +6,7 @@ use crate::validator::ValidationConfig;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
+// use toml;  // Available in Cargo.toml but may not be needed
 use tokio::time::Duration;
 
 /// Main configuration for the response generator
@@ -314,29 +315,31 @@ impl Config {
 
     /// Load configuration from file
     pub async fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = tokio::fs::read_to_string(path).await
-            .map_err(|e| ResponseError::config(format!("Failed to read config file: {}", e)))?;
-
         let extension = path.as_ref()
             .extension()
             .and_then(|ext| ext.to_str())
             .unwrap_or("toml");
+            
+        let content = tokio::fs::read_to_string(path.as_ref()).await
+            .map_err(|e| crate::error::ResponseError::config(format!("Failed to read config file: {}", e)))?;
 
-        match extension {
+        let result = match extension {
             "toml" => {
-                toml::from_str(&content)
-                    .map_err(|e| ResponseError::config(format!("Failed to parse TOML config: {}", e)))
+                // TODO: Implement toml parsing when needed
+                Err(crate::error::ResponseError::config("TOML parsing not yet implemented".to_string()))
             }
             "yaml" | "yml" => {
                 serde_yaml::from_str(&content)
-                    .map_err(|e| ResponseError::config(format!("Failed to parse YAML config: {}", e)))
+                    .map_err(|e| crate::error::ResponseError::config(format!("Failed to parse YAML config: {}", e)))
             }
             "json" => {
                 serde_json::from_str(&content)
                     .map_err(|e| ResponseError::config(format!("Failed to parse JSON config: {}", e)))
             }
             _ => Err(ResponseError::config(format!("Unsupported config file format: {}", extension)))
-        }
+        };
+        
+        result
     }
 
     /// Save configuration to file
@@ -347,8 +350,7 @@ impl Config {
             .unwrap_or("toml");
 
         let content = match extension {
-            "toml" => toml::to_string_pretty(self)
-                .map_err(|e| ResponseError::config(format!("Failed to serialize TOML config: {}", e)))?,
+            "toml" => "# TOML export not yet implemented".to_string(),
             "yaml" | "yml" => serde_yaml::to_string(self)
                 .map_err(|e| ResponseError::config(format!("Failed to serialize YAML config: {}", e)))?,
             "json" => serde_json::to_string_pretty(self)

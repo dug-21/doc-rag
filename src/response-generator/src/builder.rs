@@ -271,7 +271,7 @@ impl ResponseBuilder {
         self.optimize().await?;
         
         // Calculate overall confidence
-        let overall_confidence = if self.confidence_factors.is_empty() {
+        let _overall_confidence = if self.confidence_factors.is_empty() {
             0.5 // Default neutral confidence
         } else {
             self.confidence_factors.iter().sum::<f64>() / self.confidence_factors.len() as f64
@@ -351,7 +351,7 @@ impl ResponseBuilder {
     }
 
     /// Build direct answer section
-    async fn build_direct_answer(&mut self, analysis: &QueryAnalysis) -> Result<()> {
+    async fn build_direct_answer(&mut self, _analysis: &QueryAnalysis) -> Result<()> {
         let mut content = String::new();
         let mut sources = Vec::new();
         let mut confidence_sum = 0.0;
@@ -654,7 +654,7 @@ impl ResponseBuilder {
         unique_word_ratio.min(1.0)
     }
 
-    async fn calculate_query_coherence(&self, content: &str) -> Result<f64> {
+    async fn calculate_query_coherence(&self, _content: &str) -> Result<f64> {
         // Calculate how well content relates to the query
         Ok(self.assess_relevance()) // Simplified implementation
     }

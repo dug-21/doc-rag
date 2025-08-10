@@ -144,7 +144,7 @@ async fn generate_response(
 ) -> Result<()> {
     info!("Generating response for query: {}", query);
     
-    let generator = ResponseGenerator::new(config);
+    let mut generator = ResponseGenerator::new(config);
     
     // Parse output format
     let output_format = match format.to_lowercase().as_str() {
@@ -164,7 +164,7 @@ async fn generate_response(
     let mut context_chunks = Vec::new();
     for context_file in context_files {
         let content = tokio::fs::read_to_string(&context_file).await
-            .map_err(|e| response_generator::error::ResponseError::external_service("file_system", e.to_string()))?;
+            .map_err(|e| response_generator::error::ResponseError::external_service("file_system", &e.to_string()))?;
         
         context_chunks.push(ContextChunk {
             content,
@@ -205,7 +205,7 @@ async fn generate_response(
     match output_file {
         Some(path) => {
             tokio::fs::write(&path, &response.content).await
-                .map_err(|e| response_generator::error::ResponseError::external_service("file_system", e.to_string()))?;
+                .map_err(|e| response_generator::error::ResponseError::external_service("file_system", &e.to_string()))?;
             info!("Response saved to: {}", path);
         }
         None => {
@@ -232,7 +232,7 @@ async fn run_benchmark(
 ) -> Result<()> {
     info!("Running benchmark with {} queries", num_queries);
     
-    let generator = ResponseGenerator::new(config);
+    let mut generator = ResponseGenerator::new(config);
     let test_queries = generate_test_queries(num_queries);
     
     let mut results = Vec::new();
@@ -297,7 +297,7 @@ async fn run_benchmark(
     match output_file {
         Some(path) => {
             tokio::fs::write(&path, &output).await
-                .map_err(|e| response_generator::error::ResponseError::external_service("file_system", e.to_string()))?;
+                .map_err(|e| response_generator::error::ResponseError::external_service("file_system", &e.to_string()))?;
             info!("Benchmark results saved to: {}", path);
         }
         None => {
@@ -344,7 +344,7 @@ async fn run_interactive_mode(config: Config) -> Result<()> {
     println!("Response Generator Interactive Mode");
     println!("Type 'exit' to quit, 'help' for commands");
     
-    let generator = ResponseGenerator::new(config);
+    let mut generator = ResponseGenerator::new(config);
     let stdin = std::io::stdin();
     
     loop {

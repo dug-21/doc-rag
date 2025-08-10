@@ -192,6 +192,7 @@ impl CitationTracker {
 
         // Extract citation opportunities from response text
         let citation_opportunities = self.extract_citation_opportunities(response).await?;
+        let num_opportunities = citation_opportunities.len();
 
         // Match opportunities with sources
         let mut citations = self.match_citations_to_sources(citation_opportunities, response).await?;
@@ -207,7 +208,7 @@ impl CitationTracker {
         // Validate citations
         citations = self.validate_citations(citations).await?;
 
-        debug!("Generated {} citations from {} opportunities", citations.len(), citation_opportunities.len());
+        debug!("Generated {} citations from {} opportunities", citations.len(), num_opportunities);
         Ok(citations)
     }
 
@@ -551,7 +552,7 @@ impl CitationTracker {
 
     /// Analyze confidence indicators in text
     async fn analyze_confidence_indicators(&self, sentence: &str) -> Result<f64> {
-        let mut confidence = 0.5; // Base confidence
+        let mut confidence: f64 = 0.5; // Base confidence
 
         // Look for confidence-boosting indicators
         let strong_indicators = ["studies show", "research indicates", "according to", "data shows"];
@@ -661,7 +662,7 @@ impl CitationTracker {
     }
 
     /// Extract supporting text from source
-    async fn extract_supporting_text(&self, source: &Source, cited_text: &str) -> Result<Option<String>> {
+    async fn extract_supporting_text(&self, source: &Source, _cited_text: &str) -> Result<Option<String>> {
         // In a real implementation, this would search through the source content
         // For now, return a portion of the title as supporting context
         if source.title.len() > self.config.max_excerpt_length {

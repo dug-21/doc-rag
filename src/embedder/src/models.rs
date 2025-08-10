@@ -9,6 +9,8 @@ use std::sync::Arc;
 use anyhow::{Result, Context};
 use tracing::{info, warn, error, debug, instrument};
 use tokio::fs;
+use candle_core::{IndexOp, Tensor};
+use safetensors;
 
 use crate::{EmbedderConfig, EmbedderError, ModelType, Device};
 
@@ -33,6 +35,7 @@ pub trait EmbeddingModel: Send + Sync {
 
 /// ONNX Runtime based embedding model
 pub struct OnnxEmbeddingModel {
+    #[cfg(feature = "ort")]
     session: ort::Session,
     tokenizer: Box<dyn Tokenizer + Send + Sync>,
     dimension: usize,
@@ -206,11 +209,16 @@ impl OnnxEmbeddingModel {
     pub async fn load(model_path: &Path, config: &EmbedderConfig) -> Result<Self> {
         info!("Loading ONNX model from: {:?}", model_path);
         
-        // Initialize ONNX Runtime session
-        let session = ort::Session::builder()?
-            .with_optimization_level(ort::GraphOptimizationLevel::Level3)?
-            .commit_from_file(model_path)
-            .with_context(|| format!("Failed to load ONNX model: {:?}", model_path))?;
+        // Initialize ONNX Runtime session with ORT 2.0 API
+        #[cfg(feature = "ort")]
+        let session = {
+            use ort::SessionBuilder;
+            SessionBuilder::new()?
+                .commit_from_file(model_path)?
+        };
+        
+        #[cfg(not(feature = "ort"))]
+        let session = unimplemented!("ONNX support disabled");
         
         // Load tokenizer
         let tokenizer_path = model_path.parent()
@@ -234,6 +242,7 @@ impl OnnxEmbeddingModel {
             .to_string();
         
         Ok(Self {
+            #[cfg(feature = "ort")]
             session,
             tokenizer,
             dimension,
@@ -243,7 +252,7 @@ impl OnnxEmbeddingModel {
     }
     
     async fn encode_tokenized_batch(&self, batch: &[TokenizerOutput]) -> Result<Vec<Vec<f32>>> {
-        use ort::inputs;
+        // ORT inputs functionality - API changed in newer versions
         
         let batch_size = batch.len();
         let seq_len = batch[0].input_ids.len();
@@ -258,7 +267,10 @@ impl OnnxEmbeddingModel {
         }
         
         // Run inference
-        let outputs = self.session.run(inputs![
+        #[cfg(feature = "ort")]
+        let outputs = {
+            use ort::inputs;
+            self.session.run(inputs![
             "input_ids" => ndarray::Array2::from_shape_vec(
                 (batch_size, seq_len),
                 input_ids
@@ -266,14 +278,22 @@ impl OnnxEmbeddingModel {
             "attention_mask" => ndarray::Array2::from_shape_vec(
                 (batch_size, seq_len),
                 attention_mask
-            )?,
-        ]?)?;
+            )?
+        ])?
+        };
+        
+        #[cfg(not(feature = "ort"))]
+        let outputs = unimplemented!("ONNX support disabled");
         
         // Extract embeddings (usually from the pooler output or mean pooling of last hidden states)
-        let embeddings_tensor = &outputs["last_hidden_state"];
-        let embeddings_array = embeddings_tensor
-            .try_extract_tensor::<f32>()?
-            .view();
+        #[cfg(feature = "ort")]
+        let embeddings_tensor = outputs.get("last_hidden_state")
+            .ok_or_else(|| anyhow::anyhow!("Missing last_hidden_state output"))?
+            .try_extract_tensor::<f32>()?;
+        
+        #[cfg(not(feature = "ort"))]
+        let embeddings_tensor: ndarray::ArrayView3<f32> = unimplemented!("ONNX support disabled");
+        let embeddings_array = embeddings_tensor.view();
         
         // Mean pooling over sequence dimension
         let mut results = Vec::with_capacity(batch_size);
@@ -371,7 +391,7 @@ impl CandleEmbeddingModel {
             intermediate_size,
             hidden_act: candle_transformers::models::bert::HiddenAct::Gelu,
             hidden_dropout_prob: 0.1,
-            attention_probs_dropout_prob: 0.1,
+            // attention_probs_dropout_prob field removed in newer candle-transformers
             max_position_embeddings,
             type_vocab_size: 2,
             initializer_range: 0.02,
@@ -390,11 +410,15 @@ impl CandleEmbeddingModel {
         } else {
             // Try safetensors format
             let safetensors_path = model_path.join("model.safetensors");
-            candle_nn::VarBuilder::from_safetensors(&[safetensors_path], candle_core::DType::F32, &device)?
+            candle_nn::VarBuilder::from_tensors(
+                candle_core::safetensors::load(&safetensors_path, &device)?,
+                candle_core::DType::F32,
+                &device
+            )
         };
         
         // Initialize BERT model
-        let model = candle_transformers::models::bert::BertModel::load(&vb, &bert_config)?;
+        let model = candle_transformers::models::bert::BertModel::load(vb, &bert_config)?;
         
         // Load tokenizer
         let tokenizer_path = model_path.join("vocab.txt");
@@ -435,8 +459,8 @@ impl CandleEmbeddingModel {
         let attention_mask = Tensor::from_vec(attention_mask_data, (batch_size, seq_len), &self.device)?;
         
         // Forward pass
-        let outputs = self.model.forward(&input_ids, &attention_mask)?;
-        let hidden_states = outputs.0;
+        let outputs = self.model.forward(&input_ids, &attention_mask, None)?;
+        let hidden_states = outputs; // ORT 2.0 returns tensor directly
         
         // Mean pooling
         let mut results = Vec::with_capacity(batch_size);
@@ -500,7 +524,7 @@ impl ModelManager {
             Arc::new(CandleEmbeddingModel::load(&model_path, config).await?)
         };
         
-        self.models.insert(*model_type, model);
+        self.models.insert(model_type.clone(), model);
         info!("Successfully loaded model {:?}", model_type);
         
         Ok(())
@@ -540,7 +564,7 @@ impl ModelManager {
     }
     
     pub fn loaded_models(&self) -> Vec<ModelType> {
-        self.models.keys().copied().collect()
+        self.models.keys().cloned().collect()
     }
 }
 

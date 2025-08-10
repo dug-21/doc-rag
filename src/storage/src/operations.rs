@@ -81,7 +81,7 @@ impl BatchOperations {
     pub const MAX_BATCH_SIZE: usize = 1000;
     
     /// Split large batches into smaller chunks
-    pub fn split_into_batches<T>(items: Vec<T>, batch_size: Option<usize>) -> Vec<Vec<T>> {
+    pub fn split_into_batches<T: Clone>(items: Vec<T>, batch_size: Option<usize>) -> Vec<Vec<T>> {
         let batch_size = batch_size
             .unwrap_or(Self::DEFAULT_BATCH_SIZE)
             .min(Self::MAX_BATCH_SIZE);

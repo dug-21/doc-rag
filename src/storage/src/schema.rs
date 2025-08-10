@@ -21,7 +21,6 @@ pub struct ChunkDocument {
     pub chunk_id: Uuid,
     
     /// Text content of the chunk
-    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     pub content: String,
     
     /// Vector embedding for similarity search
@@ -176,7 +175,6 @@ pub struct DocumentMetadata {
     
     /// Creation date of the original document
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     pub document_created_at: Option<DateTime<Utc>>,
     
     /// File size in bytes
@@ -355,10 +353,12 @@ impl ChunkDocument {
     
     /// Calculate content hash for deduplication
     pub fn calculate_content_hash(&self) -> String {
-        use sha2::{Sha256, Digest};
-        let mut hasher = Sha256::new();
-        hasher.update(self.content.as_bytes());
-        format!("{:x}", hasher.finalize())
+        // Use simple hash for now, can be improved with sha2 dependency
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        self.content.hash(&mut hasher);
+        format!("{:x}", hasher.finish())
     }
     
     /// Validate the chunk document

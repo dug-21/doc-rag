@@ -34,7 +34,7 @@ unicode-segmentation = "1.10"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 metrics = "0.22"
-metrics-exporter-prometheus = { version = "0.13", optional = true }
+metrics-exporter-prometheus = { version = "0.12", optional = true }
 
 # Configuration
 config = "0.14"
@@ -50,21 +50,21 @@ reqwest = { version = "0.11", features = ["json", "stream"] }
 # Performance monitoring
 dashmap = "5.5"
 
+# CLI support
+clap = { version = "4.4", features = ["derive"] }
+
 [dev-dependencies]
+tempfile = "3.8"
 # Testing framework
 tokio-test = "0.4"
 criterion = { version = "0.5", features = ["html_reports"] }
 proptest = "1.4"
 mockall = "0.12"
-tempfile = "3.8"
 
 # Test data generation
 fake = { version = "2.9", features = ["derive", "chrono"] }
 quickcheck = "1.0"
 quickcheck_macros = "1.0"
-
-# CLI support
-clap = { version = "4.4", features = ["derive"] }
 
 # TOML support for configuration
 toml = "0.8"

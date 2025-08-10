@@ -41,7 +41,7 @@ pub struct EmbedderConfig {
 }
 
 /// Available embedding model types
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ModelType {
     /// all-MiniLM-L6-v2: Fast, lightweight model (384 dimensions)
     AllMiniLmL6V2,
@@ -298,8 +298,8 @@ impl EmbedderConfig {
     
     /// Set the model type
     pub fn with_model_type(mut self, model_type: ModelType) -> Self {
-        self.model_type = model_type;
         self.max_length = model_type.default_max_length();
+        self.model_type = model_type;
         self
     }
     
