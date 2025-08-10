@@ -1,5 +1,5 @@
 {
-  "name": "Neural Trader Development",
+  "name": "doc-rag Development",
   "image": "mcr.microsoft.com/devcontainers/rust:1-bullseye",
   
   "features": {
@@ -35,10 +35,6 @@
   
   "remoteUser": "vscode",
   
-  "runArgs": [
-    "--privileged"
-  ],
-
   "mounts": [
     "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
   ],

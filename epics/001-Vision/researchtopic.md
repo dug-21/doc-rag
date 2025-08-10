@@ -4,7 +4,7 @@ RAG based applications use an LLM to introspect a document or repository that it
 
 Is there a way to leverage https://github.com/ruvnet/fact.git, https://github.com/ruvnet/ruv-fann.git, and/or https://github.com/ruvnet/daa.git to be able to provide a service that can provide 99% accuracy of complex answers to these questions.
 
-Revised Architecture Overview
+Preliminary Research
 
 Based on your feedback, here's the refined architecture with DAA as the central orchestrator:
 
@@ -131,10 +131,7 @@ Confidence scoring algorithms
 This approach elegantly solves our core challenge by having DAA maintain full context awareness while leveraging specialized tools through MCP for accurate, cited responses.
 
 📬
-dug-21
-dug-21 commented 15 hours ago
-dug-21
-15 hours ago
+Comment:
 Author
 daa and ruv-net are both rust libraries, do you think it might be beneficial for learning that they are packaged together? Now think more deeply about this architecture and also defined the data loading pipeline... is there machine learning during the load process? how will DAA actually parse the query, with the LLM? embedding model? where's the embedding model for this.. Think through this with this new information the same way you did originally...
 dug-21
