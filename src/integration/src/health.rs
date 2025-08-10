@@ -503,7 +503,7 @@ impl HealthMonitor {
             interval.tick().await;
             
             let mut component_health = HashMap::new();
-            let mut healthy_count = 0;
+            let mut _healthy_count = 0;
             let mut unhealthy_count = 0;
             let mut degraded_count = 0;
             
@@ -520,7 +520,7 @@ impl HealthMonitor {
                     };
                     
                     match health.status {
-                        HealthStatus::Healthy => healthy_count += 1,
+                        HealthStatus::Healthy => _healthy_count += 1,
                         HealthStatus::Degraded => degraded_count += 1,
                         HealthStatus::Unhealthy => unhealthy_count += 1,
                         _ => {}

@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create a response generator with default configuration
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let mut generator = ResponseGenerator::new(config);
 
     // Example 1: Simple query without context
     println!("Example 1: Simple Query");
@@ -149,7 +149,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .default_confidence_threshold(0.8)
         .build();
 
-    let custom_generator = ResponseGenerator::new(custom_config);
+    let mut custom_generator = ResponseGenerator::new(custom_config);
     
     let request = GenerationRequest::builder()
         .query("What is the future of artificial intelligence?")

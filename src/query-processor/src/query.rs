@@ -528,11 +528,11 @@ impl ProcessedQuery {
         let mut confidence_count = 0;
 
         // Intent confidence
-        confidence_sum += self.intent.primary_confidence;
+        confidence_sum += self.intent.confidence;
         confidence_count += 1;
 
         // Strategy confidence
-        confidence_sum += self.strategy.primary_confidence;
+        confidence_sum += self.strategy.confidence;
         confidence_count += 1;
 
         // Entity confidences (average)
@@ -549,7 +549,7 @@ impl ProcessedQuery {
 
         // Consensus confidence (if available)
         if let Some(ref consensus) = self.consensus {
-            confidence_sum += consensus.agreement_ratio;
+            confidence_sum += consensus.agreement;
             confidence_count += 1;
         }
 
@@ -578,12 +578,12 @@ impl ProcessedQuery {
             intent: self.intent.primary_intent.clone(),
             entity_count: self.entities.len(),
             key_term_count: self.key_terms.len(),
-            strategy: self.strategy.primary_strategy.clone(),
+            strategy: self.strategy.strategy.clone(),
             confidence: self.overall_confidence(),
             quality_score: self.quality_score(),
             processing_duration: self.processing_metadata.total_duration,
             warnings: self.processing_metadata.warnings.len(),
-            consensus_reached: self.consensus.as_ref().map(|c| c.consensus_reached),
+            consensus_reached: self.consensus.as_ref().map(|c| c.byzantine_tolerance),
         }
     }
 }

@@ -486,16 +486,23 @@ mod tests {
     
     #[test]
     fn test_chunk_document_creation() {
-        let metadata = ChunkMetadata::new(
-            Uuid::new_v4(),
+        let document_id = Uuid::new_v4();
+        let chunk_id = Uuid::new_v4();
+        
+        let mut metadata = ChunkMetadata::new(
+            document_id,
             "Test Document".to_string(),
             0,
             10,
             "/path/to/test.txt".to_string(),
         );
         
+        // Set the chunk size to match content length for validation
+        metadata.chunk_size = "This is test content".len();
+        metadata.content_hash = "test-hash".to_string();
+        
         let chunk = ChunkDocument::new(
-            Uuid::new_v4(),
+            chunk_id,
             "This is test content".to_string(),
             metadata,
         );
@@ -503,28 +510,59 @@ mod tests {
         assert!(chunk.validate().is_ok());
         assert_eq!(chunk.version, 1);
         assert!(chunk.embedding.is_none());
+        assert_eq!(chunk.chunk_id, chunk_id);
+        assert_eq!(chunk.metadata.document_id, document_id);
+        assert_eq!(chunk.content, "This is test content");
+        assert_eq!(chunk.metadata.chunk_index, 0);
+        assert_eq!(chunk.metadata.total_chunks, 10);
     }
     
     #[test]
     fn test_chunk_with_embedding() {
-        let metadata = ChunkMetadata::new(
-            Uuid::new_v4(),
+        let document_id = Uuid::new_v4();
+        let chunk_id = Uuid::new_v4();
+        
+        let mut metadata = ChunkMetadata::new(
+            document_id,
             "Test Document".to_string(),
             0,
             10,
             "/path/to/test.txt".to_string(),
         );
         
+        // Set the chunk size to match content length for validation
+        let content = "This is test content";
+        metadata.chunk_size = content.len();
+        metadata.content_hash = "test-hash".to_string();
+        
         let embedding = vec![0.1, 0.2, 0.3, 0.4, 0.5];
         let chunk = ChunkDocument::new(
-            Uuid::new_v4(),
-            "This is test content".to_string(),
+            chunk_id,
+            content.to_string(),
             metadata,
         ).with_embedding(embedding.clone());
         
         assert!(chunk.validate().is_ok());
         assert_eq!(chunk.embedding, Some(embedding));
-        assert_eq!(chunk.version, 2);
+        assert_eq!(chunk.version, 2); // Version incremented by with_embedding
+        assert_eq!(chunk.chunk_id, chunk_id);
+        assert_eq!(chunk.metadata.document_id, document_id);
+        
+        // Test embedding validation
+        let empty_embedding = vec![];
+        let mut invalid_chunk = ChunkDocument::new(
+            chunk_id,
+            content.to_string(),
+            ChunkMetadata::new(
+                document_id,
+                "Test Document".to_string(),
+                0,
+                10,
+                "/path/to/test.txt".to_string(),
+            ),
+        );
+        invalid_chunk.embedding = Some(empty_embedding);
+        assert!(invalid_chunk.validate().is_err());
     }
     
     #[test]

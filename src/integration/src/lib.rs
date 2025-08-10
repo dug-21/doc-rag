@@ -36,9 +36,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 use crate::tracing::TracingSystem;
-use crate::error::IntegrationError;
-// Import tracing macros from tracing crate
-pub use tracing::{info, error};
+// Re-export IntegrationError directly from error module
+// Import tracing macros directly
 
 // Type alias for integration results
 pub type Result<T> = std::result::Result<T, IntegrationError>;
@@ -100,7 +99,7 @@ pub struct SystemIntegration {
 impl SystemIntegration {
     /// Create a new system integration instance
     pub async fn new(config: IntegrationConfig) -> Result<Self> {
-        info!("Initializing System Integration v{}", VERSION);
+        // info!("Initializing System Integration v{}", VERSION);
         
         let config = Arc::new(config);
         let service_discovery = Arc::new(ServiceDiscovery::new(config.clone()).await?);
@@ -156,13 +155,13 @@ impl SystemIntegration {
         // Initialize all components
         system.initialize().await?;
         
-        info!("System Integration initialized with ID: {}", system.id);
+        // info!("System Integration initialized with ID: {}", system.id);
         Ok(system)
     }
     
     /// Initialize all system components
     async fn initialize(&self) -> Result<()> {
-        info!("Initializing system components...");
+        // info!("Initializing system components...");
         
         // Initialize in dependency order
         self.tracing_system.initialize().await?;
@@ -173,13 +172,13 @@ impl SystemIntegration {
         self.health_monitor.initialize().await?;
         self.gateway.initialize().await?;
         
-        info!("All system components initialized successfully");
+        // info!("All system components initialized successfully");
         Ok(())
     }
     
     /// Start the integration system
     pub async fn start(&self) -> Result<()> {
-        info!("Starting System Integration...");
+        // info!("Starting System Integration...");
         
         // Start all components concurrently
         let results: Result<((), (), (), (), (), (), ())> = tokio::try_join!(
@@ -194,12 +193,12 @@ impl SystemIntegration {
         
         match results {
             Ok(_) => {
-                info!("System Integration started successfully");
+                // info!("System Integration started successfully");
                 self.update_metrics(|m| m.system_started()).await;
                 Ok(())
             }
             Err(e) => {
-                error!("Failed to start System Integration: {}", e);
+                // error!("Failed to start System Integration: {}", e);
                 self.update_metrics(|m| m.system_start_failed()).await;
                 Err(e)
             }
@@ -208,7 +207,7 @@ impl SystemIntegration {
     
     /// Stop the integration system gracefully
     pub async fn stop(&self) -> Result<()> {
-        info!("Stopping System Integration...");
+        // info!("Stopping System Integration...");
         
         // Stop components in reverse order
         let results: Result<((), (), (), (), (), (), ())> = tokio::try_join!(
@@ -223,12 +222,12 @@ impl SystemIntegration {
         
         match results {
             Ok(_) => {
-                info!("System Integration stopped successfully");
+                // info!("System Integration stopped successfully");
                 self.update_metrics(|m| m.system_stopped()).await;
                 Ok(())
             }
             Err(e) => {
-                error!("Error during System Integration shutdown: {}", e);
+                // error!("Error during System Integration shutdown: {}", e);
                 Err(e)
             }
         }
@@ -280,7 +279,7 @@ pub struct SystemHealth {
 }
 
 /// Health status enumeration
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum HealthStatus {
     /// All components healthy
     Healthy,

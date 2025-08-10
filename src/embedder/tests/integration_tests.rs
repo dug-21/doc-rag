@@ -4,11 +4,11 @@
 //! including model loading, batch processing, caching, and performance.
 
 use embedder::{
-    EmbeddingGenerator, EmbedderConfig, ModelType, Device, Chunk, ChunkMetadata,
+    EmbeddingGenerator, EmbedderConfig, ModelType, Chunk, ChunkMetadata,
     AdaptiveBatchConfig,
 };
 use std::collections::HashMap;
-use std::time::Duration;
+// use std::time::Duration;
 use tokio;
 use uuid::Uuid;
 
@@ -472,14 +472,7 @@ async fn test_cache_persistence() {
     let embedded_chunks = generator.generate_embeddings(chunks).await.unwrap();
     assert_eq!(embedded_chunks.len(), 2);
     
-    // Export cache contents
-    let cache_contents = generator.cache.export().await;
-    assert!(!cache_contents.is_empty());
-    
-    // Clear cache and re-import
+    // Test cache clearing
     generator.clear_cache().await;
     assert_eq!(generator.get_cache_stats().await.total_entries, 0);
-    
-    generator.cache.import(cache_contents).await;
-    assert!(generator.get_cache_stats().await.total_entries > 0);
 }

@@ -47,7 +47,10 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, request: Request) -> Self::Future {
+    fn call(&mut self, request: Request) -> Self::Future 
+    where
+        S::Error: std::fmt::Display,
+    {
         let start_time = Instant::now();
         
         // Extract request information

@@ -74,6 +74,14 @@ pub struct PerformanceMetrics {
     /// Cache miss ratio
     pub cache_miss_ratio: f64,
     
+    /// Total cache hits (for calculation)
+    #[serde(skip)]
+    pub cache_hits: u64,
+    
+    /// Total cache misses (for calculation)
+    #[serde(skip)]
+    pub cache_misses: u64,
+    
     /// Index utilization statistics
     pub index_stats: HashMap<String, IndexStats>,
     
@@ -325,23 +333,24 @@ impl StorageMetrics {
     /// Record cache hit
     pub fn record_cache_hit(&self) {
         if let Ok(mut perf) = self.performance_metrics.write() {
-            // Simple cache hit tracking - in practice, use a more sophisticated approach
-            let total_cache_ops = (perf.cache_hit_ratio + perf.cache_miss_ratio) * 100.0;
-            let new_total = total_cache_ops + 1.0;
-            let new_hits = (perf.cache_hit_ratio * 100.0) + 1.0;
-            perf.cache_hit_ratio = new_hits / new_total;
-            perf.cache_miss_ratio = 1.0 - perf.cache_hit_ratio;
+            perf.cache_hits += 1;
+            let total_ops = perf.cache_hits + perf.cache_misses;
+            if total_ops > 0 {
+                perf.cache_hit_ratio = perf.cache_hits as f64 / total_ops as f64;
+                perf.cache_miss_ratio = perf.cache_misses as f64 / total_ops as f64;
+            }
         }
     }
     
     /// Record cache miss
     pub fn record_cache_miss(&self) {
         if let Ok(mut perf) = self.performance_metrics.write() {
-            let total_cache_ops = (perf.cache_hit_ratio + perf.cache_miss_ratio) * 100.0;
-            let new_total = total_cache_ops + 1.0;
-            let new_hits = perf.cache_hit_ratio * 100.0;
-            perf.cache_hit_ratio = new_hits / new_total;
-            perf.cache_miss_ratio = 1.0 - perf.cache_hit_ratio;
+            perf.cache_misses += 1;
+            let total_ops = perf.cache_hits + perf.cache_misses;
+            if total_ops > 0 {
+                perf.cache_hit_ratio = perf.cache_hits as f64 / total_ops as f64;
+                perf.cache_miss_ratio = perf.cache_misses as f64 / total_ops as f64;
+            }
         }
     }
     
@@ -438,11 +447,18 @@ impl StorageMetrics {
     
     /// Update throughput metrics
     fn update_throughput_metrics(&self, perf: &mut PerformanceMetrics) {
-        let elapsed_seconds = self.start_time.elapsed().as_secs() as f64;
-        if elapsed_seconds > 0.0 {
-            perf.avg_throughput_dps = perf.documents_processed as f64 / elapsed_seconds;
-            perf.avg_throughput_bps = perf.bytes_processed as f64 / elapsed_seconds;
-        }
+        let elapsed = self.start_time.elapsed();
+        let elapsed_seconds = elapsed.as_secs_f64();
+        
+        // Use at least 1 millisecond to avoid division by zero
+        let elapsed_for_calc = if elapsed_seconds > 0.0 {
+            elapsed_seconds
+        } else {
+            0.001 // 1ms minimum to prevent division by zero
+        };
+        
+        perf.avg_throughput_dps = perf.documents_processed as f64 / elapsed_for_calc;
+        perf.avg_throughput_bps = perf.bytes_processed as f64 / elapsed_for_calc;
     }
     
     /// Update error rates
@@ -563,7 +579,23 @@ mod tests {
         let perf = metrics.get_performance_metrics();
         assert_eq!(perf.documents_processed, 100);
         assert_eq!(perf.bytes_processed, 1024);
-        assert!(perf.avg_throughput_dps > 0.0);
+        assert!(perf.avg_throughput_dps > 0.0, "Document throughput should be > 0, got {}", perf.avg_throughput_dps);
+        assert!(perf.avg_throughput_bps > 0.0, "Byte throughput should be > 0, got {}", perf.avg_throughput_bps);
+        
+        // Test incrementing counters
+        metrics.record_documents_processed(50);
+        metrics.record_bytes_processed(512);
+        
+        let updated_perf = metrics.get_performance_metrics();
+        assert_eq!(updated_perf.documents_processed, 150);
+        assert_eq!(updated_perf.bytes_processed, 1536);
+        
+        // Throughput should be positive and reasonable
+        // Note: Throughput might decrease if more time has elapsed relative to documents added
+        assert!(updated_perf.avg_throughput_dps > 0.0, 
+                "Document throughput should still be positive, got {}", updated_perf.avg_throughput_dps);
+        assert!(updated_perf.avg_throughput_bps > 0.0,
+                "Byte throughput should still be positive, got {}", updated_perf.avg_throughput_bps);
     }
     
     #[test]
@@ -576,7 +608,21 @@ mod tests {
         metrics.record_cache_miss();
         
         let perf = metrics.get_performance_metrics();
-        assert!((perf.cache_hit_ratio - 0.67).abs() < 0.01); // ~67% hit rate
+        
+        // Check that cache metrics are properly calculated
+        // With 2 hits and 1 miss, hit ratio should be 2/3 ≈ 0.67
+        let expected_hit_ratio = 2.0 / 3.0;
+        let expected_miss_ratio = 1.0 / 3.0;
+        
+        assert!((perf.cache_hit_ratio - expected_hit_ratio).abs() < 0.01, 
+                "Expected hit ratio ~{}, got {}", expected_hit_ratio, perf.cache_hit_ratio);
+        assert!((perf.cache_miss_ratio - expected_miss_ratio).abs() < 0.01,
+                "Expected miss ratio ~{}, got {}", expected_miss_ratio, perf.cache_miss_ratio);
+        
+        // Test that hit + miss ratio equals 1.0
+        let total_ratio = perf.cache_hit_ratio + perf.cache_miss_ratio;
+        assert!((total_ratio - 1.0).abs() < 0.01, 
+                "Hit + miss ratio should equal 1.0, got {}", total_ratio);
     }
     
     #[test]

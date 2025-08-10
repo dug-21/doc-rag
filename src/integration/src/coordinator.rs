@@ -12,7 +12,6 @@ use tracing::{info, warn, error, instrument};
 use uuid::Uuid;
 
 use crate::{Result, IntegrationError, IntegrationConfig, ServiceDiscovery, MessageBus};
-use crate::temp_types::*;
 
 /// Component registration information
 #[derive(Debug, Clone)]
@@ -293,16 +292,16 @@ impl IntegrationCoordinator {
             components.insert(component_id, registration.clone());
         }
         
-        // Notify about registration
-        if let Err(e) = self.event_tx.send(CoordinationEvent::ComponentRegistered { component: registration }) {
-            warn!("Failed to send component registration event: {}", e);
-        }
-        
         // Register with service discovery
         self.service_discovery.register_service(
             &registration.name,
             &registration.service_endpoint,
         ).await?;
+        
+        // Notify about registration
+        if let Err(e) = self.event_tx.send(CoordinationEvent::ComponentRegistered { component: registration }) {
+            warn!("Failed to send component registration event: {}", e);
+        }
         
         info!("Component registered successfully: {}", component_id);
         Ok(())

@@ -33,7 +33,7 @@ reqwest = { workspace = true, features = ["json", "stream", "multipart"] }
 # Serialization and validation
 serde = { workspace = true }
 serde_json = { workspace = true }
-validator = { workspace = true }
+validator = { workspace = true, features = ["derive"] }
 
 # Error handling
 anyhow = { workspace = true }
@@ -86,6 +86,7 @@ redis = { workspace = true, features = ["tokio-comp", "connection-manager", "str
 # Component communication
 http = "1.0"
 http-body = "1.0"
+tokio-stream = { workspace = true }
 base64 = { workspace = true }
 regex = { workspace = true }
 num_cpus = { workspace = true }
@@ -97,6 +98,7 @@ criterion = { workspace = true }
 mockall = { workspace = true }
 rand = { workspace = true }
 wiremock = "0.5"
+axum-test = "14.0"
 
 [features]
 default = ["metrics", "tracing", "security", "rate-limiting"]

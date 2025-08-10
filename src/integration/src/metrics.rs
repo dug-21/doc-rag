@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
+use tracing::error;
 
 /// System-wide metrics collection
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

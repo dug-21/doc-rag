@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tracing::{info, warn, error, instrument, Span};
+use tracing::{info, warn, instrument};
 use uuid::Uuid;
 
 use crate::{Result, IntegrationError};
@@ -456,7 +456,8 @@ impl TracingSystem {
         #[cfg(feature = "tracing")]
         let subscriber = {
             if self.tracer.is_some() {
-                subscriber.with(tracing_opentelemetry::layer().with_tracer(self.tracer.clone().unwrap()))
+                // Note: OpenTelemetry tracing layer temporarily disabled due to BoxedTracer clone issues
+                subscriber
             } else {
                 subscriber
             }
@@ -470,7 +471,7 @@ impl TracingSystem {
     
     /// Initialize Jaeger tracer
     #[cfg(feature = "tracing")]
-    async fn initialize_jaeger(&self, endpoint: &str) -> Result<opentelemetry::global::BoxedTracer> {
+    async fn initialize_jaeger(&self, _endpoint: &str) -> Result<opentelemetry::global::BoxedTracer> {
         warn!("Jaeger tracing not fully implemented due to API changes in opentelemetry-jaeger");
         
         // Return a no-op tracer for now

@@ -244,6 +244,11 @@ impl StrategySelector {
                     max_results: 10,
                 }, characteristics),
                 fallbacks: vec![],
+                predictions: crate::types::StrategyPredictions {
+                    latency: 0.5,
+                    accuracy: 0.5,
+                    resource_usage: 0.3,
+                },
             });
         }
 
@@ -268,6 +273,11 @@ impl StrategySelector {
             reasoning,
             expected_metrics,
             fallbacks,
+            predictions: crate::types::StrategyPredictions {
+                latency: 0.4,
+                accuracy: best_recommendation.confidence,
+                resource_usage: 0.3,
+            },
         })
     }
 
@@ -977,6 +987,8 @@ fn strategy_name(strategy: &SearchStrategy) -> String {
         SearchStrategy::Hybrid { .. } => "hybrid".to_string(),
         SearchStrategy::Semantic { .. } => "semantic".to_string(),
         SearchStrategy::Adaptive { .. } => "adaptive".to_string(),
+        SearchStrategy::HybridSearch => "hybrid_search".to_string(),
+        SearchStrategy::SemanticSearch => "semantic_search".to_string(),
     }
 }
 
@@ -1047,6 +1059,11 @@ mod tests {
                 resource_usage: ResourceUsage::default(),
             },
             fallbacks: vec![],
+            predictions: crate::types::StrategyPredictions {
+                latency: 0.1,
+                accuracy: 0.9,
+                resource_usage: 0.3,
+            },
         };
         
         let actual = ActualPerformance {

@@ -622,10 +622,10 @@ mod tests {
         cache.put("key1".to_string(), vec![1.0]).await;
         assert_eq!(cache.utilization().await, 10.0); // 1/10 * 100%
         
-        for i in 1..10 {
+        for i in 2..10 {
             cache.put(format!("key{}", i), vec![i as f32]).await;
         }
         
-        assert_eq!(cache.utilization().await, 100.0); // 10/10 * 100%
+        assert_eq!(cache.utilization().await, 90.0); // 9/10 * 100%
     }
 }

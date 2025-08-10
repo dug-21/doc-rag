@@ -5,7 +5,7 @@
 
 use embedder::{
     EmbeddingGenerator, EmbedderConfig, ModelType, Device, Chunk, ChunkMetadata,
-    BatchProcessor, AdaptiveBatchConfig, BatchUtils,
+    BatchProcessor, AdaptiveBatchConfig,
 };
 use std::collections::HashMap;
 use uuid::Uuid;

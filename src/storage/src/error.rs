@@ -98,6 +98,11 @@ impl StorageError {
         }
     }
     
+    /// Add detailed context to an error
+    pub fn with_detailed_context(self, context: ErrorContext) -> Result<(), ContextualError> {
+        Err(ContextualError::new(self, context))
+    }
+    
     /// Check if error is a client error (4xx equivalent)
     pub fn is_client_error(&self) -> bool {
         match self {
@@ -341,6 +346,9 @@ pub trait WithContext<T> {
     
     /// Add detailed context to an error
     fn with_detailed_context(self, context: ErrorContext) -> Result<T, ContextualError>;
+    
+    /// Add extended context to an error (alias for compatibility)
+    fn ext_context(self, operation: impl Into<String>) -> Result<T, ContextualError>;
 }
 
 impl<T> WithContext<T> for Result<T, StorageError> {
@@ -350,6 +358,10 @@ impl<T> WithContext<T> for Result<T, StorageError> {
     
     fn with_detailed_context(self, context: ErrorContext) -> Result<T, ContextualError> {
         self.map_err(|e| ContextualError::new(e, context))
+    }
+    
+    fn ext_context(self, operation: impl Into<String>) -> Result<T, ContextualError> {
+        self.with_context(operation)
     }
 }
 

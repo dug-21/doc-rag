@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{RwLock, Semaphore};
-use tracing::{info, warn, error, instrument};
+use tracing::{info, error, instrument};
 use uuid::Uuid;
 
 use crate::{
@@ -116,7 +116,7 @@ pub struct ProcessingPipeline {
 }
 
 /// Pipeline metrics
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PipelineMetrics {
     /// Total requests processed
     pub total_requests: u64,
@@ -131,7 +131,7 @@ pub struct PipelineMetrics {
 }
 
 /// Stage-specific metrics
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
 pub struct StageMetrics {
     /// Requests processed
     pub requests: u64,

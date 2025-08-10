@@ -7,10 +7,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tracing::{info, warn, error, debug};
+use tracing::{info, warn, error};
 use uuid::Uuid;
 
-use crate::{Result, IntegrationError};
+use crate::Result;
 
 /// Service registration information
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -333,9 +333,12 @@ impl ServiceDiscovery {
         strategy: LoadBalancingStrategy,
     ) -> Option<String> {
         let services = self.services.read().await;
+        let instances = match services.get(service_name) {
+            Some(instances) => instances,
+            None => return None,
+        };
         
-        let instances = services.get(service_name)?;
-        let healthy_instances: Vec<_> = instances.iter()
+        let healthy_instances: Vec<&ServiceInstance> = instances.iter()
             .filter(|instance| instance.registration.status == ServiceStatus::Healthy)
             .collect();
         
@@ -346,7 +349,6 @@ impl ServiceDiscovery {
         
         let selected = match strategy {
             LoadBalancingStrategy::RoundRobin => {
-                drop(services);
                 self.select_round_robin(service_name, &healthy_instances).await
             }
             LoadBalancingStrategy::Random => {

@@ -4,7 +4,7 @@
 //! and their performance characteristics.
 
 use embedder::{EmbeddingGenerator, EmbedderConfig, ModelType, Device};
-use std::time::Duration;
+// use std::time::Duration;
 use tokio;
 
 #[tokio::main]
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("   Supports ONNX: {}", model_type.supports_onnx());
         
         let config = EmbedderConfig::new()
-            .with_model_type(*model_type)
+            .with_model_type(model_type.clone())
             .with_batch_size(8)
             .with_device(Device::Cpu);
         
@@ -122,7 +122,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("      Average batch time: {:.2}ms", stats.avg_batch_time_ms);
                 
                 model_results.push(ModelResult {
-                    model_type: *model_type,
+                    model_type: model_type.clone(),
                     dimension: model_type.dimension(),
                     generation_rate: embeddings_per_sec,
                     similarity_rate: similarities_per_sec,

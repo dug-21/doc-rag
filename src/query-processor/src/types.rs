@@ -10,6 +10,19 @@ use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use std::time::Duration;
 
+/// Frame element for semantic role labeling
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FrameElement {
+    /// Element role label
+    pub role: String,
+    /// Element text span
+    pub text: String,
+    /// Start position in text
+    pub start: usize,
+    /// End position in text
+    pub end: usize,
+}
+
 /// Language detection result
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Language {
@@ -222,14 +235,14 @@ pub struct SemanticRole {
     pub id: Uuid,
     /// Predicate (usually a verb)
     pub predicate: String,
+    /// Frame for semantic interpretation
+    pub frame: String,
+    /// Frame elements (roles and their fillers)
+    pub frame_elements: Vec<FrameElement>,
     /// Arguments (subjects, objects, etc.)
     pub arguments: Vec<Argument>,
     /// Confidence score
     pub confidence: f64,
-    /// Semantic frame
-    pub frame: Option<String>,
-    /// Frame elements
-    pub frame_elements: HashMap<String, String>,
 }
 
 impl SemanticRole {
@@ -237,10 +250,10 @@ impl SemanticRole {
         Self {
             id: Uuid::new_v4(),
             predicate,
+            frame: "unknown".to_string(),
+            frame_elements: vec![],
             arguments,
             confidence,
-            frame: None,
-            frame_elements: HashMap::new(),
         }
     }
 }
@@ -367,6 +380,8 @@ pub enum QueryIntent {
     Temporal,
     /// Compliance/regulatory inquiry
     Compliance,
+    /// Compliance check queries (backward compatibility)
+    ComplianceCheck,
     /// Multi-intent query
     Multi(Vec<QueryIntent>),
     /// Unknown/unclear intent
@@ -385,6 +400,7 @@ impl QueryIntent {
             QueryIntent::Causal => 0.7,
             QueryIntent::Temporal => 0.8,
             QueryIntent::Compliance => 0.9,
+            QueryIntent::ComplianceCheck => 0.9,
             QueryIntent::Multi(_) => 0.6,
             QueryIntent::Unknown => 0.3,
         }
@@ -492,6 +508,12 @@ pub enum SearchStrategy {
         adaptation_rules: Vec<AdaptationRule>,
         learning_enabled: bool,
     },
+    
+    /// Simple hybrid search (backward compatibility)
+    HybridSearch,
+    
+    /// Simple semantic search (backward compatibility)  
+    SemanticSearch,
 }
 
 /// Keyword search algorithms
@@ -566,6 +588,19 @@ pub struct StrategySelection {
     pub expected_metrics: PerformanceMetrics,
     /// Fallback strategies
     pub fallbacks: Vec<SearchStrategy>,
+    /// Strategy predictions
+    pub predictions: StrategyPredictions,
+}
+
+/// Strategy predictions for performance estimation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StrategyPredictions {
+    /// Predicted latency in seconds
+    pub latency: f64,
+    /// Predicted accuracy
+    pub accuracy: f64,
+    /// Predicted resource usage
+    pub resource_usage: f64,
 }
 
 /// Performance metrics prediction
@@ -660,7 +695,7 @@ pub struct ConsensusResult {
     pub vote_distribution: HashMap<ConsensusDecision, usize>,
     /// Time to reach consensus
     pub consensus_time: Duration,
-    /// Byzantine fault tolerance achieved
+    /// Whether Byzantine tolerance was achieved
     pub byzantine_tolerance: bool,
 }
 
@@ -1016,6 +1051,72 @@ impl Default for ResourceUsage {
             disk_io: 0,
         }
     }
+}
+
+/// Query processing result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueryResult {
+    /// Original query text
+    pub query: String,
+    /// Search strategy used
+    pub search_strategy: SearchStrategy,
+    /// Result confidence
+    pub confidence: f64,
+    /// Processing time
+    pub processing_time: Duration,
+    /// Additional metadata
+    pub metadata: HashMap<String, String>,
+}
+
+/// Classification result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClassificationResult {
+    /// Classified intent
+    pub intent: QueryIntent,
+    /// Classification confidence
+    pub confidence: f64,
+    /// Reasoning for classification
+    pub reasoning: String,
+    /// Features used
+    pub features: HashMap<String, f64>,
+}
+
+/// Strategy recommendation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StrategyRecommendation {
+    /// Recommended strategy
+    pub strategy: SearchStrategy,
+    /// Recommendation confidence
+    pub confidence: f64,
+    /// Reasoning for recommendation
+    pub reasoning: String,
+    /// Strategy parameters
+    pub parameters: HashMap<String, f64>,
+    /// Performance estimation
+    pub estimated_performance: Option<PerformanceMetrics>,
+}
+
+/// Processed query structure for consensus
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProcessedQuery {
+    /// Query ID
+    pub id: String,
+    /// Original query text
+    pub original_query: String,
+    /// Processed query text
+    pub processed_query: String,
+    /// Detected intent
+    pub intent: QueryIntent,
+    /// Extracted entities
+    pub entities: Vec<ExtractedEntity>,
+    /// Query type
+    pub query_type: String,
+    /// Processing confidence
+    pub confidence: f64,
+    /// Processing time
+    pub processing_time: Duration,
+    /// Additional metadata
+    pub metadata: HashMap<String, String>,
 }
 
 #[cfg(test)]

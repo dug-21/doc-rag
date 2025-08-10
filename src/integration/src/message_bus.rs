@@ -510,7 +510,7 @@ impl MessageBus {
         if let Some(topic_queue) = topics.get(topic_name) {
             let mut receiver = topic_queue.subscribe();
             let bus = self.clone();
-            let topic = topic_name.to_string();
+            let _topic = topic_name.to_string();
             
             tokio::spawn(async move {
                 while let Ok(message) = receiver.recv().await {

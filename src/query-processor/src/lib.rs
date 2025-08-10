@@ -65,15 +65,15 @@ pub mod types;
 pub mod validation;
 
 pub use analyzer::QueryAnalyzer;
-pub use classifier::{IntentClassifier, QueryIntent};
+pub use classifier::IntentClassifier;
 pub use config::ProcessorConfig;
-pub use consensus::ConsensusEngine;
+pub use consensus::{ConsensusState, ConsensusMessage};
 pub use entities::EntityExtractor;
 pub use error::{ProcessorError, Result};
 pub use extractor::KeyTermExtractor;
 pub use metrics::ProcessorMetrics;
 pub use query::{ProcessedQuery, Query, QueryMetadata};
-pub use strategy::{SearchStrategy, StrategySelector};
+pub use strategy::StrategySelector;
 pub use types::*;
 pub use validation::ValidationEngine;
 
@@ -95,7 +95,7 @@ pub struct QueryProcessor {
     /// Strategy selection component
     strategy_selector: Arc<StrategySelector>,
     /// Consensus validation engine
-    consensus_engine: Arc<ConsensusEngine>,
+    consensus_engine: Option<Arc<ConsensusState>>,
     /// Validation engine
     validation_engine: Arc<ValidationEngine>,
     /// Performance metrics

@@ -75,7 +75,7 @@ async fn initialize_tracing() -> Result<()> {
             let tracer = opentelemetry_jaeger::new_agent_pipeline()
                 .with_endpoint(&jaeger_endpoint)
                 .with_service_name("doc-rag-integration")
-                .install_batch(opentelemetry::runtime::Tokio)
+                .install_simple()
                 .map_err(|e| integration::IntegrationError::TracingError(e.to_string()))?;
             
             subscriber.with(OpenTelemetryLayer::new(tracer))

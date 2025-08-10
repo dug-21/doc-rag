@@ -12,10 +12,11 @@
 //! - Dynamic node membership management
 //! - Consensus metrics and monitoring
 
-use crate::error::{Result, QueryProcessorError};
+use crate::error::{Result, ProcessorError};
 use crate::types::{
-    ProcessedQuery, QueryResult, ClassificationResult, ExtractedEntity, 
-    StrategyRecommendation, ConsensusResult, ValidationResult
+    SemanticAnalysis, IntentClassification, KeyTerm, StrategySelection,
+    ConsensusResult, ValidationResult, QueryIntent, SearchStrategy, ExtractedEntity,
+    ProcessedQuery, QueryResult, ClassificationResult, StrategyRecommendation
 };
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -796,8 +797,8 @@ impl ConsensusManager {
         // Wait for consensus result with timeout
         match timeout(self.config.consensus_timeout, response_receiver).await {
             Ok(Ok(result)) => Ok(result),
-            Ok(Err(_)) => Err(QueryProcessorError::consensus("Response channel closed")),
-            Err(_) => Err(QueryProcessorError::timeout("Consensus timeout reached")),
+            Ok(Err(_)) => Err(ProcessorError::ConsensusFailed { reason: "Response channel closed".to_string() }),
+            Err(_) => Err(ProcessorError::Timeout { operation: "consensus".to_string(), duration: self.config.consensus_timeout }),
         }
     }
     
@@ -1356,7 +1357,7 @@ impl ConsensusManager {
         for node_id in state.nodes.keys() {
             if *node_id != self.node_id {
                 self.message_sender.send((node_id.clone(), message.clone()))
-                    .map_err(|_| QueryProcessorError::consensus("Failed to send message"))?;
+                    .map_err(|_| ProcessorError::ConsensusFailed { reason: "Failed to send message".to_string() })?;
             }
         }
         

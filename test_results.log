@@ -1,0 +1,2458 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /workspaces/doc-rag/src/response-generator/Cargo.toml
+workspace: /workspaces/doc-rag/Cargo.toml
+warning: output filename collision.
+The example target `basic_usage` in package `response-generator v0.1.0 (/workspaces/doc-rag/src/response-generator)` has the same output filename as the example target `basic_usage` in package `embedder v0.1.0 (/workspaces/doc-rag/src/embedder)`.
+Colliding filename is: /workspaces/doc-rag/target/debug/examples/basic_usage
+The targets should have unique names.
+Consider changing their names to be unique or compiling them separately.
+This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
+warning: output filename collision.
+The example target `basic_usage` in package `response-generator v0.1.0 (/workspaces/doc-rag/src/response-generator)` has the same output filename as the example target `basic_usage` in package `embedder v0.1.0 (/workspaces/doc-rag/src/embedder)`.
+Colliding filename is: /workspaces/doc-rag/target/debug/examples/basic_usage.dwp
+The targets should have unique names.
+Consider changing their names to be unique or compiling them separately.
+This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
+warning: output filename collision.
+The example target `basic_usage` in package `storage v0.1.0 (/workspaces/doc-rag/src/storage)` has the same output filename as the example target `basic_usage` in package `response-generator v0.1.0 (/workspaces/doc-rag/src/response-generator)`.
+Colliding filename is: /workspaces/doc-rag/target/debug/examples/basic_usage
+The targets should have unique names.
+Consider changing their names to be unique or compiling them separately.
+This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
+warning: output filename collision.
+The example target `basic_usage` in package `storage v0.1.0 (/workspaces/doc-rag/src/storage)` has the same output filename as the example target `basic_usage` in package `response-generator v0.1.0 (/workspaces/doc-rag/src/response-generator)`.
+Colliding filename is: /workspaces/doc-rag/target/debug/examples/basic_usage.dwp
+The targets should have unique names.
+Consider changing their names to be unique or compiling them separately.
+This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
+   Compiling embedder v0.1.0 (/workspaces/doc-rag/src/embedder)
+warning: unused imports: `Citation` and `Source`
+ --> src/response-generator/src/builder.rs:5:16
+  |
+5 |     citation::{Citation, Source},
+  |                ^^^^^^^^  ^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unnecessary parentheses around block return value
+   --> src/response-generator/src/builder.rs:757:9
+    |
+757 |         (self.relevance * 0.3 + 
+    |         ^
+...
+761 |          self.source_diversity * 0.1)
+    |                                     ^
+    |
+    = note: `#[warn(unused_parens)]` on by default
+help: remove these parentheses
+    |
+757 ~         self.relevance * 0.3 + 
+758 |          self.coherence * 0.2 + 
+759 |          self.completeness * 0.2 + 
+760 |          self.accuracy_indicators * 0.2 + 
+761 ~          self.source_diversity * 0.1
+    |
+
+warning: unused import: `ResponseError`
+ --> src/response-generator/src/citation.rs:3:28
+  |
+3 | use crate::error::{Result, ResponseError};
+  |                            ^^^^^^^^^^^^^
+
+warning: unused import: `uuid::Uuid`
+  --> src/response-generator/src/pipeline.rs:13:5
+   |
+13 | use uuid::Uuid;
+   |     ^^^^^^^^^^
+
+warning: unused import: `GeneratedResponse`
+ --> src/response-generator/src/validator.rs:4:32
+  |
+4 | use crate::{GenerationRequest, GeneratedResponse, IntermediateResponse};
+  |                                ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `uuid::Uuid`
+  --> src/response-generator/src/validator.rs:10:5
+   |
+10 | use uuid::Uuid;
+   |     ^^^^^^^^^^
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:312:39
+    |
+312 |     async fn validate_pipeline(&self, context: &ProcessingContext) -> Result<()> {
+    |                                       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: variable does not need to be mutable
+   --> src/response-generator/src/pipeline.rs:346:13
+    |
+346 |         let mut current_builder = builder;
+    |             ----^^^^^^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:102:9
+    |
+102 |         context: &ProcessingContext,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:119:44
+    |
+119 |     async fn validate_preconditions(&self, context: &ProcessingContext) -> Result<()> {
+    |                                            ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:124:29
+    |
+124 |     async fn cleanup(&self, context: &ProcessingContext) -> Result<()> {
+    |                             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:499:9
+    |
+499 |         context: &ProcessingContext,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:541:9
+    |
+541 |         context: &ProcessingContext,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:554:9
+    |
+554 |         context: &ProcessingContext,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:608:9
+    |
+608 |         context: &ProcessingContext,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `context`
+   --> src/response-generator/src/pipeline.rs:650:9
+    |
+650 |         context: &ProcessingContext,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `request`
+   --> src/response-generator/src/validator.rs:478:9
+    |
+478 |         request: &GenerationRequest,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src/response-generator/src/validator.rs:570:9
+    |
+570 |         request: &GenerationRequest,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src/response-generator/src/validator.rs:656:9
+    |
+656 |         request: &GenerationRequest,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src/response-generator/src/validator.rs:850:9
+    |
+850 |         request: &GenerationRequest,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+    --> src/response-generator/src/validator.rs:1002:9
+     |
+1002 |         request: &GenerationRequest,
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: field `config` is never read
+  --> src/response-generator/src/lib.rs:70:5
+   |
+69 | pub struct ResponseGenerator {
+   |            ----------------- field in this struct
+70 |     config: Config,
+   |     ^^^^^^
+   |
+   = note: `ResponseGenerator` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: method `generate_streaming_impl` is never used
+   --> src/response-generator/src/lib.rs:427:14
+    |
+237 | impl ResponseGenerator {
+    | ---------------------- method in this implementation
+...
+427 |     async fn generate_streaming_impl(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `content` is never read
+   --> src/response-generator/src/lib.rs:464:5
+    |
+461 | struct TextSegment {
+    |        ----------- field in this struct
+...
+464 |     content: String,
+    |     ^^^^^^^
+    |
+    = note: `TextSegment` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `relevance_score` is never read
+  --> src/response-generator/src/builder.rs:45:5
+   |
+43 | struct RankedContext {
+   |        ------------- field in this struct
+44 |     chunk: ContextChunk,
+45 |     relevance_score: f64,
+   |     ^^^^^^^^^^^^^^^
+   |
+   = note: `RankedContext` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `confidence` is never read
+  --> src/response-generator/src/builder.rs:63:5
+   |
+52 | struct ContentSection {
+   |        -------------- field in this struct
+...
+63 |     confidence: f64,
+   |     ^^^^^^^^^^
+   |
+   = note: `ContentSection` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `query_type` and `expected_sections` are never read
+   --> src/response-generator/src/builder.rs:768:5
+    |
+767 | struct QueryAnalysis {
+    |        ------------- fields in this struct
+768 |     query_type: QueryType,
+    |     ^^^^^^^^^^
+...
+771 |     expected_sections: Vec<SectionType>,
+    |     ^^^^^^^^^^^^^^^^^
+    |
+    = note: `QueryAnalysis` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: function `serialize` is never used
+   --> src/response-generator/src/config.rs:567:12
+    |
+567 |     pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
+    |            ^^^^^^^^^
+
+warning: function `deserialize` is never used
+   --> src/response-generator/src/config.rs:574:12
+    |
+574 |     pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+    |            ^^^^^^^^^^^
+
+warning: `response-generator` (lib) generated 29 warnings (run `cargo fix --lib -p response-generator` to apply 7 suggestions)
+warning: unused import: `std::collections::HashMap`
+  --> src/storage/src/lib.rs:13:5
+   |
+13 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `AggregateOptions`, `Bson`, `CreateIndexOptions`, `DeleteResult`, `Document`, `FindOptions`, `InsertManyResult`, `UpdateResult`, `from_document`, and `to_document`
+  --> src/storage/src/lib.rs:20:30
+   |
+20 |     options::{ClientOptions, CreateIndexOptions, IndexOptions, AggregateOptions, FindOptions},
+   |                              ^^^^^^^^^^^^^^^^^^                ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^
+21 |     bson::{doc, Document, Bson, from_document, to_document},
+   |                 ^^^^^^^^  ^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^
+22 |     IndexModel,
+23 |     results::{InsertManyResult, UpdateResult, DeleteResult},
+   |               ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^
+
+warning: unused import: `futures::stream::TryStreamExt`
+  --> src/storage/src/lib.rs:25:5
+   |
+25 | use futures::stream::TryStreamExt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `DateTime` and `Utc`
+  --> src/storage/src/lib.rs:28:14
+   |
+28 | use chrono::{DateTime, Utc};
+   |              ^^^^^^^^  ^^^
+
+warning: unused import: `async_trait::async_trait`
+  --> src/storage/src/lib.rs:30:5
+   |
+30 | use async_trait::async_trait;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `debug`
+  --> src/storage/src/lib.rs:31:34
+   |
+31 | use tracing::{info, warn, error, debug, instrument};
+   |                                  ^^^^^
+
+warning: unused imports: `Collection`, `DeleteOptions`, `DeleteResult`, `InsertManyResult`, `ReadPreference`, `UpdateResult`, and `from_document`
+  --> src/storage/src/operations.rs:10:40
+   |
+10 |     bson::{doc, Document, to_document, from_document},
+   |                                        ^^^^^^^^^^^^^
+11 |     options::{
+12 |         FindOptions, UpdateOptions, DeleteOptions, InsertManyOptions,
+   |                                     ^^^^^^^^^^^^^
+13 |         ReadPreference, WriteConcern, ReadConcern, TransactionOptions,
+   |         ^^^^^^^^^^^^^^
+14 |     },
+15 |     results::{InsertManyResult, UpdateResult, DeleteResult},
+   |               ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^
+16 |     ClientSession, Collection,
+   |                    ^^^^^^^^^^
+
+warning: unused imports: `Deserialize` and `Serialize`
+  --> src/storage/src/operations.rs:19:13
+   |
+19 | use serde::{Deserialize, Serialize};
+   |             ^^^^^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `anyhow`
+  --> src/storage/src/operations.rs:22:31
+   |
+22 | use anyhow::{Result, Context, anyhow};
+   |                               ^^^^^^
+
+warning: unused import: `MetadataDocument`
+  --> src/storage/src/operations.rs:26:43
+   |
+26 | use crate::{VectorStorage, ChunkDocument, MetadataDocument, BulkInsertRequest, BulkInsertResponse, BulkInsertError};
+   |                                           ^^^^^^^^^^^^^^^^
+
+warning: unused import: `Duration`
+ --> src/storage/src/search.rs:9:17
+  |
+9 | use std::time::{Duration, Instant};
+  |                 ^^^^^^^^
+
+warning: unused imports: `Bson`, `Cursor`, and `FindOptions`
+  --> src/storage/src/search.rs:13:27
+   |
+13 |     bson::{doc, Document, Bson},
+   |                           ^^^^
+14 |     options::{AggregateOptions, FindOptions},
+   |                                 ^^^^^^^^^^^
+15 |     Cursor,
+   |     ^^^^^^
+
+warning: unused import: `TryStreamExt`
+  --> src/storage/src/search.rs:17:34
+   |
+17 | use futures::stream::{StreamExt, TryStreamExt};
+   |                                  ^^^^^^^^^^^^
+
+warning: unused imports: `debug`, `error`, and `warn`
+  --> src/storage/src/search.rs:23:21
+   |
+23 | use tracing::{info, warn, error, debug, instrument};
+   |                     ^^^^  ^^^^^  ^^^^^
+
+warning: unused import: `ChunkMetadata`
+  --> src/storage/src/search.rs:26:43
+   |
+26 | use crate::{VectorStorage, ChunkDocument, ChunkMetadata};
+   |                                           ^^^^^^^^^^^^^
+
+warning: unused import: `Arc`
+ --> src/storage/src/metrics.rs:3:17
+  |
+3 | use std::sync::{Arc, RwLock};
+  |                 ^^^
+
+warning: unused variable: `options`
+   --> src/storage/src/operations.rs:366:13
+    |
+366 |         let options = FindOptions::builder()
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_options`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: constant `OPERATION_TIMEOUT` is never used
+  --> src/storage/src/lib.rs:51:7
+   |
+51 | const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
+   |       ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: fields `metadata_collection` and `config` are never read
+  --> src/storage/src/lib.rs:59:5
+   |
+55 | pub struct VectorStorage {
+   |            ------------- fields in this struct
+...
+59 |     metadata_collection: Collection<MetadataDocument>,
+   |     ^^^^^^^^^^^^^^^^^^^
+...
+62 |     config: StorageConfig,
+   |     ^^^^^^
+   |
+   = note: `VectorStorage` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: `storage` (lib) generated 19 warnings (run `cargo fix --lib -p storage` to apply 16 suggestions)
+warning: field `quotes` is never read
+  --> src/chunker/src/boundary.rs:70:5
+   |
+64 | struct BoundaryPatterns {
+   |        ---------------- field in this struct
+...
+70 |     quotes: Regex,
+   |     ^^^^^^
+   |
+   = note: `BoundaryPatterns` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: field `config` is never read
+  --> src/chunker/src/boundary.rs:87:5
+   |
+86 | pub struct FeatureExtractor {
+   |            ---------------- field in this struct
+87 |     config: BoundaryConfig,
+   |     ^^^^^^
+   |
+   = note: `FeatureExtractor` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `language_detector`, `content_analyzers`, `quality_assessor`, and `semantic_tagger` are never read
+  --> src/chunker/src/metadata.rs:20:5
+   |
+16 | pub struct MetadataExtractor {
+   |            ----------------- fields in this struct
+...
+20 |     language_detector: LanguageDetector,
+   |     ^^^^^^^^^^^^^^^^^
+21 |     /// Content type analyzers
+22 |     content_analyzers: ContentTypeAnalyzers,
+   |     ^^^^^^^^^^^^^^^^^
+23 |     /// Quality assessment metrics
+24 |     quality_assessor: QualityAssessor,
+   |     ^^^^^^^^^^^^^^^^
+25 |     /// Semantic tag extractors
+26 |     semantic_tagger: SemanticTagger,
+   |     ^^^^^^^^^^^^^^^
+   |
+   = note: `MetadataExtractor` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `emails`, `words`, and `line_breaks` are never read
+  --> src/chunker/src/metadata.rs:49:5
+   |
+31 | struct MetadataPatterns {
+   |        ---------------- fields in this struct
+...
+49 |     emails: Regex,
+   |     ^^^^^^
+...
+55 |     words: Regex,
+   |     ^^^^^
+56 |     /// Line breaks
+57 |     line_breaks: Regex,
+   |     ^^^^^^^^^^^
+   |
+   = note: `MetadataPatterns` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `language_indicators` and `character_patterns` are never read
+  --> src/chunker/src/metadata.rs:64:5
+   |
+62 | struct LanguageDetector {
+   |        ---------------- fields in this struct
+63 |     /// Common words by language
+64 |     language_indicators: HashMap<String, HashSet<String>>,
+   |     ^^^^^^^^^^^^^^^^^^^
+65 |     /// Character frequency patterns
+66 |     character_patterns: HashMap<String, Regex>,
+   |     ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `LanguageDetector` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `code_language_patterns`, `table_analyzers`, `list_detectors`, and `math_detectors` are never read
+  --> src/chunker/src/metadata.rs:73:5
+   |
+71 | struct ContentTypeAnalyzers {
+   |        -------------------- fields in this struct
+72 |     /// Code language detection patterns
+73 |     code_language_patterns: HashMap<String, Regex>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+74 |     /// Table structure analyzers
+75 |     table_analyzers: TableAnalyzers,
+   |     ^^^^^^^^^^^^^^^
+76 |     /// List type detectors
+77 |     list_detectors: ListDetectors,
+   |     ^^^^^^^^^^^^^^
+78 |     /// Mathematical content detectors
+79 |     math_detectors: MathDetectors,
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `ContentTypeAnalyzers` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `markdown_table`, `csv_pattern`, `html_table`, and `tsv_pattern` are never read
+  --> src/chunker/src/metadata.rs:86:5
+   |
+84 | struct TableAnalyzers {
+   |        -------------- fields in this struct
+85 |     /// Markdown table pattern
+86 |     markdown_table: Regex,
+   |     ^^^^^^^^^^^^^^
+87 |     /// CSV-like pattern
+88 |     csv_pattern: Regex,
+   |     ^^^^^^^^^^^
+89 |     /// HTML table pattern
+90 |     html_table: Regex,
+   |     ^^^^^^^^^^
+91 |     /// TSV pattern
+92 |     tsv_pattern: Regex,
+   |     ^^^^^^^^^^^
+   |
+   = note: `TableAnalyzers` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `ordered_list`, `unordered_list`, `definition_list`, and `checklist` are never read
+   --> src/chunker/src/metadata.rs:99:5
+    |
+97  | struct ListDetectors {
+    |        ------------- fields in this struct
+98  |     /// Ordered list pattern
+99  |     ordered_list: Regex,
+    |     ^^^^^^^^^^^^
+100 |     /// Unordered list pattern (bullet points)
+101 |     unordered_list: Regex,
+    |     ^^^^^^^^^^^^^^
+102 |     /// Definition list pattern
+103 |     definition_list: Regex,
+    |     ^^^^^^^^^^^^^^^
+104 |     /// Checklist pattern
+105 |     checklist: Regex,
+    |     ^^^^^^^^^
+    |
+    = note: `ListDetectors` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `latex_blocks`, `inline_math`, `math_symbols`, and `equations` are never read
+   --> src/chunker/src/metadata.rs:112:5
+    |
+110 | struct MathDetectors {
+    |        ------------- fields in this struct
+111 |     /// LaTeX math blocks
+112 |     latex_blocks: Regex,
+    |     ^^^^^^^^^^^^
+113 |     /// Inline math
+114 |     inline_math: Regex,
+    |     ^^^^^^^^^^^
+115 |     /// Mathematical symbols
+116 |     math_symbols: Regex,
+    |     ^^^^^^^^^^^^
+117 |     /// Equations
+118 |     equations: Regex,
+    |     ^^^^^^^^^
+    |
+    = note: `MathDetectors` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `readability_metrics`, `completeness_indicators`, and `structure_metrics` are never read
+   --> src/chunker/src/metadata.rs:125:5
+    |
+123 | struct QualityAssessor {
+    |        --------------- fields in this struct
+124 |     /// Readability metrics
+125 |     readability_metrics: ReadabilityMetrics,
+    |     ^^^^^^^^^^^^^^^^^^^
+126 |     /// Completeness indicators
+127 |     completeness_indicators: CompletenessIndicators,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+128 |     /// Structure quality metrics
+129 |     structure_metrics: StructureMetrics,
+    |     ^^^^^^^^^^^^^^^^^
+    |
+    = note: `QualityAssessor` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `sentence_length_weights`, `complexity_patterns`, and `readability_thresholds` are never read
+   --> src/chunker/src/metadata.rs:136:5
+    |
+134 | struct ReadabilityMetrics {
+    |        ------------------ fields in this struct
+135 |     /// Average sentence length weights
+136 |     sentence_length_weights: Vec<f32>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+137 |     /// Word complexity indicators
+138 |     complexity_patterns: Regex,
+    |     ^^^^^^^^^^^^^^^^^^^
+139 |     /// Readability thresholds
+140 |     readability_thresholds: HashMap<String, f32>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `ReadabilityMetrics` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `sentence_endings`, `paragraph_completeness`, and `fragment_indicators` are never read
+   --> src/chunker/src/metadata.rs:147:5
+    |
+145 | struct CompletenessIndicators {
+    |        ---------------------- fields in this struct
+146 |     /// Sentence ending patterns
+147 |     sentence_endings: Regex,
+    |     ^^^^^^^^^^^^^^^^
+148 |     /// Paragraph completeness patterns
+149 |     paragraph_completeness: Regex,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+150 |     /// Fragment indicators
+151 |     fragment_indicators: Regex,
+    |     ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `CompletenessIndicators` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `structure_patterns` and `quality_weights` are never read
+   --> src/chunker/src/metadata.rs:158:5
+    |
+156 | struct StructureMetrics {
+    |        ---------------- fields in this struct
+157 |     /// Well-formed structure patterns
+158 |     structure_patterns: HashMap<String, Regex>,
+    |     ^^^^^^^^^^^^^^^^^^
+159 |     /// Quality weights
+160 |     quality_weights: HashMap<String, f32>,
+    |     ^^^^^^^^^^^^^^^
+    |
+    = note: `StructureMetrics` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `domain_vocabularies`, `topic_patterns`, and `entity_patterns` are never read
+   --> src/chunker/src/metadata.rs:167:5
+    |
+165 | struct SemanticTagger {
+    |        -------------- fields in this struct
+166 |     /// Domain-specific vocabularies
+167 |     domain_vocabularies: HashMap<String, HashSet<String>>,
+    |     ^^^^^^^^^^^^^^^^^^^
+168 |     /// Topic classification patterns
+169 |     topic_patterns: HashMap<String, Regex>,
+    |     ^^^^^^^^^^^^^^
+170 |     /// Named entity patterns
+171 |     entity_patterns: HashMap<String, Regex>,
+    |     ^^^^^^^^^^^^^^^
+    |
+    = note: `SemanticTagger` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: `chunker` (lib) generated 14 warnings
+   Compiling integration v0.1.0 (/workspaces/doc-rag/src/integration)
+   Compiling response-generator v0.1.0 (/workspaces/doc-rag/src/response-generator)
+warning: unused import: `Citation`
+ --> src/response-generator/src/builder.rs:5:16
+  |
+5 |     citation::{Citation, Source},
+  |                ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `ContextChunk` and `Source`
+   --> src/response-generator/src/pipeline.rs:708:36
+    |
+708 |     use crate::{GenerationRequest, ContextChunk, Source};
+    |                                    ^^^^^^^^^^^^  ^^^^^^
+
+warning: unused imports: `ContextChunk` and `Source`
+    --> src/response-generator/src/validator.rs:1051:36
+     |
+1051 |     use crate::{GenerationRequest, ContextChunk, Source};
+     |                                    ^^^^^^^^^^^^  ^^^^^^
+
+warning: unused import: `tokio_test`
+   --> src/response-generator/src/lib.rs:554:9
+    |
+554 |     use tokio_test;
+    |         ^^^^^^^^^^
+
+warning: method `generate_streaming_impl` is never used
+   --> src/response-generator/src/lib.rs:427:14
+    |
+237 | impl ResponseGenerator {
+    | ---------------------- method in this implementation
+...
+427 |     async fn generate_streaming_impl(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: `response-generator` (lib test) generated 31 warnings (26 duplicates) (run `cargo fix --lib -p response-generator --tests` to apply 4 suggestions)
+   Compiling api v0.1.0 (/workspaces/doc-rag/src/api)
+   Compiling storage v0.1.0 (/workspaces/doc-rag/src/storage)
+warning: unused import: `tokio_test`
+ --> src/response-generator/tests/integration_tests.rs:8:5
+  |
+8 | use tokio_test;
+  |     ^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `CitationConfig`, `CitationStyle`, `formatter::FormatterConfig`, and `validator::ValidationConfig`
+ --> src/response-generator/examples/advanced_features.rs:5:16
+  |
+5 |     citation::{CitationStyle, CitationConfig},
+  |                ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
+6 |     formatter::FormatterConfig,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7 |     validator::ValidationConfig,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::time::Duration`
+  --> src/response-generator/examples/advanced_features.rs:10:5
+   |
+10 | use std::time::Duration;
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src/storage/tests/unit.rs:3:5
+  |
+3 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `BulkInsertError`, `ErrorMetrics`, `MonitoringConfig`, `PerformanceConfig`, `PerformanceMetrics`, `TextSearchConfig`, and `VectorSearchConfig`
+  --> src/storage/tests/unit.rs:11:20
+   |
+11 |     StorageConfig, VectorSearchConfig, TextSearchConfig, PerformanceConfig, MonitoringConfig,
+   |                    ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^
+12 |     StorageError, ErrorContext, RecoveryStrategy, WithContext,
+13 |     StorageMetrics, OperationMetrics, PerformanceMetrics, ErrorMetrics,
+   |                                       ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^
+14 |     BulkInsertRequest, BulkInsertResponse, BulkInsertError,
+   |                                            ^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src/storage/examples/basic_usage.rs:3:5
+  |
+3 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `error`
+  --> src/embedder/src/models.rs:10:27
+   |
+10 | use tracing::{info, warn, error, debug, instrument};
+   |                           ^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `Tensor`
+  --> src/embedder/src/models.rs:12:28
+   |
+12 | use candle_core::{IndexOp, Tensor};
+   |                            ^^^^^^
+
+warning: unused import: `safetensors`
+  --> src/embedder/src/models.rs:13:5
+   |
+13 | use safetensors;
+   |     ^^^^^^^^^^^
+
+warning: unused imports: `error` and `warn`
+  --> src/embedder/src/lib.rs:46:21
+   |
+46 | use tracing::{info, warn, error, debug, instrument};
+   |                     ^^^^  ^^^^^
+
+error[E0369]: cannot add `&str` to `&str`
+  --> src/storage/examples/basic_usage.rs:72:88
+   |
+72 |             println!("   ✓ Content: {}", &chunk.content[..50.min(chunk.content.len())] + "...");
+   |                                          --------------------------------------------- ^ ----- &str
+   |                                          |                                             |
+   |                                          |                                             `+` cannot be used to concatenate two `&str` strings
+   |                                          &str
+   |
+   = note: string concatenation requires an owned `String` on the left
+help: remove the borrow to obtain an owned `String`
+   |
+72 -             println!("   ✓ Content: {}", &chunk.content[..50.min(chunk.content.len())] + "...");
+72 +             println!("   ✓ Content: {}", chunk.content[..50.min(chunk.content.len())] + "...");
+   |
+
+error[E0599]: the method `next` exists for struct `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>`, but its trait bounds were not satisfied
+   --> src/response-generator/examples/basic_usage.rs:122:43
+    |
+122 |     while let Some(chunk_result) = stream.next().await {
+    |                                           ^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+   ::: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/sync/mpsc/bounded.rs:106:1
+    |
+106 | pub struct Receiver<T> {
+    | ---------------------- doesn't satisfy `_: StreamExt` or `_: Stream`
+    |
+    = note: the following trait bounds were not satisfied:
+            `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: Stream`
+            which is required by `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: StreamExt`
+
+error[E0599]: the method `next` exists for struct `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>`, but its trait bounds were not satisfied
+   --> src/response-generator/examples/streaming_demo.rs:37:43
+    |
+37  |     while let Some(chunk_result) = stream.next().await {
+    |                                           ^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+   ::: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/sync/mpsc/bounded.rs:106:1
+    |
+106 | pub struct Receiver<T> {
+    | ---------------------- doesn't satisfy `_: StreamExt` or `_: Stream`
+    |
+    = note: the following trait bounds were not satisfied:
+            `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: Stream`
+            which is required by `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: StreamExt`
+
+error[E0599]: the method `next` exists for struct `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>`, but its trait bounds were not satisfied
+   --> src/response-generator/examples/streaming_demo.rs:131:51
+    |
+131 |     while let Some(chunk_result) = context_stream.next().await {
+    |                                                   ^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+   ::: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/sync/mpsc/bounded.rs:106:1
+    |
+106 | pub struct Receiver<T> {
+    | ---------------------- doesn't satisfy `_: StreamExt` or `_: Stream`
+    |
+    = note: the following trait bounds were not satisfied:
+            `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: Stream`
+            which is required by `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: StreamExt`
+
+error[E0599]: the method `next` exists for struct `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>`, but its trait bounds were not satisfied
+   --> src/response-generator/examples/streaming_demo.rs:204:48
+    |
+204 |     while let Some(chunk_result) = perf_stream.next().await {
+    |                                                ^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+   ::: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/sync/mpsc/bounded.rs:106:1
+    |
+106 | pub struct Receiver<T> {
+    | ---------------------- doesn't satisfy `_: StreamExt` or `_: Stream`
+    |
+    = note: the following trait bounds were not satisfied:
+            `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: Stream`
+            which is required by `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: StreamExt`
+
+error[E0277]: the trait bound `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: Stream` is not satisfied
+   --> src/response-generator/tests/integration_tests.rs:133:59
+    |
+133 |     let chunks: Vec<_> = tokio_stream::StreamExt::collect(stream).await;
+    |                          -------------------------------- ^^^^^^ the trait `Stream` is not implemented for `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>`
+    |                          |
+    |                          required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `Stream`:
+              &mut S
+              Abortable<St>
+              AssertUnwindSafe<S>
+              Box<S>
+              Buffer<S, Item>
+              BufferUnordered<St>
+              Buffered<St>
+              ChunksTimeout<S>
+            and 116 others
+note: required by a bound in `tokio_stream::StreamExt::collect`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-stream-0.1.17/src/stream_ext.rs:106:22
+    |
+106 | pub trait StreamExt: Stream {
+    |                      ^^^^^^ required by this bound in `StreamExt::collect`
+...
+915 |     fn collect<T>(self) -> Collect<Self, T>
+    |        ------- required by a bound in this associated function
+
+error[E0603]: macro import `info` is private
+    --> src/integration/src/lib.rs:41:19
+     |
+41   | pub use tracing::{info, error};
+     |                   ^^^^ private macro import
+     |
+note: the macro import `info` is defined here...
+    --> src/integration/src/tracing.rs:10:15
+     |
+10   | use tracing::{info, warn, error, instrument, Span};
+     |               ^^^^
+note: ...and refers to the macro `info` which is defined here
+    --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-0.1.41/src/macros.rs:1866:1
+     |
+1866 | macro_rules! info {
+     | ^^^^^^^^^^^^^^^^^ you could import this directly
+help: import `info` directly
+     |
+41   | pub use tracing::{tracing::macros::info, error};
+     |                   +++++++++++++++++
+
+error[E0277]: the trait bound `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: Stream` is not satisfied
+   --> src/response-generator/tests/integration_tests.rs:133:26
+    |
+133 |     let chunks: Vec<_> = tokio_stream::StreamExt::collect(stream).await;
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Stream` is not implemented for `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>`
+    |
+    = help: the following other types implement trait `Stream`:
+              &mut S
+              Abortable<St>
+              AssertUnwindSafe<S>
+              Box<S>
+              Buffer<S, Item>
+              BufferUnordered<St>
+              Buffered<St>
+              ChunksTimeout<S>
+            and 116 others
+note: required by a bound in `tokio_stream::stream_ext::collect::Collect`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-stream-0.1.17/src/stream_ext/collect.rs:11:1
+    |
+11  | / pin_project! {
+12  | |     /// Future returned by the [`collect`](super::StreamExt::collect) method.
+13  | |     #[must_use = "futures do nothing unless you `.await` or poll them"]
+14  | |     #[derive(Debug)]
+15  | |     pub struct Collect<T, U>
+    | |                ------- required by a bound in this struct
+...   |
+27  | | }
+    | |_^ required by this bound in `Collect`
+    = note: this error originates in the macro `$crate::__pin_project_parse_generics` which comes from the expansion of the macro `pin_project` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: the method `next` exists for struct `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>`, but its trait bounds were not satisfied
+   --> src/response-generator/examples/streaming_demo.rs:256:49
+    |
+256 |     while let Some(chunk_result) = error_stream.next().await {
+    |                                                 ^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+   ::: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/sync/mpsc/bounded.rs:106:1
+    |
+106 | pub struct Receiver<T> {
+    | ---------------------- doesn't satisfy `_: StreamExt` or `_: Stream`
+    |
+    = note: the following trait bounds were not satisfied:
+            `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: Stream`
+            which is required by `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: StreamExt`
+
+error[E0603]: macro import `error` is private
+    --> src/integration/src/lib.rs:41:25
+     |
+41   | pub use tracing::{info, error};
+     |                         ^^^^^ private macro import
+     |
+note: the macro import `error` is defined here...
+    --> src/integration/src/tracing.rs:10:27
+     |
+10   | use tracing::{info, warn, error, instrument, Span};
+     |                           ^^^^^
+note: ...and refers to the macro `error` which is defined here
+    --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-0.1.41/src/macros.rs:2422:1
+     |
+2422 | macro_rules! error {
+     | ^^^^^^^^^^^^^^^^^^ you could import this directly
+help: import `error` directly
+     |
+41   | pub use tracing::{info, tracing::macros::error};
+     |                         +++++++++++++++++
+
+error[E0277]: the trait bound `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>: Stream` is not satisfied
+   --> src/response-generator/tests/integration_tests.rs:133:67
+    |
+133 |     let chunks: Vec<_> = tokio_stream::StreamExt::collect(stream).await;
+    |                                                                   ^^^^^ the trait `Stream` is not implemented for `tokio::sync::mpsc::Receiver<Result<ResponseChunk, ResponseError>>`
+    |
+    = help: the following other types implement trait `Stream`:
+              &mut S
+              Abortable<St>
+              AssertUnwindSafe<S>
+              Box<S>
+              Buffer<S, Item>
+              BufferUnordered<St>
+              Buffered<St>
+              ChunksTimeout<S>
+            and 116 others
+note: required by a bound in `tokio_stream::stream_ext::collect::Collect`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-stream-0.1.17/src/stream_ext/collect.rs:11:1
+    |
+11  | / pin_project! {
+12  | |     /// Future returned by the [`collect`](super::StreamExt::collect) method.
+13  | |     #[must_use = "futures do nothing unless you `.await` or poll them"]
+14  | |     #[derive(Debug)]
+15  | |     pub struct Collect<T, U>
+    | |                ------- required by a bound in this struct
+...   |
+27  | | }
+    | |_^ required by this bound in `Collect`
+    = note: this error originates in the macro `$crate::__pin_project_parse_generics` which comes from the expansion of the macro `pin_project` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: private item shadows public glob re-export
+  --> src/integration/src/lib.rs:39:5
+   |
+39 | use crate::error::IntegrationError;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+note: the name `IntegrationError` in the type namespace is supposed to be publicly re-exported here
+  --> src/integration/src/lib.rs:64:9
+   |
+64 | pub use error::*;
+   |         ^^^^^^^^
+note: but the private item here shadows it
+  --> src/integration/src/lib.rs:39:5
+   |
+39 | use crate::error::IntegrationError;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: `#[warn(hidden_glob_reexports)]` on by default
+
+warning: unused import: `crate::temp_types::*`
+  --> src/integration/src/coordinator.rs:15:5
+   |
+15 | use crate::temp_types::*;
+   |     ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `warn`
+  --> src/integration/src/pipeline.rs:10:21
+   |
+10 | use tracing::{info, warn, error, instrument};
+   |                     ^^^^
+
+warning: unused import: `Span`
+  --> src/integration/src/tracing.rs:10:46
+   |
+10 | use tracing::{info, warn, error, instrument, Span};
+   |                                              ^^^^
+
+warning: unused imports: `HeaderMap`, `Query`, `body::Body`, and `self`
+  --> src/integration/src/gateway.rs:14:24
+   |
+14 |     http::{StatusCode, HeaderMap, Method},
+   |                        ^^^^^^^^^
+15 |     response::Response,
+16 |     body::Body,
+   |     ^^^^^^^^^^
+17 |     middleware::{self, Next},
+   |                  ^^^^
+18 |     extract::{Path, Query, State},
+   |                     ^^^^^
+
+warning: unused import: `tower::ServiceBuilder`
+  --> src/integration/src/gateway.rs:20:5
+   |
+20 | use tower::ServiceBuilder;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `add_extension::AddExtensionLayer`
+  --> src/integration/src/gateway.rs:25:5
+   |
+25 |     add_extension::AddExtensionLayer,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `warn`
+  --> src/integration/src/gateway.rs:28:21
+   |
+28 | use tracing::{info, warn, error, instrument};
+   |                     ^^^^
+
+warning: unused import: `std::time::Duration`
+ --> src/integration/src/config.rs:8:5
+  |
+8 | use std::time::Duration;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `info` and `warn`
+  --> src/integration/src/metrics.rs:11:15
+   |
+11 | use tracing::{info, warn, error};
+   |               ^^^^  ^^^^
+
+warning: unused import: `debug`
+  --> src/integration/src/service_discovery.rs:10:34
+   |
+10 | use tracing::{info, warn, error, debug};
+   |                                  ^^^^^
+
+warning: unused import: `IntegrationError`
+  --> src/integration/src/service_discovery.rs:13:21
+   |
+13 | use crate::{Result, IntegrationError};
+   |                     ^^^^^^^^^^^^^^^^
+
+warning: ambiguous glob re-exports
+  --> src/integration/src/lib.rs:64:9
+   |
+64 | pub use error::*;
+   |         ^^^^^^^^ the name `ErrorMetrics` in the type namespace is first re-exported here
+65 | pub use config::*;
+66 | pub use metrics::*;
+   |         ---------- but the name `ErrorMetrics` in the type namespace is also re-exported here
+   |
+   = note: `#[warn(ambiguous_glob_reexports)]` on by default
+
+error[E0596]: cannot borrow `custom_generator` as mutable, as it is not declared as mutable
+  --> src/response-generator/examples/advanced_features.rs:40:20
+   |
+40 |     let response = custom_generator.generate(request).await?;
+   |                    ^^^^^^^^^^^^^^^^ cannot borrow as mutable
+   |
+help: consider changing this to be mutable
+   |
+32 |     let mut custom_generator = ResponseGenerator::new(custom_config);
+   |         +++
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/examples/advanced_features.rs:114:9
+    |
+114 |     let generator = ResponseGenerator::default();
+    |         ^^^^^^^^^ not mutable
+...
+124 |     let response = generator.generate(request).await?;
+    |                    --------- cannot borrow as mutable
+...
+151 |     let perf_response = generator.generate(perf_request).await?;
+    |                         --------- cannot borrow as mutable
+...
+181 |     let validation_response = generator.generate(validation_request).await?;
+    |                               --------- cannot borrow as mutable
+...
+221 |         let format_response = generator.generate(format_request).await?;
+    |                               --------- cannot borrow as mutable
+...
+252 |     match generator.generate(high_confidence_request).await {
+    |           --------- cannot borrow as mutable
+...
+270 |     match generator.generate(empty_request).await {
+    |           --------- cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+114 |     let mut generator = ResponseGenerator::default();
+    |         +++
+
+error[E0599]: no method named `transactional_bulk_insert` found for struct `VectorStorage` in the current scope
+   --> src/storage/examples/basic_usage.rs:234:29
+    |
+234 |     let tx_result = storage.transactional_bulk_insert(bulk_request).await?;
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^ method not found in `VectorStorage`
+    |
+   ::: /workspaces/doc-rag/src/storage/src/operations.rs:70:14
+    |
+70  |     async fn transactional_bulk_insert(&self, request: BulkInsertRequest) -> Result<BulkInsertResponse>;
+    |              ------------------------- the method is available for `VectorStorage` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `TransactionOperations` which provides `transactional_bulk_insert` is implemented but not in scope; perhaps you want to import it
+    |
+3   + use storage::TransactionOperations;
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `response-generator` (example "basic_usage") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error[E0599]: no method named `with_detailed_context` found for enum `StorageError` in the current scope
+   --> src/storage/tests/unit.rs:403:34
+    |
+403 |     let contextual_error = error.with_detailed_context(context).unwrap_err();
+    |                                  ^^^^^^^^^^^^^^^^^^^^^
+    |
+help: there is a method `ext_context` with a similar name
+    |
+403 -     let contextual_error = error.with_detailed_context(context).unwrap_err();
+403 +     let contextual_error = error.ext_context(context).unwrap_err();
+    |
+
+error: could not compile `response-generator` (example "streaming_demo") due to 4 previous errors
+error[E0432]: unresolved import `crate::metrics::MetricsRegistry`
+  --> src/api/src/server.rs:23:5
+   |
+23 |     metrics::MetricsRegistry,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^ no `MetricsRegistry` in `metrics`
+   |
+   = help: consider importing this struct instead:
+           crate::middleware::metrics::MetricsRegistry
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+  --> src/response-generator/tests/integration_tests.rs:21:20
+   |
+21 |     let response = generator.generate(request).await?;
+   |                    ^^^^^^^^^ cannot borrow as mutable
+   |
+help: consider changing this to be mutable
+   |
+15 |     let mut generator = ResponseGenerator::new(config);
+   |         +++
+
+error[E0432]: unresolved import `rand`
+   --> src/api/src/middleware/auth.rs:194:9
+    |
+194 |     use rand::Rng;
+    |         ^^^^ use of unresolved module or unlinked crate `rand`
+    |
+    = help: if you wanted to use a crate named `rand`, use `cargo add rand` to add it to your `Cargo.toml`
+
+error: cannot find attribute `validate` in this scope
+  --> src/api/src/models.rs:31:7
+   |
+31 |     #[validate(length(min = 1, max = 100, message = "Batch must contain 1-100 documents"))]
+   |       ^^^^^^^^
+   |
+   = note: `validate` is an attribute that can be used by the derive macro `Validate`, you might be missing a `derive` attribute
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+  --> src/response-generator/tests/integration_tests.rs:55:20
+   |
+55 |     let response = generator.generate(request).await?;
+   |                    ^^^^^^^^^ cannot borrow as mutable
+   |
+help: consider changing this to be mutable
+   |
+34 |     let mut generator = ResponseGenerator::new(config);
+   |         +++
+
+For more information about this error, try `rustc --explain E0596`.
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+  --> src/response-generator/tests/integration_tests.rs:85:24
+   |
+85 |         let response = generator.generate(request).await?;
+   |                        ^^^^^^^^^ cannot borrow as mutable
+   |
+help: consider changing this to be mutable
+   |
+68 |     let mut generator = ResponseGenerator::new(config);
+   |         +++
+
+warning: `response-generator` (example "advanced_features") generated 2 warnings
+error: could not compile `response-generator` (example "advanced_features") due to 2 previous errors; 2 warnings emitted
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/tests/integration_tests.rs:106:18
+    |
+106 |     let result = generator.generate(request).await;
+    |                  ^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+97  |     let mut generator = ResponseGenerator::new(config);
+    |         +++
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/tests/integration_tests.rs:157:20
+    |
+157 |     let response = generator.generate(request).await?;
+    |                    ^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+149 |     let mut generator = ResponseGenerator::new(config);
+    |         +++
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/tests/integration_tests.rs:179:20
+    |
+179 |     let response = generator.generate(request).await?;
+    |                    ^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+173 |     let mut generator = ResponseGenerator::new(config);
+    |         +++
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/tests/integration_tests.rs:237:20
+    |
+237 |     let response = generator.generate(request).await?;
+    |                    ^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+200 |     let mut generator = ResponseGenerator::new(config);
+    |         +++
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/tests/integration_tests.rs:263:18
+    |
+263 |     let result = generator.generate(request).await;
+    |                  ^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+256 |     let mut generator = ResponseGenerator::new(config);
+    |         +++
+
+error[E0433]: failed to resolve: could not find `runtime` in `opentelemetry`
+  --> src/api/src/tracing.rs:63:47
+   |
+63 |                 .install_batch(opentelemetry::runtime::Tokio)
+   |                                               ^^^^^^^ could not find `runtime` in `opentelemetry`
+
+error[E0412]: cannot find type `ReceiverStream` in this scope
+  --> src/api/src/handlers/queries.rs:67:17
+   |
+67 | ) -> Result<Sse<ReceiverStream<tokio::sync::mpsc::Receiver<Result<axum::response::sse::Event, std::convert::Infallible>>>>> {
+   |                 ^^^^^^^^^^^^^^ not found in this scope
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/tests/integration_tests.rs:295:9
+    |
+295 |         generator.generate(request)
+    |         ^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+283 |     let mut generator = ResponseGenerator::new(config);
+    |         +++
+
+error[E0531]: cannot find tuple struct or tuple variant `Path` in this scope
+   --> src/api/src/handlers/queries.rs:214:5
+    |
+214 |     Path(query_id): axum::extract::Path<Uuid>,
+    |     ^^^^ not found in this scope
+    |
+help: consider importing this tuple struct
+    |
+1   + use axum::extract::Path;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Path` in this scope
+   --> src/api/src/handlers/queries.rs:237:5
+    |
+237 |     Path(query_id): axum::extract::Path<Uuid>,
+    |     ^^^^ not found in this scope
+    |
+help: consider importing this tuple struct
+    |
+1   + use axum::extract::Path;
+    |
+
+error: captured variable cannot escape `FnMut` closure body
+   --> src/response-generator/tests/integration_tests.rs:295:9
+    |
+283 |     let generator = ResponseGenerator::new(config);
+    |         --------- variable defined here
+...
+294 |     let futures: Vec<_> = requests.into_iter().map(|request| {
+    |                                                            - inferred to be a `FnMut` closure
+295 |         generator.generate(request)
+    |         ---------^^^^^^^^^^^^^^^^^^
+    |         |
+    |         returns an `async` block that contains a reference to a captured variable, which then escapes the closure body
+    |         variable captured here
+    |
+    = note: `FnMut` closures only have access to their captured variables while they are executing...
+    = note: ...therefore, they cannot allow references to captured variables to escape
+
+error[E0531]: cannot find tuple struct or tuple variant `Path` in this scope
+   --> src/api/src/handlers/queries.rs:258:5
+    |
+258 |     Path(query_id): axum::extract::Path<Uuid>,
+    |     ^^^^ not found in this scope
+    |
+help: consider importing this tuple struct
+    |
+1   + use axum::extract::Path;
+    |
+
+error[E0412]: cannot find type `Uuid` in this scope
+   --> src/api/src/handlers/admin.rs:191:18
+    |
+191 |         file_id: Uuid,
+    |                  ^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+1   + use sqlx::types::Uuid;
+    |
+1   + use uuid::Uuid;
+    |
+
+error[E0412]: cannot find type `Uuid` in this scope
+   --> src/api/src/handlers/admin.rs:200:48
+    |
+200 |     pub async fn get_file_info(&self, file_id: Uuid) -> anyhow::Result<crate::models::FileUploadResponse> {
+    |                                                ^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+1   + use sqlx::types::Uuid;
+    |
+1   + use uuid::Uuid;
+    |
+
+error[E0412]: cannot find type `Uuid` in this scope
+   --> src/api/src/handlers/admin.rs:214:46
+    |
+214 |     pub async fn delete_file(&self, file_id: Uuid, user_id: Uuid) -> anyhow::Result<bool> {
+    |                                              ^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+1   + use sqlx::types::Uuid;
+    |
+1   + use uuid::Uuid;
+    |
+
+error[E0412]: cannot find type `Uuid` in this scope
+   --> src/api/src/handlers/admin.rs:214:61
+    |
+214 |     pub async fn delete_file(&self, file_id: Uuid, user_id: Uuid) -> anyhow::Result<bool> {
+    |                                                             ^^^^ not found in this scope
+    |
+help: consider importing one of these structs
+    |
+1   + use sqlx::types::Uuid;
+    |
+1   + use uuid::Uuid;
+    |
+
+warning: unreachable statement
+   --> src/embedder/src/models.rs:224:9
+    |
+221 |           let session = unimplemented!("ONNX support disabled");
+    |                         --------------------------------------- any code following this expression is unreachable
+...
+224 | /         let tokenizer_path = model_path.parent()
+225 | |             .ok_or_else(|| EmbedderError::ModelNotFound)?
+226 | |             .join("vocab.txt");
+    | |_______________________________^ unreachable statement
+    |
+    = note: `#[warn(unreachable_code)]` on by default
+
+warning: unused variable: `document_id`
+   --> src/storage/tests/unit.rs:370:9
+    |
+370 |     let document_id = Uuid::new_v4();
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_document_id`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused import: `tokio::signal`
+ --> src/api/src/server.rs:4:5
+  |
+4 | use tokio::signal;
+  |     ^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `error`
+  --> src/api/src/server.rs:13:27
+   |
+13 | use tracing::{info, warn, error};
+   |                           ^^^^^
+
+warning: unused imports: `Json`, `Multipart`, `Path`, `Query`, `Sse`, `State`, and `http::StatusCode`
+ --> src/api/src/routes.rs:2:15
+  |
+2 |     extract::{Multipart, Path, Query, State},
+  |               ^^^^^^^^^  ^^^^  ^^^^^  ^^^^^
+3 |     http::StatusCode,
+  |     ^^^^^^^^^^^^^^^^
+4 |     response::{Json, Sse},
+  |                ^^^^  ^^^
+
+warning: unused import: `uuid::Uuid`
+  --> src/api/src/routes.rs:11:5
+   |
+11 | use uuid::Uuid;
+   |     ^^^^^^^^^^
+
+warning: unused imports: `ApiError`, `AuthResponse`, `BatchIngestRequest`, `BatchIngestResponse`, `ComponentStatusResponse`, `HealthResponse`, `IngestRequest`, `IngestResponse`, `LoginRequest`, `QueryRequest`, `QueryResponse`, `Result`, and `SystemInfo`
+  --> src/api/src/routes.rs:26:9
+   |
+26 |         IngestRequest, IngestResponse, QueryRequest, QueryResponse,
+   |         ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^^
+27 |         BatchIngestRequest, BatchIngestResponse, LoginRequest, AuthResponse,
+   |         ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^
+28 |         HealthResponse, SystemInfo, ComponentStatusResponse
+   |         ^^^^^^^^^^^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^
+...
+31 |     ApiError, Result,
+   |     ^^^^^^^^  ^^^^^^
+
+warning: unused import: `http::StatusCode`
+ --> src/api/src/handlers/documents.rs:4:5
+  |
+4 |     http::StatusCode,
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `IngestTask`
+  --> src/api/src/handlers/documents.rs:14:25
+   |
+14 |         DocumentStatus, IngestTask, TaskStatus
+   |                         ^^^^^^^^^^
+
+warning: unused import: `self`
+ --> src/api/src/handlers/queries.rs:6:23
+  |
+6 | use futures::stream::{self, StreamExt};
+  |                       ^^^^
+
+warning: unused import: `StreamingQueryResponse`
+  --> src/api/src/handlers/queries.rs:17:38
+   |
+17 |         QueryRequest, QueryResponse, StreamingQueryResponse, QueryHistoryRequest,
+   |                                      ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `http::StatusCode`
+ --> src/api/src/handlers/health.rs:4:5
+  |
+4 |     http::StatusCode,
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> src/api/src/handlers/metrics.rs:3:5
+  |
+3 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `http::StatusCode`
+ --> src/api/src/handlers/auth.rs:4:5
+  |
+4 |     http::StatusCode,
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `error`
+ --> src/api/src/handlers/auth.rs:8:27
+  |
+8 | use tracing::{info, warn, error};
+  |                           ^^^^^
+
+warning: unused import: `AuthContext`
+  --> src/api/src/handlers/auth.rs:13:68
+   |
+13 |     middleware::auth::{generate_jwt_token, generate_refresh_token, AuthContext, AuthExtension},
+   |                                                                    ^^^^^^^^^^^
+
+warning: unused imports: `HeaderValue` and `StatusCode`
+ --> src/api/src/middleware/auth.rs:3:12
+  |
+3 |     http::{HeaderValue, StatusCode},
+  |            ^^^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused import: `middleware::Next`
+ --> src/api/src/middleware/metrics.rs:3:5
+  |
+3 |     middleware::Next,
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `tracing::warn`
+  --> src/api/src/middleware/metrics.rs:14:5
+   |
+14 | use tracing::warn;
+   |     ^^^^^^^^^^^^^
+
+warning: unused import: `middleware::Next`
+ --> src/api/src/middleware/error_handling.rs:4:5
+  |
+4 |     middleware::Next,
+  |     ^^^^^^^^^^^^^^^^
+
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/tests/integration_tests.rs:341:25
+    |
+341 |         let _response = generator.generate(request).await?;
+    |                         ^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+333 |     let mut generator = ResponseGenerator::new(config);
+    |         +++
+
+warning: unused import: `crate::ApiError`
+  --> src/api/src/middleware/error_handling.rs:16:5
+   |
+16 | use crate::ApiError;
+   |     ^^^^^^^^^^^^^^^
+
+warning: unused imports: `HeaderMap`, `Uri`, and `Version`
+ --> src/api/src/middleware/request_logging.rs:3:12
+  |
+3 |     http::{HeaderMap, Method, StatusCode, Uri, Version},
+  |            ^^^^^^^^^                      ^^^  ^^^^^^^
+
+warning: unused import: `Span`
+  --> src/api/src/middleware/request_logging.rs:12:27
+   |
+12 | use tracing::{info, warn, Span};
+   |                           ^^^^
+
+warning: unused imports: `error` and `warn`
+ --> src/api/src/clients.rs:6:22
+  |
+6 | use tracing::{debug, error, info, warn};
+  |                      ^^^^^        ^^^^
+
+warning: unused imports: `ApiError`, `HealthStatus`, and `TaskStatus`
+  --> src/api/src/clients.rs:12:54
+   |
+12 |         QueryRequest, QueryResponse, DocumentStatus, TaskStatus, 
+   |                                                      ^^^^^^^^^^
+13 |         HealthStatus, QueryHistoryRequest, QueryHistoryResponse,
+   |         ^^^^^^^^^^^^
+...
+16 |     ApiError,
+   |     ^^^^^^^^
+
+warning: unused import: `opentelemetry::trace::TracerProvider`
+  --> src/api/src/tracing.rs:57:17
+   |
+57 |             use opentelemetry::trace::TracerProvider;
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::time::Duration`
+ --> src/api/src/security.rs:2:5
+  |
+2 | use std::time::Duration;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+Some errors have detailed explanations: E0369, E0599.
+For more information about an error, try `rustc --explain E0369`.
+error[E0596]: cannot borrow `generator` as mutable, as it is not declared as mutable
+   --> src/response-generator/tests/integration_tests.rs:404:20
+    |
+404 |     let response = generator.generate(request).await?;
+    |                    ^^^^^^^^^ cannot borrow as mutable
+    |
+help: consider changing this to be mutable
+    |
+354 |     let mut generator = ResponseGenerator::new(config);
+    |         +++
+
+warning: `storage` (example "basic_usage") generated 1 warning
+error: could not compile `storage` (example "basic_usage") due to 2 previous errors; 1 warning emitted
+Some errors have detailed explanations: E0277, E0596.
+For more information about an error, try `rustc --explain E0277`.
+warning: `response-generator` (test "integration_tests") generated 1 warning
+error: could not compile `response-generator` (test "integration_tests") due to 15 previous errors; 1 warning emitted
+warning: `storage` (test "unit") generated 3 warnings
+error: could not compile `storage` (test "unit") due to 1 previous error; 3 warnings emitted
+warning: unused variable: `session`
+   --> src/embedder/src/models.rs:221:13
+    |
+221 |         let session = unimplemented!("ONNX support disabled");
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_session`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `config`
+   --> src/embedder/src/models.rs:228:70
+    |
+228 |         let tokenizer = Box::new(BertTokenizer::new(&tokenizer_path, config.max_length)?)
+    |                                                                      ^^^^^^^^^^^^^^^^^
+    |
+    = help: did you mean to capture by reference instead?
+
+warning: use of deprecated type alias `std::panic::PanicInfo`: use `PanicHookInfo` instead
+  --> src/api/src/middleware/error_handling.rs:99:40
+   |
+99 | pub fn handle_panic(info: &std::panic::PanicInfo) -> Response {
+   |                                        ^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated function `base64::encode`: Use Engine::encode
+   --> src/api/src/clients.rs:389:32
+    |
+389 |             "content": base64::encode(&file_content),
+    |                                ^^^^^^
+
+error[E0531]: cannot find tuple struct or tuple variant `Path` in this scope
+   --> src/api/src/handlers/queries.rs:214:5
+    |
+214 |     Path(query_id): axum::extract::Path<Uuid>,
+    |     ^^^^ not found in this scope
+    |
+    = note: tuple struct `crate::handlers::files::tests::Path` exists but is inaccessible
+help: consider importing this tuple struct
+    |
+1   + use axum::extract::Path;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Path` in this scope
+   --> src/api/src/handlers/queries.rs:237:5
+    |
+237 |     Path(query_id): axum::extract::Path<Uuid>,
+    |     ^^^^ not found in this scope
+    |
+    = note: tuple struct `crate::handlers::files::tests::Path` exists but is inaccessible
+help: consider importing this tuple struct
+    |
+1   + use axum::extract::Path;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Path` in this scope
+   --> src/api/src/handlers/queries.rs:258:5
+    |
+258 |     Path(query_id): axum::extract::Path<Uuid>,
+    |     ^^^^ not found in this scope
+    |
+    = note: tuple struct `crate::handlers::files::tests::Path` exists but is inaccessible
+help: consider importing this tuple struct
+    |
+1   + use axum::extract::Path;
+    |
+
+error[E0412]: cannot find type `Uuid` in this scope
+   --> src/api/src/handlers/admin.rs:191:18
+    |
+191 |         file_id: Uuid,
+    |                  ^^^^ not found in this scope
+    |
+    = note: struct `crate::errors::tests::Uuid` exists but is inaccessible
+help: consider importing one of these structs
+    |
+1   + use sqlx::types::Uuid;
+    |
+1   + use uuid::Uuid;
+    |
+
+error[E0412]: cannot find type `Uuid` in this scope
+   --> src/api/src/handlers/admin.rs:200:48
+    |
+200 |     pub async fn get_file_info(&self, file_id: Uuid) -> anyhow::Result<crate::models::FileUploadResponse> {
+    |                                                ^^^^ not found in this scope
+    |
+    = note: struct `crate::errors::tests::Uuid` exists but is inaccessible
+help: consider importing one of these structs
+    |
+1   + use sqlx::types::Uuid;
+    |
+1   + use uuid::Uuid;
+    |
+
+error[E0412]: cannot find type `Uuid` in this scope
+   --> src/api/src/handlers/admin.rs:214:46
+    |
+214 |     pub async fn delete_file(&self, file_id: Uuid, user_id: Uuid) -> anyhow::Result<bool> {
+    |                                              ^^^^ not found in this scope
+    |
+    = note: struct `crate::errors::tests::Uuid` exists but is inaccessible
+help: consider importing one of these structs
+    |
+1   + use sqlx::types::Uuid;
+    |
+1   + use uuid::Uuid;
+    |
+
+warning: unreachable statement
+   --> src/embedder/src/models.rs:295:9
+    |
+286 |         let outputs = unimplemented!("ONNX support disabled");
+    |                       --------------------------------------- any code following this expression is unreachable
+...
+295 |         let embeddings_tensor: ndarray::ArrayView3<f32> = unimplemented!("ONNX support disabled");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unreachable statement
+
+error[E0412]: cannot find type `Uuid` in this scope
+   --> src/api/src/handlers/admin.rs:214:61
+    |
+214 |     pub async fn delete_file(&self, file_id: Uuid, user_id: Uuid) -> anyhow::Result<bool> {
+    |                                                             ^^^^ not found in this scope
+    |
+    = note: struct `crate::errors::tests::Uuid` exists but is inaccessible
+help: consider importing one of these structs
+    |
+1   + use sqlx::types::Uuid;
+    |
+1   + use uuid::Uuid;
+    |
+
+error[E0107]: type alias takes 1 generic argument but 2 generic arguments were supplied
+   --> src/integration/src/gateway.rs:528:6
+    |
+528 | ) -> Result<&'static str, StatusCode> {
+    |      ^^^^^^             ------------ help: remove the unnecessary generic argument
+    |      |
+    |      expected 1 generic argument
+    |
+note: type alias defined here, with 1 generic parameter: `T`
+   --> src/integration/src/lib.rs:44:10
+    |
+44  | pub type Result<T> = std::result::Result<T, IntegrationError>;
+    |          ^^^^^^ -
+
+warning: unused import: `mockall::predicate::*`
+   --> src/api/src/handlers/documents.rs:261:9
+    |
+261 |     use mockall::predicate::*;
+    |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `HeaderValue`
+   --> src/api/src/middleware/auth.rs:214:22
+    |
+214 |     use axum::http::{HeaderValue, Method, Request};
+    |                      ^^^^^^^^^^^
+
+warning: unused imports: `IpAddr` and `Ipv4Addr`
+   --> src/api/src/middleware/request_logging.rs:330:20
+    |
+330 |     use std::net::{IpAddr, Ipv4Addr};
+    |                    ^^^^^^  ^^^^^^^^
+
+error[E0282]: type annotations needed for `Vec<_>`
+   --> src/embedder/src/models.rs:261:13
+    |
+261 |         let mut input_ids = Vec::with_capacity(batch_size * seq_len);
+    |             ^^^^^^^^^^^^^   ---------------------------------------- type must be known at this point
+    |
+help: consider giving `input_ids` an explicit type, where the type for type parameter `T` is specified
+    |
+261 |         let mut input_ids: Vec<T> = Vec::with_capacity(batch_size * seq_len);
+    |                          ++++++++
+
+error[E0382]: borrow of moved value
+    --> src/integration/src/coordinator.rs:304:13
+     |
+297  |         if let Err(e) = self.event_tx.send(CoordinationEvent::ComponentRegistered { component: registration }) {
+     |                                                                                                ------------ value moved here
+...
+304  |             &registration.service_endpoint,
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ value borrowed here after move
+     |
+     = note: move occurs because value has type `ComponentRegistration`, which does not implement the `Copy` trait
+     = note: borrow occurs due to deref coercion to `str`
+note: deref defined here
+    --> /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/string.rs:2733:5
+     |
+2733 |     type Target = str;
+     |     ^^^^^^^^^^^
+
+error[E0599]: no method named `context` found for struct `HashMap` in the current scope
+  --> src/api/src/server.rs:46:14
+   |
+45 | /         clients.health_check_all().await
+46 | |             .context("Initial component health check failed")?;
+   | |_____________-^^^^^^^
+   |
+help: there is a method `with_context` with a similar name
+   |
+46 |             .with_context("Initial component health check failed")?;
+   |              +++++
+
+error[E0433]: failed to resolve: use of undeclared type `Server`
+  --> src/api/src/server.rs:65:9
+   |
+65 |         Server::bind(&addr)
+   |         ^^^^^^ use of undeclared type `Server`
+   |
+help: there is an enum variant `opentelemetry::trace::SpanKind::Server`; try using the variant's enum
+   |
+65 -         Server::bind(&addr)
+65 +         opentelemetry::trace::SpanKind::bind(&addr)
+   |
+
+error[E0433]: failed to resolve: use of undeclared type `Server`
+  --> src/api/src/server.rs:84:9
+   |
+84 |         Server::bind(&addr)
+   |         ^^^^^^ use of undeclared type `Server`
+   |
+help: there is an enum variant `opentelemetry::trace::SpanKind::Server`; try using the variant's enum
+   |
+84 -         Server::bind(&addr)
+84 +         opentelemetry::trace::SpanKind::bind(&addr)
+   |
+
+error[E0382]: borrow of moved value
+    --> src/integration/src/coordinator.rs:304:13
+     |
+297  |         if let Err(e) = self.event_tx.send(CoordinationEvent::ComponentRegistered { component: registration }) {
+     |                                                                                                ------------ value moved here
+...
+304  |             &registration.service_endpoint,
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ value borrowed here after move
+     |
+     = note: move occurs because value has type `coordinator::ComponentRegistration`, which does not implement the `Copy` trait
+     = note: borrow occurs due to deref coercion to `str`
+note: deref defined here
+    --> /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/string.rs:2733:5
+     |
+2733 |     type Target = str;
+     |     ^^^^^^^^^^^
+
+error[E0282]: type annotations needed for `Vec<_>`
+  --> src/api/src/handlers/documents.rs:89:9
+   |
+89 |     let mut results = Vec::new();
+   |         ^^^^^^^^^^^   ---------- type must be known at this point
+   |
+help: consider giving `results` an explicit type, where the type for type parameter `T` is specified
+   |
+89 |     let mut results: Vec<T> = Vec::new();
+   |                    ++++++++
+
+error[E0433]: failed to resolve: use of undeclared type `ReceiverStream`
+   --> src/api/src/handlers/queries.rs:146:18
+    |
+146 |     let stream = ReceiverStream::new(rx);
+    |                  ^^^^^^^^^^^^^^ use of undeclared type `ReceiverStream`
+
+error[E0505]: cannot move out of `services` because it is borrowed
+   --> src/integration/src/service_discovery.rs:349:22
+    |
+335 |         let services = self.services.read().await;
+    |             -------- binding `services` declared here
+336 |         
+337 |         let instances = services.get(service_name)?;
+    |                         -------- borrow of `services` occurs here
+...
+349 |                 drop(services);
+    |                      ^^^^^^^^ move out of `services` occurs here
+350 |                 self.select_round_robin(service_name, &healthy_instances).await
+    |                                                       ------------------ borrow later used here
+
+error[E0369]: binary operation `!=` cannot be applied to type `HealthStatus`
+   --> src/integration/src/health.rs:557:27
+    |
+557 |             if old_status != new_status {
+    |                ---------- ^^ ---------- HealthStatus
+    |                |
+    |                HealthStatus
+    |
+note: an implementation of `PartialEq` might be missing for `HealthStatus`
+   --> src/integration/src/lib.rs:284:1
+    |
+284 | pub enum HealthStatus {
+    | ^^^^^^^^^^^^^^^^^^^^^ must implement `PartialEq`
+help: consider annotating `HealthStatus` with `#[derive(PartialEq)]`
+   --> src/integration/src/lib.rs:284:1
+    |
+284 + #[derive(PartialEq)]
+285 | pub enum HealthStatus {
+    |
+
+warning: unused variable: `refresh_token`
+   --> src/api/src/handlers/auth.rs:201:45
+    |
+201 | async fn store_refresh_token(user_id: Uuid, refresh_token: &str) -> Result<()> {
+    |                                             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_refresh_token`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+For more information about this error, try `rustc --explain E0282`.
+warning: `embedder` (lib) generated 8 warnings
+error: could not compile `embedder` (lib) due to 1 previous error; 8 warnings emitted
+error[E0599]: the method `clone` exists for enum `std::option::Option<BoxedTracer>`, but its trait bounds were not satisfied
+   --> src/integration/src/tracing.rs:459:88
+    |
+459 |                 subscriber.with(tracing_opentelemetry::layer().with_tracer(self.tracer.clone().unwrap()))
+    |                                                                                        ^^^^^ method cannot be called on `std::option::Option<BoxedTracer>` due to unsatisfied trait bounds
+    |
+   ::: /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:591:1
+    |
+591 | pub enum Option<T> {
+    | ------------------ doesn't satisfy `std::option::Option<BoxedTracer>: Clone`
+    |
+   ::: /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/opentelemetry-0.21.0/src/global/trace.rs:230:1
+    |
+230 | pub struct BoxedTracer(Box<dyn ObjectSafeTracer + Send + Sync>);
+    | ---------------------- doesn't satisfy `BoxedTracer: Clone`
+    |
+    = note: the following trait bounds were not satisfied:
+            `BoxedTracer: Clone`
+            which is required by `std::option::Option<BoxedTracer>: Clone`
+
+warning: unused variable: `endpoint`
+   --> src/integration/src/tracing.rs:473:39
+    |
+473 |     async fn initialize_jaeger(&self, endpoint: &str) -> Result<opentelemetry::global::BoxedTracer> {
+    |                                       ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_endpoint`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `result`
+   --> src/api/src/clients.rs:274:13
+    |
+274 |         let result: Value = response.json().await
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
+
+error[E0614]: type `PipelineMetrics` cannot be dereferenced
+   --> src/integration/src/gateway.rs:434:73
+    |
+434 |     status.insert("pipeline_metrics".to_string(), serde_json::to_value(&*pipeline_metrics).unwrap());
+    |                                                                         ^^^^^^^^^^^^^^^^^ can't be dereferenced
+
+error[E0277]: the trait bound `GatewayMetrics: Serialize` is not satisfied
+   --> src/integration/src/gateway.rs:435:72
+    |
+435 |     status.insert("gateway_metrics".to_string(), serde_json::to_value(&*gateway_metrics).unwrap());
+    |                                                  --------------------  ^^^^^^^^^^^^^^^^ the trait `Serialize` is not implemented for `GatewayMetrics`
+    |                                                  |
+    |                                                  required by a bound introduced by this call
+    |
+    = note: for local types consider adding `#[derive(serde::Serialize)]` to your `GatewayMetrics` type
+    = note: for types from other crates check whether the crate offers a `serde` feature flag
+    = help: the following other types implement trait `Serialize`:
+              &'a T
+              &'a mut T
+              ()
+              (T,)
+              (T0, T1)
+              (T0, T1, T2)
+              (T0, T1, T2, T3)
+              (T0, T1, T2, T3, T4)
+            and 244 others
+    = note: required for `&GatewayMetrics` to implement `Serialize`
+note: required by a bound in `serde_json::to_value`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.142/src/value/mod.rs:997:8
+    |
+995 | pub fn to_value<T>(value: T) -> Result<Value, Error>
+    |        -------- required by a bound in this function
+996 | where
+997 |     T: Serialize,
+    |        ^^^^^^^^^ required by this bound in `to_value`
+
+error[E0277]: the trait bound `fn(State<Arc<...>>, ...) -> ... {metrics_handler}: Handler<_, _>` is not satisfied
+   --> src/integration/src/gateway.rs:266:36
+    |
+266 |             .route("/metrics", get(metrics_handler))
+    |                                --- ^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiGateway>>, Extension<...>) -> ... {metrics_handler}`
+    |                                |
+    |                                required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `MethodRouter<S>` implements `Handler<(), S>`
+              `axum::handler::Layered<L, H, T, S>` implements `Handler<T, S>`
+note: required by a bound in `axum::routing::get`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:439:1
+    |
+439 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/integration-c15e1d769c020428.long-type-16820349740954737567.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0308]: mismatched types
+   --> src/api/src/clients.rs:290:69
+    |
+290 |         let response = self.query_processor_client.post("/process", request).await?;
+    |                                                    ----             ^^^^^^^ expected `&Value`, found `&QueryRequest`
+    |                                                    |
+    |                                                    arguments to this method are incorrect
+    |
+    = note: expected reference `&serde_json::Value`
+               found reference `&models::QueryRequest`
+note: method defined here
+   --> src/api/src/clients.rs:489:14
+    |
+489 |     async fn post(&self, path: &str, body: &Value) -> Result<Response> {
+    |              ^^^^                    ------------
+
+error[E0277]: the trait bound `fn(State<Arc<...>>, ...) -> ... {query_stream_handler}: Handler<_, _>` is not satisfied
+   --> src/integration/src/gateway.rs:270:42
+    |
+270 |             .route("/query/stream", post(query_stream_handler))
+    |                                     ---- ^^^^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiGateway>>, ...) -> ... {query_stream_handler}`
+    |                                     |
+    |                                     required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `MethodRouter<S>` implements `Handler<(), S>`
+              `axum::handler::Layered<L, H, T, S>` implements `Handler<T, S>`
+note: required by a bound in `post`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:443:1
+    |
+443 | top_level_handler_fn!(post, POST);
+    | ^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `post`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/integration-c15e1d769c020428.long-type-9059191418469695345.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: variable does not need to be mutable
+   --> src/integration/src/gateway.rs:594:5
+    |
+594 |     mut request: axum::extract::Request,
+    |     ----^^^^^^^
+    |     |
+    |     help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+error[E0277]: the trait bound `GatewayMetrics: Serialize` is not satisfied
+   --> src/integration/src/gateway.rs:435:72
+    |
+435 |     status.insert("gateway_metrics".to_string(), serde_json::to_value(&*gateway_metrics).unwrap());
+    |                                                  --------------------  ^^^^^^^^^^^^^^^^ the trait `Serialize` is not implemented for `GatewayMetrics`
+    |                                                  |
+    |                                                  required by a bound introduced by this call
+    |
+    = note: for local types consider adding `#[derive(serde::Serialize)]` to your `GatewayMetrics` type
+    = note: for types from other crates check whether the crate offers a `serde` feature flag
+    = help: the following other types implement trait `Serialize`:
+              &'a T
+              &'a mut T
+              ()
+              (T,)
+              (T0, T1)
+              (T0, T1, T2)
+              (T0, T1, T2, T3)
+              (T0, T1, T2, T3, T4)
+            and 264 others
+    = note: required for `&GatewayMetrics` to implement `Serialize`
+note: required by a bound in `serde_json::to_value`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.142/src/value/mod.rs:997:8
+    |
+995 | pub fn to_value<T>(value: T) -> Result<Value, Error>
+    |        -------- required by a bound in this function
+996 | where
+997 |     T: Serialize,
+    |        ^^^^^^^^^ required by this bound in `to_value`
+
+error[E0277]: the trait bound `fn(State<Arc<...>>, ...) -> ... {metrics_handler}: Handler<_, _>` is not satisfied
+   --> src/integration/src/gateway.rs:266:36
+    |
+266 |             .route("/metrics", get(metrics_handler))
+    |                                --- ^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiGateway>>, Extension<...>) -> ... {metrics_handler}`
+    |                                |
+    |                                required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `MethodRouter<S>` implements `Handler<(), S>`
+              `axum::handler::Layered<L, H, T, S>` implements `Handler<T, S>`
+note: required by a bound in `axum::routing::get`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:439:1
+    |
+439 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/integration-e823be920742fe29.long-type-5750227417171838909.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `fn(State<Arc<...>>, ...) -> ... {query_stream_handler}: Handler<_, _>` is not satisfied
+   --> src/integration/src/gateway.rs:270:42
+    |
+270 |             .route("/query/stream", post(query_stream_handler))
+    |                                     ---- ^^^^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn(State<Arc<ApiGateway>>, ...) -> ... {query_stream_handler}`
+    |                                     |
+    |                                     required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+    = help: the following other types implement trait `Handler<T, S>`:
+              `MethodRouter<S>` implements `Handler<(), S>`
+              `axum::handler::Layered<L, H, T, S>` implements `Handler<T, S>`
+note: required by a bound in `post`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:443:1
+    |
+443 | top_level_handler_fn!(post, POST);
+    | ^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `post`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/integration-e823be920742fe29.long-type-14605002976275151790.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `ResponseBody<Body, NeverClassifyEos<...>>: Default` is not satisfied
+   --> src/api/src/server.rs:126:14
+    |
+126 |             .layer(middleware)
+    |              ^^^^^ unsatisfied trait bound
+    |
+    = help: the trait `std::default::Default` is not implemented for `tower_http::trace::ResponseBody<axum::body::Body, NeverClassifyEos<ServerErrorsFailureClass>>`
+    = help: the trait `Service<axum::http::Request<ReqBody>>` is implemented for `Cors<S>`
+    = note: required for `Cors<Trace<RequestLoggingMiddleware<...>, ...>>` to implement `Service<axum::http::Request<axum::body::Body>>`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/api-c8b3f6d40ca6e449.long-type-10786274529723560350.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0308]: mismatched types
+   --> src/api/src/server.rs:127:25
+    |
+127 |               .with_state(AppState {
+    |  ______________----------_^
+    | |              |
+    | |              arguments to this method are incorrect
+128 | |                 config: self.config.clone(),
+129 | |                 clients: self.clients.clone(),
+130 | |                 metrics: self.metrics.clone(),
+131 | |             })
+    | |_____________^ expected `()`, found `AppState`
+    |
+note: method defined here
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/mod.rs:370:12
+    |
+370 |     pub fn with_state<S2>(self, state: S) -> Router<S2> {
+    |            ^^^^^^^^^^
+
+error[E0382]: use of moved value: `service_discovery`
+   --> src/integration/src/gateway.rs:723:74
+    |
+715 |         let service_discovery = Arc::new(ServiceDiscovery::new(config.clone()).await.unwrap());
+    |             ----------------- move occurs because `service_discovery` has type `std::sync::Arc<service_discovery::ServiceDiscovery>`, which does not implement the `Copy` trait
+...
+718 |             IntegrationCoordinator::new(config.clone(), service_discovery, message_bus.clone()).await.unwrap()
+    |                                                         ----------------- value moved here
+...
+723 |         let health_monitor = Arc::new(HealthMonitor::new(config.clone(), service_discovery).await.unwrap());
+    |                                                                          ^^^^^^^^^^^^^^^^^ value used here after move
+    |
+note: consider changing this parameter type in method `new` to borrow instead if owning the value isn't necessary
+   --> src/integration/src/coordinator.rs:202:28
+    |
+200 |     pub async fn new(
+    |                  --- in this method
+201 |         config: Arc<IntegrationConfig>,
+202 |         service_discovery: Arc<ServiceDiscovery>,
+    |                            ^^^^^^^^^^^^^^^^^^^^^ this parameter takes ownership of the value
+help: clone the value to increment its reference count
+    |
+718 |             IntegrationCoordinator::new(config.clone(), service_discovery.clone(), message_bus.clone()).await.unwrap()
+    |                                                                          ++++++++
+
+error[E0277]: the trait bound `AuthMiddleware: tower::Layer<Route>` is not satisfied
+   --> src/api/src/routes.rs:69:16
+    |
+69  |         .layer(AuthMiddleware::new(config.clone()))
+    |          ----- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `tower::Layer<Route>` is not implemented for `AuthMiddleware`
+    |          |
+    |          required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `tower::Layer<S>`:
+              `&'a T` implements `tower::Layer<S>`
+              `()` implements `tower::Layer<S>`
+              `(L1, L2)` implements `tower::Layer<S>`
+              `(L1, L2, L3)` implements `tower::Layer<S>`
+              `(L1, L2, L3, L4)` implements `tower::Layer<S>`
+              `(L1, L2, L3, L4, L5)` implements `tower::Layer<S>`
+              `(L1, L2, L3, L4, L5, L6)` implements `tower::Layer<S>`
+              `(L1, L2, L3, L4, L5, L6, L7)` implements `tower::Layer<S>`
+            and 76 others
+note: required by a bound in `Router::<S>::layer`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/mod.rs:283:12
+    |
+281 |     pub fn layer<L>(self, layer: L) -> Router<S>
+    |            ----- required by a bound in this associated function
+282 |     where
+283 |         L: Layer<Route> + Clone + Send + 'static,
+    |            ^^^^^^^^^^^^ required by this bound in `Router::<S>::layer`
+
+error[E0277]: the trait bound `security::RateLimitLayer: tower::Layer<Route>` is not satisfied
+   --> src/api/src/routes.rs:71:16
+    |
+71  |         .layer(RateLimitLayer::new(&config.security))
+    |          ----- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `tower::Layer<Route>` is not implemented for `security::RateLimitLayer`
+    |          |
+    |          required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `tower::Layer<S>`:
+              `&'a T` implements `tower::Layer<S>`
+              `()` implements `tower::Layer<S>`
+              `(L1, L2)` implements `tower::Layer<S>`
+              `(L1, L2, L3)` implements `tower::Layer<S>`
+              `(L1, L2, L3, L4)` implements `tower::Layer<S>`
+              `(L1, L2, L3, L4, L5)` implements `tower::Layer<S>`
+              `(L1, L2, L3, L4, L5, L6)` implements `tower::Layer<S>`
+              `(L1, L2, L3, L4, L5, L6, L7)` implements `tower::Layer<S>`
+            and 76 others
+note: required by a bound in `Router::<S>::layer`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/mod.rs:283:12
+    |
+281 |     pub fn layer<L>(self, layer: L) -> Router<S>
+    |            ----- required by a bound in this associated function
+282 |     where
+283 |         L: Layer<Route> + Clone + Send + 'static,
+    |            ^^^^^^^^^^^^ required by this bound in `Router::<S>::layer`
+
+error[E0277]: the trait bound `security::RateLimitLayer: Clone` is not satisfied
+   --> src/api/src/routes.rs:71:16
+    |
+71  |         .layer(RateLimitLayer::new(&config.security))
+    |          ----- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Clone` is not implemented for `security::RateLimitLayer`
+    |          |
+    |          required by a bound introduced by this call
+    |
+note: required by a bound in `Router::<S>::layer`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/mod.rs:283:27
+    |
+281 |     pub fn layer<L>(self, layer: L) -> Router<S>
+    |            ----- required by a bound in this associated function
+282 |     where
+283 |         L: Layer<Route> + Clone + Send + 'static,
+    |                           ^^^^^ required by this bound in `Router::<S>::layer`
+help: consider annotating `security::RateLimitLayer` with `#[derive(Clone)]`
+   --> src/api/src/security.rs:5:1
+    |
+5   + #[derive(Clone)]
+6   | pub struct RateLimitLayer;
+    |
+
+error[E0277]: the trait bound `Arc<ComponentClients>: FromRef<Arc<ApiConfig>>` is not satisfied
+   --> src/api/src/routes.rs:38:37
+    |
+38  |         .route("/health/ready", get(readiness_check))
+    |                                 --- ^^^^^^^^^^^^^^^ the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+    |                                 |
+    |                                 required by a bound introduced by this call
+    |
+    = help: the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+            but trait `FromRef<AppState>` is implemented for it
+    = help: for that trait implementation, expected `AppState`, found `Arc<ApiConfig>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequestParts<Arc<ApiConfig>>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequest<Arc<ApiConfig>, axum_core::extract::private::ViaParts>`
+    = note: required for `fn(State<Arc<ComponentClients>>) -> ... {readiness_check}` to implement `Handler<(axum_core::extract::private::ViaParts, axum::extract::State<Arc<ComponentClients>>), Arc<ApiConfig>>`
+note: required by a bound in `axum::routing::get`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:439:1
+    |
+439 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/api-c8b3f6d40ca6e449.long-type-7081412268904130682.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Arc<ComponentClients>: FromRef<Arc<ApiConfig>>` is not satisfied
+   --> src/api/src/routes.rs:39:42
+    |
+39  |         .route("/health/components", get(component_health))
+    |                                      --- ^^^^^^^^^^^^^^^^ the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+    |                                      |
+    |                                      required by a bound introduced by this call
+    |
+    = help: the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+            but trait `FromRef<AppState>` is implemented for it
+    = help: for that trait implementation, expected `AppState`, found `Arc<ApiConfig>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequestParts<Arc<ApiConfig>>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequest<Arc<ApiConfig>, axum_core::extract::private::ViaParts>`
+    = note: required for `fn(State<Arc<ComponentClients>>) -> ... {component_health}` to implement `Handler<(axum_core::extract::private::ViaParts, axum::extract::State<Arc<ComponentClients>>), Arc<ApiConfig>>`
+note: required by a bound in `axum::routing::get`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:439:1
+    |
+439 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/api-c8b3f6d40ca6e449.long-type-18040837098056138443.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Arc<ComponentClients>: FromRef<Arc<ApiConfig>>` is not satisfied
+   --> src/api/src/routes.rs:49:32
+    |
+49  |         .route("/ingest", post(ingest_document))
+    |                           ---- ^^^^^^^^^^^^^^^ the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+    |                           |
+    |                           required by a bound introduced by this call
+    |
+    = help: the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+            but trait `FromRef<AppState>` is implemented for it
+    = help: for that trait implementation, expected `AppState`, found `Arc<ApiConfig>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequestParts<Arc<ApiConfig>>`
+    = note: required for `fn(State<Arc<ComponentClients>>, Json<...>) -> ... {ingest_document}` to implement `Handler<(axum_core::extract::private::ViaRequest, axum::extract::State<Arc<ComponentClients>>, axum::Json<IngestRequest>), Arc<ApiConfig>>`
+note: required by a bound in `post`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:443:1
+    |
+443 | top_level_handler_fn!(post, POST);
+    | ^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `post`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/api-c8b3f6d40ca6e449.long-type-13666905444845545170.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Arc<ComponentClients>: FromRef<Arc<ApiConfig>>` is not satisfied
+   --> src/api/src/routes.rs:50:38
+    |
+50  |         .route("/ingest/batch", post(batch_ingest_documents))
+    |                                 ---- ^^^^^^^^^^^^^^^^^^^^^^ the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+    |                                 |
+    |                                 required by a bound introduced by this call
+    |
+    = help: the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+            but trait `FromRef<AppState>` is implemented for it
+    = help: for that trait implementation, expected `AppState`, found `Arc<ApiConfig>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequestParts<Arc<ApiConfig>>`
+    = note: required for `fn(State<Arc<ComponentClients>>, ...) -> ... {batch_ingest_documents}` to implement `Handler<(axum_core::extract::private::ViaRequest, axum::extract::State<Arc<ComponentClients>>, axum::Json<models::BatchIngestRequest>), Arc<ApiConfig>>`
+note: required by a bound in `post`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:443:1
+    |
+443 | top_level_handler_fn!(post, POST);
+    | ^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `post`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/api-c8b3f6d40ca6e449.long-type-9278434405500236618.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Arc<ComponentClients>: FromRef<Arc<ApiConfig>>` is not satisfied
+   --> src/api/src/routes.rs:51:47
+    |
+51  |         .route("/ingest/status/:task_id", get(get_document_status))
+    |                                           --- ^^^^^^^^^^^^^^^^^^^ the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+    |                                           |
+    |                                           required by a bound introduced by this call
+    |
+    = help: the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+            but trait `FromRef<AppState>` is implemented for it
+    = help: for that trait implementation, expected `AppState`, found `Arc<ApiConfig>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequestParts<Arc<ApiConfig>>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequest<Arc<ApiConfig>, axum_core::extract::private::ViaParts>`
+    = note: required for `fn(Path<Uuid>, State<Arc<...>>) -> ... {get_document_status}` to implement `Handler<(axum_core::extract::private::ViaParts, axum::extract::Path<Uuid>, axum::extract::State<Arc<ComponentClients>>), Arc<ApiConfig>>`
+note: required by a bound in `axum::routing::get`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:439:1
+    |
+439 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/api-c8b3f6d40ca6e449.long-type-10204810187542794756.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Arc<ComponentClients>: FromRef<Arc<ApiConfig>>` is not satisfied
+   --> src/api/src/routes.rs:54:38
+    |
+54  |         .route("/files/upload", post(upload_file))
+    |                                 ---- ^^^^^^^^^^^ the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+    |                                 |
+    |                                 required by a bound introduced by this call
+    |
+    = help: the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+            but trait `FromRef<AppState>` is implemented for it
+    = help: for that trait implementation, expected `AppState`, found `Arc<ApiConfig>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequestParts<Arc<ApiConfig>>`
+    = note: required for `fn(State<Arc<ComponentClients>>, Multipart) -> ... {upload_file}` to implement `Handler<(axum_core::extract::private::ViaRequest, axum::extract::State<Arc<ComponentClients>>, Multipart), Arc<ApiConfig>>`
+note: required by a bound in `post`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:443:1
+    |
+443 | top_level_handler_fn!(post, POST);
+    | ^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `post`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/api-c8b3f6d40ca6e449.long-type-5297050716070350408.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `Arc<ComponentClients>: FromRef<Arc<ApiConfig>>` is not satisfied
+   --> src/api/src/routes.rs:55:39
+    |
+55  |         .route("/files/:file_id", get(get_file))
+    |                                   --- ^^^^^^^^ the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+    |                                   |
+    |                                   required by a bound introduced by this call
+    |
+    = help: the trait `FromRef<Arc<ApiConfig>>` is not implemented for `Arc<ComponentClients>`
+            but trait `FromRef<AppState>` is implemented for it
+    = help: for that trait implementation, expected `AppState`, found `Arc<ApiConfig>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequestParts<Arc<ApiConfig>>`
+    = note: required for `axum::extract::State<Arc<ComponentClients>>` to implement `FromRequest<Arc<ApiConfig>, axum_core::extract::private::ViaParts>`
+    = note: required for `fn(Path<Uuid>, State<Arc<ComponentClients>>) -> ... {get_file}` to implement `Handler<(axum_core::extract::private::ViaParts, axum::extract::Path<Uuid>, axum::extract::State<Arc<ComponentClients>>), Arc<ApiConfig>>`
+note: required by a bound in `axum::routing::get`
+   --> /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:439:1
+    |
+439 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: the full name for the type has been written to '/workspaces/doc-rag/target/debug/deps/api-c8b3f6d40ca6e449.long-type-18325800475542960350.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+

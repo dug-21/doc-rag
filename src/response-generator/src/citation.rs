@@ -1,6 +1,6 @@
 //! Citation tracking and source attribution system for response generation
 
-use crate::error::{Result, ResponseError};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use tracing::{debug, instrument, warn};

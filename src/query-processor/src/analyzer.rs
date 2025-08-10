@@ -89,6 +89,8 @@ impl QueryAnalyzer {
             dependencies,
             topics,
             confidence,
+            timestamp: chrono::Utc::now(),
+            processing_time: std::time::Duration::from_millis(100), // Default processing time
         })
     }
 
@@ -364,6 +366,8 @@ impl TextPreprocessor {
             sentence_count,
             avg_word_length,
             complexity_score,
+            reading_level: complexity_score * 10.0, // Simple mapping
+            keyword_density: HashMap::new(), // Would be calculated separately
         }
     }
 }
@@ -654,11 +658,11 @@ impl SemanticAnalyzer {
                 }
                 
                 if !arguments.is_empty() {
-                    roles.push(SemanticRole {
-                        predicate: head_verb.clone(),
+                    roles.push(SemanticRole::new(
+                        head_verb.clone(),
                         arguments,
-                        confidence: 0.7,
-                    });
+                        0.7,
+                    ));
                 }
             }
         }
@@ -718,7 +722,7 @@ impl SemanticAnalyzer {
 
     async fn generate_embedding_vector(&self, text: &PreprocessedText) -> Result<Vec<f32>> {
         // Create a chunk from the text
-        use embedder::{Chunk, ChunkMetadata, EmbeddingGenerator, EmbedderConfig, ModelType};
+        use embedder::{Chunk, ChunkMetadata, EmbeddingGenerator, EmbedderConfig};
         use std::collections::HashMap;
         
         let chunk = Chunk {
@@ -790,10 +794,15 @@ impl SemanticAnalyzer {
             ("neutral", 0.0)
         };
         
+        let mut emotions = std::collections::HashMap::new();
+        emotions.insert(label.to_string(), normalized_score.abs());
+        
         Ok(Sentiment {
             label: label.to_string(),
             score: normalized_score,
             confidence: 0.6, // Lower confidence for rule-based sentiment
+            emotions,
+            subjectivity: 0.5, // Default subjectivity
         })
     }
 }

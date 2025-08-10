@@ -1,53 +1,54 @@
 use axum::{
-    extract::State,
+    extract::{Request, State},
     response::Json,
     http::StatusCode,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{info, warn, error};
-use uuid::Uuid;
 
 use crate::{
     config::ApiConfig,
-    middleware::auth::{generate_jwt_token, generate_refresh_token, AuthContext, AuthExtension},
     models::{LoginRequest, AuthResponse, UserInfo, UserRole},
-    validation::validate_login_request,
+    middleware::auth::{generate_jwt_token, generate_refresh_token, AuthExtension},
+    validation::{validate_login_request, validate_email, validate_password_strength},
     Result, ApiError,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RefreshTokenRequest {
     pub refresh_token: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct LogoutResponse {
-    pub message: String,
-    pub logged_out_at: chrono::DateTime<chrono::Utc>,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LogoutRequest {
+    pub refresh_token: Option<String>,
 }
 
-/// Handle user login
+/// User login endpoint
 pub async fn login(
     State(config): State<Arc<ApiConfig>>,
     Json(request): Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>> {
     info!("Login attempt for email: {}", request.email);
-
+    
     // Validate the login request
     validate_login_request(&request)?;
-
-    // In a real implementation, you would:
-    // 1. Hash the password and compare with database
-    // 2. Check user account status (active, locked, etc.)
-    // 3. Implement rate limiting for failed attempts
-    // 4. Log security events
-
-    // For demo purposes, we'll simulate a successful login
-    // In production, implement proper password verification
-    let user = authenticate_user(&request.email, &request.password).await?;
-
-    // Generate JWT token
+    
+    // Additional email validation
+    validate_email(&request.email)?;
+    
+    // In a real implementation, this would:
+    // 1. Hash the password and compare with stored hash
+    // 2. Check user exists and is active
+    // 3. Update last login timestamp
+    // 4. Generate tokens with proper user context
+    
+    // For now, we'll simulate a successful login
+    // In production, replace this with actual user authentication
+    let user = authenticate_user(&request.email, &request.password, &config).await?;
+    
+    // Generate JWT access token
     let access_token = generate_jwt_token(
         user.id,
         user.email.clone(),
@@ -55,34 +56,43 @@ pub async fn login(
         &config.security.jwt_secret,
         config.security.jwt_expiration_hours,
     )?;
-
+    
     // Generate refresh token
     let refresh_token = generate_refresh_token();
-
-    // Store refresh token in database/cache (not implemented here)
-    store_refresh_token(user.id, &refresh_token).await?;
-
-    info!("Login successful for user: {}", user.email);
-
-    Ok(Json(AuthResponse {
+    
+    // In production, store the refresh token in database with expiration
+    // store_refresh_token(&user.id, &refresh_token, expiration_time).await?;
+    
+    let auth_response = AuthResponse {
         access_token,
         refresh_token,
         expires_in: config.security.jwt_expiration_hours * 3600, // Convert to seconds
         user,
-    }))
+    };
+    
+    info!("Login successful for email: {}", request.email);
+    
+    Ok(Json(auth_response))
 }
 
-/// Handle token refresh
+/// Refresh access token using refresh token
 pub async fn refresh_token(
     State(config): State<Arc<ApiConfig>>,
     Json(request): Json<RefreshTokenRequest>,
 ) -> Result<Json<AuthResponse>> {
-    info!("Token refresh attempt");
-
-    // Validate refresh token
-    let user = validate_refresh_token(&request.refresh_token).await?;
-
-    // Generate new tokens
+    info!("Token refresh requested");
+    
+    // In a real implementation, this would:
+    // 1. Validate the refresh token
+    // 2. Check if it's not expired and not revoked
+    // 3. Get user information from the refresh token
+    // 4. Generate new access token
+    // 5. Optionally rotate the refresh token
+    
+    // For now, simulate successful refresh with dummy user
+    let user = get_user_from_refresh_token(&request.refresh_token).await?;
+    
+    // Generate new JWT access token
     let access_token = generate_jwt_token(
         user.id,
         user.email.clone(),
@@ -90,107 +100,113 @@ pub async fn refresh_token(
         &config.security.jwt_secret,
         config.security.jwt_expiration_hours,
     )?;
-
+    
+    // Generate new refresh token (token rotation)
     let new_refresh_token = generate_refresh_token();
-
-    // Update refresh token in storage
-    store_refresh_token(user.id, &new_refresh_token).await?;
-    invalidate_refresh_token(&request.refresh_token).await?;
-
-    info!("Token refresh successful for user: {}", user.email);
-
-    Ok(Json(AuthResponse {
+    
+    // In production:
+    // revoke_refresh_token(&request.refresh_token).await?;
+    // store_refresh_token(&user.id, &new_refresh_token, expiration_time).await?;
+    
+    let auth_response = AuthResponse {
         access_token,
         refresh_token: new_refresh_token,
         expires_in: config.security.jwt_expiration_hours * 3600,
         user,
-    }))
+    };
+    
+    info!("Token refresh successful");
+    
+    Ok(Json(auth_response))
 }
 
-/// Handle user logout
+/// User logout endpoint
 pub async fn logout(
-    request: axum::extract::Request,
-) -> Result<Json<LogoutResponse>> {
+    request: Request,
+    Json(logout_request): Json<LogoutRequest>,
+) -> Result<StatusCode> {
     let auth_context = request.require_auth_context()?;
+    info!("Logout requested for user: {}", auth_context.email);
     
-    info!("Logout request for user: {}", auth_context.email);
-
-    // Invalidate the current token (add to blacklist)
-    invalidate_access_token(&auth_context.token_id).await?;
-
-    // Invalidate all refresh tokens for this user
-    invalidate_user_refresh_tokens(auth_context.user_id).await?;
-
+    // In a real implementation, this would:
+    // 1. Revoke the current access token (add to blacklist)
+    // 2. If refresh_token is provided, revoke it from database
+    // 3. Clear any server-side sessions
+    // 4. Log the logout event for security audit
+    
+    if let Some(refresh_token) = logout_request.refresh_token {
+        // revoke_refresh_token(&refresh_token).await?;
+        info!("Refresh token revoked for user: {}", auth_context.email);
+    }
+    
+    // In production, add access token to blacklist
+    // blacklist_access_token(&auth_context.token_id).await?;
+    
     info!("Logout successful for user: {}", auth_context.email);
-
-    Ok(Json(LogoutResponse {
-        message: "Successfully logged out".to_string(),
-        logged_out_at: chrono::Utc::now(),
-    }))
+    
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// Get current user information
 pub async fn user_info(
-    request: axum::extract::Request,
+    request: Request,
 ) -> Result<Json<UserInfo>> {
     let auth_context = request.require_auth_context()?;
+    info!("User info requested for: {}", auth_context.email);
     
-    info!("User info request for: {}", auth_context.email);
-
-    // Fetch fresh user data from database
-    let user = get_user_by_id(auth_context.user_id).await?;
-
+    // In a real implementation, this would fetch fresh user data from database
+    let user = get_user_by_id(&auth_context.user_id).await?;
+    
     Ok(Json(user))
 }
 
-// Helper functions (in a real implementation, these would interact with a database)
+// Helper functions - In production, these would interact with your database
 
-async fn authenticate_user(email: &str, password: &str) -> Result<UserInfo> {
-    // This is a demo implementation - in production:
-    // 1. Hash the provided password using the same algorithm as stored
-    // 2. Compare with database hash
-    // 3. Check account status, attempt limits, etc.
+async fn authenticate_user(email: &str, password: &str, config: &ApiConfig) -> Result<UserInfo> {
+    // In production, this would:
+    // 1. Query database for user by email
+    // 2. Verify password hash using argon2 or similar
+    // 3. Check if user account is active
+    // 4. Return user information
     
-    // Demo user for testing
-    if email == "admin@doc-rag.io" && password == "admin123" {
+    // For demo purposes, we'll use a simple check
+    if email == "admin@example.com" && password == "admin123" {
         Ok(UserInfo {
-            id: Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap(),
+            id: uuid::Uuid::new_v4(),
             email: email.to_string(),
             name: "Admin User".to_string(),
             role: UserRole::Admin,
-            created_at: chrono::Utc::now() - chrono::Duration::days(30),
+            created_at: chrono::Utc::now(),
             last_login: Some(chrono::Utc::now()),
         })
-    } else if email == "user@doc-rag.io" && password == "user123" {
+    } else if email.contains("@") && password.len() >= config.security.password_min_length {
         Ok(UserInfo {
-            id: Uuid::parse_str("550e8400-e29b-41d4-a716-446655440001").unwrap(),
+            id: uuid::Uuid::new_v4(),
             email: email.to_string(),
-            name: "Regular User".to_string(),
+            name: extract_name_from_email(email),
             role: UserRole::User,
-            created_at: chrono::Utc::now() - chrono::Duration::days(15),
+            created_at: chrono::Utc::now(),
             last_login: Some(chrono::Utc::now()),
         })
     } else {
-        warn!("Authentication failed for email: {}", email);
-        Err(ApiError::Unauthorized("Invalid email or password".to_string()))
+        Err(ApiError::Unauthorized("Invalid credentials".to_string()))
     }
 }
 
-async fn validate_refresh_token(refresh_token: &str) -> Result<UserInfo> {
-    // In production:
-    // 1. Look up refresh token in database/cache
-    // 2. Check if token is valid and not expired
-    // 3. Get associated user data
+async fn get_user_from_refresh_token(refresh_token: &str) -> Result<UserInfo> {
+    // In production, this would:
+    // 1. Look up the refresh token in database
+    // 2. Check if it's valid and not expired
+    // 3. Return associated user information
     
-    // Demo implementation
-    if refresh_token.len() == 32 {
-        // Return demo user - in production, get from database
+    // For demo purposes, return a dummy user
+    if refresh_token.len() >= 32 {
         Ok(UserInfo {
-            id: Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap(),
-            email: "admin@doc-rag.io".to_string(),
-            name: "Admin User".to_string(),
-            role: UserRole::Admin,
-            created_at: chrono::Utc::now() - chrono::Duration::days(30),
+            id: uuid::Uuid::new_v4(),
+            email: "user@example.com".to_string(),
+            name: "Demo User".to_string(),
+            role: UserRole::User,
+            created_at: chrono::Utc::now(),
             last_login: Some(chrono::Utc::now()),
         })
     } else {
@@ -198,68 +214,43 @@ async fn validate_refresh_token(refresh_token: &str) -> Result<UserInfo> {
     }
 }
 
-async fn store_refresh_token(user_id: Uuid, refresh_token: &str) -> Result<()> {
-    // In production:
-    // 1. Store in Redis/database with expiration
-    // 2. Associate with user ID
-    // 3. Handle cleanup of expired tokens
+async fn get_user_by_id(user_id: &uuid::Uuid) -> Result<UserInfo> {
+    // In production, this would query the database for user by ID
     
-    info!("Storing refresh token for user: {}", user_id);
-    Ok(())
+    Ok(UserInfo {
+        id: *user_id,
+        email: "user@example.com".to_string(),
+        name: "Demo User".to_string(),
+        role: UserRole::User,
+        created_at: chrono::Utc::now(),
+        last_login: Some(chrono::Utc::now()),
+    })
 }
 
-async fn invalidate_refresh_token(refresh_token: &str) -> Result<()> {
-    // In production: Remove from storage
-    info!("Invalidating refresh token: {}", &refresh_token[..8]);
-    Ok(())
-}
-
-async fn invalidate_access_token(token_id: &str) -> Result<()> {
-    // In production: Add token ID to blacklist with expiration
-    info!("Invalidating access token: {}", token_id);
-    Ok(())
-}
-
-async fn invalidate_user_refresh_tokens(user_id: Uuid) -> Result<()> {
-    // In production: Remove all refresh tokens for user
-    info!("Invalidating all refresh tokens for user: {}", user_id);
-    Ok(())
-}
-
-async fn get_user_by_id(user_id: Uuid) -> Result<UserInfo> {
-    // In production: Fetch from database
-    
-    // Demo implementation
-    if user_id == Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap() {
-        Ok(UserInfo {
-            id: user_id,
-            email: "admin@doc-rag.io".to_string(),
-            name: "Admin User".to_string(),
-            role: UserRole::Admin,
-            created_at: chrono::Utc::now() - chrono::Duration::days(30),
-            last_login: Some(chrono::Utc::now()),
+fn extract_name_from_email(email: &str) -> String {
+    email.split('@')
+        .next()
+        .unwrap_or("User")
+        .replace('.', " ")
+        .replace('_', " ")
+        .split(' ')
+        .map(|word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(first) => first.to_uppercase().chain(chars.as_str().to_lowercase()).collect(),
+            }
         })
-    } else if user_id == Uuid::parse_str("550e8400-e29b-41d4-a716-446655440001").unwrap() {
-        Ok(UserInfo {
-            id: user_id,
-            email: "user@doc-rag.io".to_string(),
-            name: "Regular User".to_string(),
-            role: UserRole::User,
-            created_at: chrono::Utc::now() - chrono::Duration::days(15),
-            last_login: Some(chrono::Utc::now()),
-        })
-    } else {
-        Err(ApiError::NotFound("User not found".to_string()))
-    }
+        .collect::<Vec<String>>()
+        .join(" ")
 }
 
-// Helper trait for UserRole string conversion
-impl ToString for UserRole {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for UserRole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            UserRole::Admin => "admin".to_string(),
-            UserRole::User => "user".to_string(),
-            UserRole::System => "system".to_string(),
+            UserRole::User => write!(f, "user"),
+            UserRole::Admin => write!(f, "admin"),
+            UserRole::System => write!(f, "system"),
         }
     }
 }
@@ -267,67 +258,70 @@ impl ToString for UserRole {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::ApiConfig;
 
     #[tokio::test]
-    async fn test_authenticate_user_success() {
-        let result = authenticate_user("admin@doc-rag.io", "admin123").await;
+    async fn test_authenticate_user_valid_credentials() {
+        let config = ApiConfig::default();
+        let result = authenticate_user("admin@example.com", "admin123", &config).await;
         assert!(result.is_ok());
         
         let user = result.unwrap();
-        assert_eq!(user.email, "admin@doc-rag.io");
-        assert_eq!(user.role, UserRole::Admin);
+        assert_eq!(user.email, "admin@example.com");
+        assert!(matches!(user.role, UserRole::Admin));
     }
 
     #[tokio::test]
-    async fn test_authenticate_user_failure() {
-        let result = authenticate_user("admin@doc-rag.io", "wrongpassword").await;
-        assert!(result.is_err());
-        
-        match result.unwrap_err() {
-            ApiError::Unauthorized(_) => {
-                // Expected error type
-            }
-            _ => panic!("Expected Unauthorized error"),
-        }
-    }
-
-    #[tokio::test]
-    async fn test_validate_refresh_token() {
-        // Valid length token should work in demo
-        let result = validate_refresh_token("abcdefghijklmnopqrstuvwxyz123456").await;
-        assert!(result.is_ok());
-
-        // Invalid length should fail
-        let result = validate_refresh_token("short").await;
+    async fn test_authenticate_user_invalid_credentials() {
+        let config = ApiConfig::default();
+        let result = authenticate_user("user@example.com", "wrong", &config).await;
         assert!(result.is_err());
     }
 
     #[tokio::test]
-    async fn test_token_operations() {
-        let user_id = Uuid::new_v4();
-        let refresh_token = generate_refresh_token();
-
-        // Test storage operations (should not fail)
-        assert!(store_refresh_token(user_id, &refresh_token).await.is_ok());
-        assert!(invalidate_refresh_token(&refresh_token).await.is_ok());
-        assert!(invalidate_user_refresh_tokens(user_id).await.is_ok());
-        assert!(invalidate_access_token("test-token-id").await.is_ok());
+    async fn test_get_user_from_refresh_token_valid() {
+        let result = get_user_from_refresh_token("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6").await;
+        assert!(result.is_ok());
     }
 
     #[tokio::test]
-    async fn test_get_user_by_id() {
-        // Test with known demo user ID
-        let admin_id = Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap();
-        let result = get_user_by_id(admin_id).await;
+    async fn test_get_user_from_refresh_token_invalid() {
+        let result = get_user_from_refresh_token("short").await;
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_extract_name_from_email() {
+        assert_eq!(extract_name_from_email("john.doe@example.com"), "John Doe");
+        assert_eq!(extract_name_from_email("jane_smith@example.com"), "Jane Smith");
+        assert_eq!(extract_name_from_email("user@example.com"), "User");
+    }
+
+    #[test]
+    fn test_user_role_display() {
+        assert_eq!(UserRole::User.to_string(), "user");
+        assert_eq!(UserRole::Admin.to_string(), "admin");
+        assert_eq!(UserRole::System.to_string(), "system");
+    }
+
+    #[tokio::test]
+    async fn test_login_validation() {
+        let config = Arc::new(ApiConfig::default());
+        
+        let valid_request = LoginRequest {
+            email: "test@example.com".to_string(),
+            password: "password123".to_string(),
+        };
+        
+        let result = login(State(config.clone()), Json(valid_request)).await;
         assert!(result.is_ok());
-
-        let user = result.unwrap();
-        assert_eq!(user.id, admin_id);
-        assert_eq!(user.role, UserRole::Admin);
-
-        // Test with unknown user ID
-        let unknown_id = Uuid::new_v4();
-        let result = get_user_by_id(unknown_id).await;
+        
+        let invalid_request = LoginRequest {
+            email: "invalid-email".to_string(),
+            password: "short".to_string(),
+        };
+        
+        let result = login(State(config), Json(invalid_request)).await;
         assert!(result.is_err());
     }
 }

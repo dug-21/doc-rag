@@ -60,7 +60,7 @@ fn init_json_tracing(env_filter: EnvFilter) -> Result<()> {
             let tracer = new_agent_pipeline()
                 .with_service_name(env!("CARGO_PKG_NAME"))
                 .with_endpoint(jaeger_endpoint)
-                .install_batch(opentelemetry::runtime::Tokio)
+                .install_simple()
                 .context("Failed to initialize Jaeger tracing")?;
 
             let opentelemetry_layer = OpenTelemetryLayer::new(tracer);

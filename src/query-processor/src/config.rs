@@ -11,39 +11,30 @@ use validator::Validate;
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct ProcessorConfig {
     /// Analyzer configuration
-    #[validate(nested)]
     pub analyzer: AnalyzerConfig,
     
     /// Entity extraction configuration
-    #[validate(nested)]
     pub entity_extractor: EntityExtractorConfig,
     
     /// Key term extraction configuration
-    #[validate(nested)]
     pub term_extractor: TermExtractorConfig,
     
     /// Intent classification configuration
-    #[validate(nested)]
     pub intent_classifier: IntentClassifierConfig,
     
     /// Strategy selection configuration
-    #[validate(nested)]
     pub strategy_selector: StrategyConfig,
     
     /// Consensus engine configuration
-    #[validate(nested)]
     pub consensus: ConsensusConfig,
     
     /// Validation engine configuration
-    #[validate(nested)]
     pub validation: ValidationConfig,
     
     /// Performance settings
-    #[validate(nested)]
     pub performance: PerformanceConfig,
     
     /// Observability settings
-    #[validate(nested)]
     pub observability: ObservabilityConfig,
     
     /// Whether to enable Byzantine consensus validation

@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
-// use axum::Server; // Server has been moved in newer axum versions
+use axum::serve;
 use std::{net::SocketAddr, sync::Arc, future::Future};
+use tokio::net::TcpListener;
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::{
@@ -18,9 +19,9 @@ use crate::{
     middleware::{
         error_handling::ErrorHandlingLayer,
         request_logging::RequestLoggingLayer,
+        metrics::MetricsRegistry,
     },
     clients::ComponentClients,
-    metrics::MetricsRegistry,
 };
 
 pub struct ApiServer {
@@ -62,8 +63,10 @@ impl ApiServer {
 
         let app = self.create_app();
 
-        Server::bind(&addr)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+        let listener = TcpListener::bind(&addr).await
+            .context("Failed to bind to address")?;
+            
+        serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
             .await
             .context("Server failed to start")?;
 
@@ -81,8 +84,10 @@ impl ApiServer {
 
         let app = self.create_app();
 
-        Server::bind(&addr)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+        let listener = TcpListener::bind(&addr).await
+            .context("Failed to bind to address")?;
+            
+        serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
             .with_graceful_shutdown(shutdown_signal)
             .await
             .context("Server failed to start")?;

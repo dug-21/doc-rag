@@ -11,21 +11,18 @@ use tokio::sync::RwLock;
 use axum::{
     routing::{get, post},
     Router, Json, Extension,
-    http::{StatusCode, HeaderMap, Method},
+    http::{StatusCode, Method},
     response::Response,
-    body::Body,
-    middleware::{self, Next},
-    extract::{Path, Query, State},
+    middleware::Next,
+    extract::{Path, State},
 };
-use tower::ServiceBuilder;
 use tower_http::{
     cors::{CorsLayer, Any},
     compression::CompressionLayer,
     trace::TraceLayer,
-    add_extension::AddExtensionLayer,
     timeout::TimeoutLayer,
 };
-use tracing::{info, warn, error, instrument};
+use tracing::{info, error, instrument};
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 
@@ -108,7 +105,7 @@ struct RateLimitState {
 }
 
 /// Gateway metrics
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 struct GatewayMetrics {
     /// Total requests
     total_requests: u64,
@@ -125,7 +122,7 @@ struct GatewayMetrics {
 }
 
 /// Endpoint-specific metrics
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 struct EndpointMetrics {
     /// Request count
     requests: u64,
@@ -431,7 +428,7 @@ async fn status_handler(
     
     let mut status = HashMap::new();
     status.insert("health".to_string(), serde_json::to_value(&health).unwrap());
-    status.insert("pipeline_metrics".to_string(), serde_json::to_value(&*pipeline_metrics).unwrap());
+    status.insert("pipeline_metrics".to_string(), serde_json::to_value(pipeline_metrics).unwrap());
     status.insert("gateway_metrics".to_string(), serde_json::to_value(&*gateway_metrics).unwrap());
     
     let response = ApiResponse {
@@ -525,7 +522,7 @@ async fn query_handler(
 async fn query_stream_handler(
     State(_gateway): State<Arc<ApiGateway>>,
     Extension(_ctx): Extension<RequestContext>,
-) -> Result<&'static str, StatusCode> {
+) -> std::result::Result<&'static str, StatusCode> {
     // Streaming implementation would go here
     Ok("Streaming not yet implemented")
 }
@@ -591,7 +588,7 @@ async fn reload_handler() -> std::result::Result<&'static str, StatusCode> {
 /// Authentication middleware
 async fn auth_middleware(
     State(gateway): State<Arc<ApiGateway>>,
-    mut request: axum::extract::Request,
+    request: axum::extract::Request,
     next: Next,
 ) -> std::result::Result<Response, StatusCode> {
     // Check API key if configured

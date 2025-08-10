@@ -94,6 +94,7 @@ docx-rs = "0.4"
 
 # Utilities
 uuid = { version = "1.6", features = ["v4", "serde"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
 chrono = { version = "0.4", features = ["serde"] }
 url = { version = "2.5", features = ["serde"] }
 mime = "0.3"

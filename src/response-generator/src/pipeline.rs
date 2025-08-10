@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::time::{Duration, Instant};
 use tracing::{debug, instrument, warn};
-use uuid::Uuid;
 
 /// Processing pipeline for response generation
 #[derive(Debug)]
@@ -561,7 +560,7 @@ impl PipelineStage for ContentGenerationStage {
             position: 0,
             is_final: false,
             confidence: Some(0.8),
-            metadata: crate::GenerationMetrics {
+            metadata: Some(crate::GenerationMetrics {
                 total_duration: std::time::Duration::from_millis(0),
                 validation_duration: std::time::Duration::from_millis(0),
                 formatting_duration: std::time::Duration::from_millis(0),
@@ -569,7 +568,7 @@ impl PipelineStage for ContentGenerationStage {
                 validation_passes: 0,
                 sources_used: 0,
                 response_length: 0,
-            },
+            }),
         }))
     }
 }

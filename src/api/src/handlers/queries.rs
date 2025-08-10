@@ -1,13 +1,12 @@
 use axum::{
-    extract::{Query as AxumQuery, State},
+    extract::{Path, Query as AxumQuery, State},
     response::{Json, Sse},
     http::StatusCode,
 };
 use futures::stream::{self, StreamExt};
 use serde::Deserialize;
 use std::sync::Arc;
-// tokio-stream dependency needs to be added
-// use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::wrappers::ReceiverStream;
 use tracing::{info, warn, error};
 use uuid::Uuid;
 

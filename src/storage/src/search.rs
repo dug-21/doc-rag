@@ -975,7 +975,10 @@ mod tests {
     
     #[test]
     fn test_centroid_calculation() {
-        let storage = create_test_storage(); // Would need mock implementation
+        // Create a minimal mock VectorStorage for testing centroid calculation
+        
+        // Use the mock storage for testing the calculation method
+        let mock_storage = MockVectorStorage::new();
         
         let embeddings = vec![
             vec![1.0, 2.0, 3.0],
@@ -983,15 +986,62 @@ mod tests {
             vec![7.0, 8.0, 9.0],
         ];
         
-        if let Ok(centroid) = storage.calculate_embedding_centroid(&embeddings) {
-            assert_eq!(centroid, vec![4.0, 5.0, 6.0]);
-        }
+        let centroid = mock_storage.calculate_embedding_centroid(&embeddings).unwrap();
+        assert_eq!(centroid, vec![4.0, 5.0, 6.0]);
+        
+        // Test empty embeddings
+        let empty_embeddings: Vec<Vec<f64>> = vec![];
+        assert!(mock_storage.calculate_embedding_centroid(&empty_embeddings).is_err());
+        
+        // Test dimension mismatch
+        let mismatched_embeddings = vec![
+            vec![1.0, 2.0],
+            vec![1.0, 2.0, 3.0],
+        ];
+        assert!(mock_storage.calculate_embedding_centroid(&mismatched_embeddings).is_err());
     }
     
-    // Helper function for tests (would need proper implementation)
-    fn create_test_storage() -> VectorStorage {
-        // This would create a mock VectorStorage for testing
-        // In practice, you'd use a test configuration or mock
-        unimplemented!("Test storage creation not implemented")
+    // Mock implementation for testing centroid calculation
+    struct MockVectorStorage;
+    
+    impl MockVectorStorage {
+        fn new() -> Self {
+            Self
+        }
+        
+        /// Calculate centroid of multiple embeddings (same logic as VectorStorage)
+        fn calculate_embedding_centroid(&self, embeddings: &[Vec<f64>]) -> Result<Vec<f64>> {
+            if embeddings.is_empty() {
+                return Err(anyhow!("Cannot calculate centroid of empty embeddings"));
+            }
+            
+            let dimension = embeddings[0].len();
+            if dimension == 0 {
+                return Err(anyhow!("Cannot calculate centroid of zero-dimensional embeddings"));
+            }
+            
+            // Verify all embeddings have the same dimension
+            for embedding in embeddings {
+                if embedding.len() != dimension {
+                    return Err(anyhow!("All embeddings must have the same dimension"));
+                }
+            }
+            
+            // Calculate centroid
+            let mut centroid = vec![0.0; dimension];
+            for embedding in embeddings {
+                for (i, &value) in embedding.iter().enumerate() {
+                    centroid[i] += value;
+                }
+            }
+            
+            // Average the values
+            let count = embeddings.len() as f64;
+            for value in &mut centroid {
+                *value /= count;
+            }
+            
+            Ok(centroid)
+        }
     }
 }

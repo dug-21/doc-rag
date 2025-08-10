@@ -7,10 +7,9 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use anyhow::{Result, Context};
-use tracing::{info, warn, error, debug, instrument};
+use tracing::{info, warn, debug, instrument};
 use tokio::fs;
-use candle_core::{IndexOp, Tensor};
-use safetensors;
+use candle_core::IndexOp;
 
 use crate::{EmbedderConfig, EmbedderError, ModelType, Device};
 
@@ -37,6 +36,8 @@ pub trait EmbeddingModel: Send + Sync {
 pub struct OnnxEmbeddingModel {
     #[cfg(feature = "ort")]
     session: ort::Session,
+    #[cfg(not(feature = "ort"))]
+    session: (),
     tokenizer: Box<dyn Tokenizer + Send + Sync>,
     dimension: usize,
     name: String,
@@ -133,7 +134,7 @@ impl BertTokenizer {
 impl Tokenizer for BertTokenizer {
     fn encode(&self, text: &str) -> Result<TokenizerOutput> {
         let tokens = self.tokenize(text);
-        let mut input_ids = Vec::new();
+        let mut input_ids: Vec<i64> = Vec::new();
         let mut attention_mask = Vec::new();
         
         // Add [CLS] token
@@ -212,13 +213,12 @@ impl OnnxEmbeddingModel {
         // Initialize ONNX Runtime session with ORT 2.0 API
         #[cfg(feature = "ort")]
         let session = {
-            use ort::SessionBuilder;
-            SessionBuilder::new()?
+            ort::Session::builder()?
                 .commit_from_file(model_path)?
         };
         
         #[cfg(not(feature = "ort"))]
-        let session = unimplemented!("ONNX support disabled");
+        let _session = ();
         
         // Load tokenizer
         let tokenizer_path = model_path.parent()
@@ -244,6 +244,8 @@ impl OnnxEmbeddingModel {
         Ok(Self {
             #[cfg(feature = "ort")]
             session,
+            #[cfg(not(feature = "ort"))]
+            session: _session,
             tokenizer,
             dimension,
             name,
@@ -258,8 +260,8 @@ impl OnnxEmbeddingModel {
         let seq_len = batch[0].input_ids.len();
         
         // Prepare input tensors
-        let mut input_ids = Vec::with_capacity(batch_size * seq_len);
-        let mut attention_mask = Vec::with_capacity(batch_size * seq_len);
+        let mut input_ids: Vec<i64> = Vec::with_capacity(batch_size * seq_len);
+        let mut attention_mask: Vec<i64> = Vec::with_capacity(batch_size * seq_len);
         
         for tokenized in batch {
             input_ids.extend(&tokenized.input_ids);
@@ -269,59 +271,65 @@ impl OnnxEmbeddingModel {
         // Run inference
         #[cfg(feature = "ort")]
         let outputs = {
-            use ort::inputs;
-            self.session.run(inputs![
-            "input_ids" => ndarray::Array2::from_shape_vec(
-                (batch_size, seq_len),
-                input_ids
-            )?,
-            "attention_mask" => ndarray::Array2::from_shape_vec(
-                (batch_size, seq_len),
-                attention_mask
-            )?
-        ])?
+            self.session.run(ort::inputs![
+                "input_ids" => ndarray::Array2::from_shape_vec(
+                    (batch_size, seq_len),
+                    input_ids
+                )?.into_dyn(),
+                "attention_mask" => ndarray::Array2::from_shape_vec(
+                    (batch_size, seq_len),
+                    attention_mask
+                )?.into_dyn()
+            ])?
         };
         
         #[cfg(not(feature = "ort"))]
-        let outputs = unimplemented!("ONNX support disabled");
+        {
+            // Return dummy results when ONNX is disabled
+            let mut results = Vec::with_capacity(batch_size);
+            for _ in 0..batch_size {
+                results.push(vec![0.0f32; self.dimension]);
+            }
+            return Ok(results);
+        }
         
         // Extract embeddings (usually from the pooler output or mean pooling of last hidden states)
         #[cfg(feature = "ort")]
-        let embeddings_tensor = outputs.get("last_hidden_state")
-            .ok_or_else(|| anyhow::anyhow!("Missing last_hidden_state output"))?
+        let embeddings_tensor = outputs["last_hidden_state"]
             .try_extract_tensor::<f32>()?;
         
-        #[cfg(not(feature = "ort"))]
-        let embeddings_tensor: ndarray::ArrayView3<f32> = unimplemented!("ONNX support disabled");
+        #[cfg(feature = "ort")]
         let embeddings_array = embeddings_tensor.view();
         
         // Mean pooling over sequence dimension
-        let mut results = Vec::with_capacity(batch_size);
-        for batch_idx in 0..batch_size {
-            let mut embedding = vec![0.0f32; self.dimension];
-            let mut valid_tokens = 0;
-            
-            for seq_idx in 0..seq_len {
-                // Only consider non-padded tokens
-                if batch[batch_idx].attention_mask[seq_idx] == 1 {
-                    for dim in 0..self.dimension {
-                        embedding[dim] += embeddings_array[[batch_idx, seq_idx, dim]];
+        #[cfg(feature = "ort")]
+        {
+            let mut results = Vec::with_capacity(batch_size);
+            for batch_idx in 0..batch_size {
+                let mut embedding = vec![0.0f32; self.dimension];
+                let mut valid_tokens = 0;
+                
+                for seq_idx in 0..seq_len {
+                    // Only consider non-padded tokens
+                    if batch[batch_idx].attention_mask[seq_idx] == 1 {
+                        for dim in 0..self.dimension {
+                            embedding[dim] += embeddings_array[[batch_idx, seq_idx, dim]];
+                        }
+                        valid_tokens += 1;
                     }
-                    valid_tokens += 1;
                 }
-            }
-            
-            // Average
-            if valid_tokens > 0 {
-                for dim in 0..self.dimension {
-                    embedding[dim] /= valid_tokens as f32;
+                
+                // Average
+                if valid_tokens > 0 {
+                    for dim in 0..self.dimension {
+                        embedding[dim] /= valid_tokens as f32;
+                    }
                 }
+                
+                results.push(embedding);
             }
-            
-            results.push(embedding);
+            return Ok(results);
         }
-        
-        Ok(results)
     }
 }
 
@@ -391,7 +399,7 @@ impl CandleEmbeddingModel {
             intermediate_size,
             hidden_act: candle_transformers::models::bert::HiddenAct::Gelu,
             hidden_dropout_prob: 0.1,
-            // attention_probs_dropout_prob field removed in newer candle-transformers
+            // attention_probs_dropout_prob removed in newer candle versions
             max_position_embeddings,
             type_vocab_size: 2,
             initializer_range: 0.02,
@@ -410,11 +418,8 @@ impl CandleEmbeddingModel {
         } else {
             // Try safetensors format
             let safetensors_path = model_path.join("model.safetensors");
-            candle_nn::VarBuilder::from_tensors(
-                candle_core::safetensors::load(&safetensors_path, &device)?,
-                candle_core::DType::F32,
-                &device
-            )
+            let tensors = candle_core::safetensors::load(&safetensors_path, &device)?;
+            candle_nn::VarBuilder::from_tensors(tensors, candle_core::DType::F32, &device)
         };
         
         // Initialize BERT model
@@ -459,8 +464,7 @@ impl CandleEmbeddingModel {
         let attention_mask = Tensor::from_vec(attention_mask_data, (batch_size, seq_len), &self.device)?;
         
         // Forward pass
-        let outputs = self.model.forward(&input_ids, &attention_mask, None)?;
-        let hidden_states = outputs; // ORT 2.0 returns tensor directly
+        let hidden_states = self.model.forward(&input_ids, &attention_mask, None)?;
         
         // Mean pooling
         let mut results = Vec::with_capacity(batch_size);

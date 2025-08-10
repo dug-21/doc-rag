@@ -127,7 +127,7 @@ pub enum ProcessorError {
     MetricsError { metric: String, reason: String },
 
     /// General processing error
-    #[error("Processing failed: {reason}")]
+    #[error("Processing failed: {0}")]
     ProcessingFailed(String),
 
     /// Internal errors (should not occur in normal operation)

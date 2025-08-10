@@ -1,13 +1,12 @@
 //! Multi-stage validation pipeline for response accuracy and quality assurance
 
 use crate::error::{Result, ResponseError};
-use crate::{GenerationRequest, GeneratedResponse, IntermediateResponse};
+use crate::{GenerationRequest, IntermediateResponse};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::time::{Duration, Instant};
 use tracing::{debug, instrument, warn, error};
-use uuid::Uuid;
 
 /// Multi-stage validator for response quality assurance
 #[derive(Debug)]

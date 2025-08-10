@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Response Generator - Streaming Demo");
     println!("==================================\n");
 
-    let generator = ResponseGenerator::default();
+    let mut generator = ResponseGenerator::default();
 
     // Example 1: Basic Streaming
     println!("Example 1: Basic Streaming Response");

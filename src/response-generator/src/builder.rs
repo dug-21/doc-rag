@@ -2,7 +2,6 @@
 
 use crate::{
     error::{Result, ResponseError},
-    citation::{Citation, Source},
     GenerationRequest, ContextChunk, IntermediateResponse,
 };
 use std::collections::{HashMap, HashSet};
@@ -754,11 +753,11 @@ impl ResponseBuilder {
 
 impl QualityMetrics {
     pub fn overall_score(&self) -> f64 {
-        (self.relevance * 0.3 + 
+        self.relevance * 0.3 + 
          self.coherence * 0.2 + 
          self.completeness * 0.2 + 
          self.accuracy_indicators * 0.2 + 
-         self.source_diversity * 0.1)
+         self.source_diversity * 0.1
     }
 }
 
