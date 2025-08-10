@@ -16,6 +16,31 @@ Building a high-accuracy RAG system requires unwavering commitment to quality, c
  - NO building neural models (ruvFANN)
  - NO building autonomous agents or orchestration (DAA)
 
+### Specific Library Requirements
+
+These are the ACTUAL libraries that MUST be integrated (not reimplemented):
+
+#### ruv-FANN (v0.1.6+)
+- **Purpose**: Neural network operations and pattern recognition
+- **Use for**: Document boundary detection, semantic analysis, classification
+- **Crate**: `ruv-fann = "0.1.6"`
+- **Documentation**: https://github.com/ruvnet/ruv-FANN
+- **DO NOT**: Build custom neural networks or pattern matching
+
+#### DAA (Decentralized Autonomous Agents)
+- **Purpose**: Orchestration, consensus, and fault tolerance
+- **Use for**: Service coordination, Byzantine consensus, autonomous decision making
+- **Repository**: https://github.com/ruvnet/daa
+- **DO NOT**: Build custom orchestration or consensus mechanisms
+
+#### FACT (Fast Augmented Context Tools)
+- **Purpose**: Intelligent caching and query optimization
+- **Use for**: Response caching, query acceleration, context management
+- **Repository**: https://github.com/ruvnet/FACT
+- **DO NOT**: Build basic caching without leveraging FACT's intelligence
+
+**IMPORTANT**: Before implementing ANY neural, orchestration, or caching functionality, CHECK if these libraries provide it. If they do, USE THE LIBRARY.
+
 ### 3. Building Block Architecture
 - **Start with the smallest testable unit** and build outward
 - Each component must be independently valuable and testable
