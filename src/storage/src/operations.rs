@@ -15,7 +15,7 @@ use mongodb::{
     results::{InsertManyResult, UpdateResult, DeleteResult},
     ClientSession, Collection,
 };
-use futures::stream::{StreamExt, TryStreamExt};
+use futures::stream::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
@@ -105,7 +105,7 @@ impl DatabaseOperations for VectorStorage {
         let chunk_id = chunk.chunk_id;
         
         // Convert to document and insert
-        let result = self.chunk_collection
+        let _result = self.chunk_collection
             .insert_one(&chunk, None)
             .await
             .context("Failed to insert chunk")?;
@@ -369,7 +369,7 @@ impl DatabaseOperations for VectorStorage {
             .build();
         
         let exists = self.chunk_collection
-            .find_one(filter, options)
+            .find_one(filter, None)
             .await
             .context("Failed to check chunk existence")?
             .is_some();
@@ -400,8 +400,7 @@ impl TransactionOperations for VectorStorage {
         
         let transaction_options = TransactionOptions::builder()
             .read_concern(ReadConcern::majority())
-            .write_concern(WriteConcern::majority())
-            .read_preference(ReadPreference::primary())
+            .write_concern(WriteConcern::builder().w(mongodb::options::Acknowledgment::Majority).build())
             .max_commit_time(Some(Duration::from_secs(30)))
             .build();
         

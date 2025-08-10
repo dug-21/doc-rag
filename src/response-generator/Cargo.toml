@@ -1,0 +1,93 @@
+[package]
+name = "response-generator"
+version = "0.1.0"
+edition = "2021"
+authors = ["RAG System Team"]
+description = "High-accuracy response generation system with citation tracking and multi-stage validation"
+license = "Apache-2.0"
+repository = "https://github.com/your-org/doc-rag"
+
+[dependencies]
+# Async runtime and utilities
+tokio = { version = "1.35", features = ["full"] }
+tokio-stream = "0.1"
+futures = "0.3"
+async-trait = "0.1"
+
+# Serialization and data handling
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Error handling and validation
+thiserror = "1.0"
+anyhow = "1.0"
+validator = { version = "0.16", features = ["derive"] }
+
+# Text processing and markdown
+pulldown-cmark = { version = "0.9", features = ["serde"] }
+regex = "1.10"
+unicode-segmentation = "1.10"
+
+# Logging and metrics
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+metrics = "0.22"
+metrics-exporter-prometheus = { version = "0.13", optional = true }
+
+# Configuration
+config = "0.14"
+once_cell = "1.19"
+
+# Hashing and utilities
+blake3 = "1.5"
+chrono = { version = "0.4", features = ["serde"] }
+
+# HTTP client for external validations
+reqwest = { version = "0.11", features = ["json", "stream"] }
+
+# Performance monitoring
+dashmap = "5.5"
+
+[dev-dependencies]
+# Testing framework
+tokio-test = "0.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.4"
+mockall = "0.12"
+tempfile = "3.8"
+
+# Test data generation
+fake = { version = "2.9", features = ["derive", "chrono"] }
+quickcheck = "1.0"
+quickcheck_macros = "1.0"
+
+# CLI support
+clap = { version = "4.4", features = ["derive"] }
+
+# TOML support for configuration
+toml = "0.8"
+
+[features]
+default = ["validation", "streaming", "metrics"]
+validation = []
+streaming = []
+metrics = ["metrics-exporter-prometheus"]
+
+[[bin]]
+name = "response-generator"
+path = "src/main.rs"
+
+[[bench]]
+name = "response_generation"
+harness = false
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.bench]
+debug = true

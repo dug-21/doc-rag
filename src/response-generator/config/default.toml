@@ -1,0 +1,83 @@
+# Default configuration for Response Generator
+# High-accuracy response generation system
+
+# Response generation settings
+[generation]
+default_format = "Json"
+max_context_chunks = 10
+min_relevance_score = 0.3
+enable_streaming = true
+stream_chunk_size = 256
+
+# Quality configuration
+[generation.quality]
+target_accuracy = 0.99  # 99% accuracy target
+enable_deduplication = true
+coherence_threshold = 0.7
+min_content_length = 10
+max_content_length = 1000
+
+# Validation system configuration
+[validation]
+min_confidence_threshold = 0.7
+max_validation_time = 50  # milliseconds
+strict_mode = false
+parallel_validation = true
+
+# Formatter configuration
+[formatter]
+default_format = "Json"
+enable_syntax_highlighting = true
+max_line_length = 80
+indent_size = 2
+include_metadata = true
+
+# Pipeline stages configuration
+pipeline_stages = [
+    "context_preprocessing",
+    "content_generation", 
+    "quality_enhancement",
+    "citation_processing",
+    "final_optimization"
+]
+
+# Performance settings
+[performance]
+max_processing_time = 100  # milliseconds - target <100ms
+max_concurrent_requests = 100
+enable_request_queue = true
+max_queue_size = 1000
+operation_timeout = 30  # milliseconds
+
+# Resource limits
+[performance.resource_limits]
+max_memory_mb = 1024  # 1GB
+max_cpu_percent = 80.0
+max_disk_mb = 10240  # 10GB  
+max_network_mbps = 100.0
+
+# Cache configuration
+[cache]
+enable_response_cache = true
+response_cache_size = 10000
+response_cache_ttl = 3600  # seconds (1 hour)
+enable_context_cache = true
+context_cache_size = 50000
+context_cache_ttl = 7200  # seconds (2 hours)
+
+# Cache backend - use memory for default
+[cache.cache_backend]
+Memory = {}
+
+# Logging configuration
+[logging]
+level = "info"
+structured = true
+max_file_size_mb = 100
+max_files = 5
+enable_performance_logs = true
+enable_metrics_export = false
+
+# Global settings
+max_response_length = 4096
+default_confidence_threshold = 0.7

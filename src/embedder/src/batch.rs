@@ -371,7 +371,7 @@ impl BatchUtils {
         }
         
         // Collect all items
-        let mut all_items: Vec<T> = batches.drain(..)
+        let all_items: Vec<T> = batches.drain(..)
             .flat_map(|batch| batch.into_iter())
             .collect();
         

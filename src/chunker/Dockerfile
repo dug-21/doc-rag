@@ -66,7 +66,7 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD echo "Chunker service is healthy"
+    CMD test -f /usr/local/bin/chunker && echo "Chunker binary is available" || exit 1
 
 # Set environment variables
 ENV RUST_LOG=info

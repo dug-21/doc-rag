@@ -176,6 +176,97 @@ services:
       - doc-rag-network
     restart: unless-stopped
 
+  # Query Processor Service (Week 3 - High-accuracy query processing)
+  query-processor:
+    build:
+      context: ./src/query-processor
+      dockerfile: Dockerfile
+    image: doc-rag/query-processor:latest
+    container_name: doc-rag-query-processor
+    ports:
+      - "8084:8080"
+    environment:
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+      - CONFIG_FILE=/app/config/default.toml
+      - MAX_PROCESSING_TIME_MS=100
+      - MAX_CONCURRENT_REQUESTS=100
+      - BYZANTINE_THRESHOLD=0.66
+      - ENABLE_METRICS=true
+      - METRICS_ENDPOINT=http://prometheus:9091/metrics
+      - REDIS_URL=redis://redis:6379
+      - JAEGER_AGENT_ENDPOINT=jaeger:14268
+    volumes:
+      - ./src/query-processor/config:/app/config:ro
+      - query_processor_logs:/app/logs
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "query-processor", "validate-config", "/app/config/default.toml"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Response Generator Service (Week 3 - High-accuracy response generation)
+  response-generator:
+    build:
+      context: ./src/response-generator
+      dockerfile: Dockerfile
+    image: doc-rag/response-generator:latest
+    container_name: doc-rag-response-generator
+    ports:
+      - "8085:8080"
+    environment:
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+      - CONFIG_FILE=/app/config/default.toml
+      - RESPONSE_MAX_LENGTH=4096
+      - DEFAULT_CONFIDENCE_THRESHOLD=0.7
+      - MAX_PROCESSING_TIME_MS=100
+      - ENABLE_RESPONSE_CACHE=true
+      - ENABLE_STREAMING=true
+      - METRICS_ENDPOINT=http://prometheus:9091/metrics
+      - REDIS_URL=redis://redis:6379
+      - JAEGER_AGENT_ENDPOINT=jaeger:14268
+    volumes:
+      - ./src/response-generator/config:/app/config:ro
+      - response_generator_logs:/app/logs
+    networks:
+      - doc-rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "response-generator", "validate-config", "/app/config/default.toml"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
   # Database Services
   postgres:
     image: postgres:16-alpine
@@ -412,6 +503,10 @@ volumes:
   grafana_data:
     driver: local
   rabbitmq_data:
+    driver: local
+  query_processor_logs:
+    driver: local
+  response_generator_logs:
     driver: local
 
 networks:

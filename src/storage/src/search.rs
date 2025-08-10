@@ -25,6 +25,7 @@ use ndarray::{Array1, Array2};
 
 use crate::{VectorStorage, ChunkDocument, ChunkMetadata};
 use crate::error::StorageError;
+use crate::operations::DatabaseOperations;
 
 /// Search query parameters
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -55,7 +56,7 @@ pub struct SearchQuery {
 }
 
 /// Types of search operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SearchType {
     /// Vector similarity search only
@@ -330,8 +331,8 @@ impl SearchOperations for VectorStorage {
             "$vectorSearch": {
                 "queryVector": query_embedding,
                 "path": "embedding",
-                "numCandidates": limit * 10, // Oversample for better results
-                "limit": limit,
+                "numCandidates": (limit * 10) as i32, // Oversample for better results
+                "limit": limit as i32,
                 "index": &self.vector_index_name
             }
         });
@@ -452,7 +453,7 @@ impl SearchOperations for VectorStorage {
             let text_score = doc.get_f64("textScore").unwrap_or(0.0) as f32;
             
             // Convert document to ChunkDocument
-            if let Ok(mut chunk) = mongodb::bson::from_document::<ChunkDocument>(doc) {
+            if let Ok(chunk) = mongodb::bson::from_document::<ChunkDocument>(doc) {
                 // Generate highlights
                 let highlights = self.generate_text_highlights(&chunk.content, query);
                 
@@ -573,7 +574,7 @@ impl SearchOperations for VectorStorage {
             .ok_or_else(|| StorageError::EmbeddingNotFound(chunk_id))?;
         
         // Perform vector search excluding the source chunk
-        let mut filters = SearchFilters::default();
+        let filters = SearchFilters::default();
         // Add filter to exclude the source chunk (would need custom implementation)
         
         let results = self.vector_search(&embedding, limit + 1, Some(filters)).await?;
@@ -701,7 +702,7 @@ impl VectorStorage {
     /// Combine and re-rank results from vector and text search
     fn combine_and_rerank_results(
         &self,
-        mut results: Vec<SearchResult>,
+        results: Vec<SearchResult>,
         query: &SearchQuery,
     ) -> Result<Vec<SearchResult>> {
         // Remove duplicates by chunk ID, keeping the best score
