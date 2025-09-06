@@ -3009,6 +3009,7 @@ dependencies = [
  "sys-info",
  "tempfile",
  "thiserror 1.0.69",
+ "time",
  "tokio",
  "tokio-test",
  "tokio-util",
@@ -3279,6 +3280,12 @@ dependencies = [
  "cfg-if",
  "digest",
 ]
+
+[[package]]
+name = "md5"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
 
 [[package]]
 name = "memchr"
@@ -4784,6 +4791,7 @@ dependencies = [
  "fact-tools",
  "fake",
  "futures",
+ "md5",
  "metrics 0.22.4",
  "metrics-exporter-prometheus",
  "mockall",

@@ -60,6 +60,9 @@ once_cell = { workspace = true }
 parking_lot = { workspace = true }
 rand = { workspace = true }
 
+# Time handling
+time = "0.3"
+
 # System information
 sys-info = "0.9"
 

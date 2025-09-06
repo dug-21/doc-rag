@@ -203,38 +203,38 @@ pub struct LatencyPercentiles {
 
 impl Query {
     /// Create a new query with default metadata
-    pub fn new(text: impl Into<String>) -> Self {
+    pub fn new(text: impl Into<String>) -> Result<Self, QueryError> {
         let text = text.into();
         
         // Basic validation
         if text.trim().is_empty() {
-            panic!("Query text cannot be empty");
+            return Err(QueryError::InvalidInput("Query text cannot be empty".to_string()));
         }
         
-        Self {
+        Ok(Self {
             id: Uuid::new_v4(),
             text,
             metadata: QueryMetadata::default(),
             created_at: Utc::now(),
             context: HashMap::new(),
-        }
+        })
     }
 
     /// Create a new query with custom metadata
-    pub fn with_metadata(text: impl Into<String>, metadata: QueryMetadata) -> Self {
+    pub fn with_metadata(text: impl Into<String>, metadata: QueryMetadata) -> Result<Self, QueryError> {
         let text = text.into();
         
         if text.trim().is_empty() {
-            panic!("Query text cannot be empty");
+            return Err(QueryError::InvalidInput("Query text cannot be empty".to_string()));
         }
         
-        Self {
+        Ok(Self {
             id: Uuid::new_v4(),
             text,
             metadata,
             created_at: Utc::now(),
             context: HashMap::new(),
-        }
+        })
     }
 
     /// Get the query ID

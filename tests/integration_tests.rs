@@ -231,7 +231,7 @@ async fn test_pipeline_error_handling() {
         "a".repeat(1000), // Very long query
     ];
     
-    for query in edge_cases {
+    for query in edge_cases.iter() {
         let processed = query_processor.process(&query).await;
         let response = response_generator.generate(&processed).await;
         

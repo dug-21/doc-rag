@@ -43,7 +43,10 @@ pub mod citation;
 pub mod config;
 pub mod error;
 pub mod fact_accelerated;
+pub mod fact_cache_impl;
+pub mod fact_cache_optimized; // High-performance sub-50ms FACT cache
 pub mod formatter;
+pub mod mongodb_integration; // MongoDB optimization integration for Phase 2
 pub mod pipeline;
 pub mod query_preprocessing;
 pub mod validator;
@@ -53,11 +56,22 @@ use tokio_stream::wrappers::ReceiverStream;
 
 pub use builder::ResponseBuilder;
 pub use cache::{FACTCacheManager, CacheManagerConfig, CacheResult, CacheSource};
-pub use citation::{Citation, CitationTracker, Source, SourceRanking};
+pub use citation::{
+    Citation, CitationTracker, Source, SourceRanking, CitationConfig,
+    CitationQualityAssurance, CitationCoverageAnalyzer, CitationChain,
+    CitationQualityMetrics, CitationValidationResult, CitationCoverageReport,
+    FACTCitationProvider, FACTCitationManager, ComprehensiveCitationSystem,
+    ComprehensiveCitationResult, CitationType, ValidationSeverity, CitationNecessity,
+    ClaimType, GapType, CitationRequirement, CitationRequirementAnalysis
+};
 pub use config::Config;
 pub use error::{ResponseError, Result};
 pub use fact_accelerated::{FACTAcceleratedGenerator, FACTConfig, FACTGeneratedResponse};
 pub use formatter::{FormatterConfig, OutputFormat, ResponseFormatter};
+pub use mongodb_integration::{
+    MongoDBIntegratedGenerator, MongoDBIntegrationConfig, IntegrationResult, 
+    IntegrationMetrics, Phase2ComplianceReport, OptimizationRecommendation
+};
 pub use pipeline::{Pipeline, PipelineStage, ProcessingContext};
 pub use query_preprocessing::{FACTQueryPreprocessingStage, QueryPreprocessingConfig};
 pub use validator::{ValidationConfig, ValidationLayer, ValidationResult, Validator};

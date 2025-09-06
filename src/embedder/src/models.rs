@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use anyhow::{Result, Context};
+use ort::session::Session;
 use tracing::{info, warn, debug, instrument};
 use tokio::fs;
 use candle_core::IndexOp;
@@ -35,7 +36,7 @@ pub trait EmbeddingModel: Send + Sync {
 /// ONNX Runtime based embedding model
 pub struct OnnxEmbeddingModel {
     #[cfg(feature = "ort")]
-    session: ort::Session,
+    session: Session,
     #[cfg(not(feature = "ort"))]
     session: (),
     tokenizer: Box<dyn Tokenizer + Send + Sync>,
@@ -213,7 +214,7 @@ impl OnnxEmbeddingModel {
         // Initialize ONNX Runtime session with ORT 2.0 API
         #[cfg(feature = "ort")]
         let session = {
-            ort::Session::builder()?
+            Session::builder()?
                 .commit_from_file(model_path)?
         };
         
@@ -271,15 +272,22 @@ impl OnnxEmbeddingModel {
         // Run inference
         #[cfg(feature = "ort")]
         let outputs = {
+            // Create ORT Values for input with proper type conversion
+            let input_ids_array = ndarray::Array2::from_shape_vec(
+                (batch_size, seq_len),
+                input_ids
+            )?.into_dyn().mapv(|x| x as i64);
+            let attention_mask_array = ndarray::Array2::from_shape_vec(
+                (batch_size, seq_len),
+                attention_mask
+            )?.into_dyn().mapv(|x| x as i64);
+            
+            let input_ids_value = ort::Value::from_array(input_ids_array)?;
+            let attention_mask_value = ort::Value::from_array(attention_mask_array)?;
+            
             self.session.run(ort::inputs![
-                "input_ids" => ndarray::Array2::from_shape_vec(
-                    (batch_size, seq_len),
-                    input_ids
-                )?.into_dyn(),
-                "attention_mask" => ndarray::Array2::from_shape_vec(
-                    (batch_size, seq_len),
-                    attention_mask
-                )?.into_dyn()
+                "input_ids" => &input_ids_value,
+                "attention_mask" => &attention_mask_value
             ])?
         };
         

@@ -88,7 +88,7 @@ mockall = "0.12"
 wiremock = "0.5"
 
 [features]
-default = []
+default = ["neural", "consensus"]
 # DAA feature enabled for distributed consensus:
 neural = ["ruv-fann"]  # Neural network features
 consensus = ["daa"]

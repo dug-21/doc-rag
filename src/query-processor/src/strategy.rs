@@ -1041,11 +1041,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_comparison_query_strategy() {
+    async fn test_comparison_query_strategy() -> Result<(), QueryError> {
         let config = Arc::new(ProcessorConfig::default());
         let selector = StrategySelector::new(config).await.unwrap();
         
-        let query = crate::query::Query::new("Compare PCI DSS 3.2.1 versus 4.0");
+        let query = crate::query::Query::new("Compare PCI DSS 3.2.1 versus 4.0")?;
         let analysis = create_test_analysis();
         let intent = QueryIntent::Comparison;
         let entities = vec![];
@@ -1055,8 +1055,13 @@ mod tests {
         // Comparison queries should prefer hybrid or semantic search
         match selection.strategy {
             SearchStrategy::Hybrid { .. } | SearchStrategy::Semantic { .. } => {},
-            _ => panic!("Unexpected strategy for comparison query: {:?}", selection.strategy),
+            _ => {
+                return Err(QueryError::InvalidStrategy(
+                    format!("Unexpected strategy for comparison query: {:?}", selection.strategy)
+                ));
+            }
         }
+        Ok(())
     }
 
     #[tokio::test]

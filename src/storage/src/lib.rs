@@ -36,6 +36,7 @@ pub mod search;
 pub mod error;
 pub mod config;
 pub mod metrics;
+pub mod mongodb_optimizer; // MongoDB optimization for Phase 2 performance targets
 
 pub use schema::*;
 pub use operations::*;
@@ -43,6 +44,7 @@ pub use search::*;
 pub use error::*;
 pub use config::*;
 pub use metrics::*;
+pub use mongodb_optimizer::*;
 
 /// Maximum retry attempts for database operations
 const MAX_RETRIES: u32 = 3;

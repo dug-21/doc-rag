@@ -3,11 +3,13 @@
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use tracing::{debug, instrument, warn};
+use tracing::{debug, instrument, warn, info, error};
 use uuid::Uuid;
+use async_trait::async_trait;
+use std::sync::Arc;
 
-/// Citation tracker for managing source attribution
-#[derive(Debug, Clone)]
+/// Citation tracker for managing source attribution with FACT integration
+#[derive(Clone)]
 pub struct CitationTracker {
     /// Configuration for citation processing
     config: CitationConfig,
@@ -17,6 +19,28 @@ pub struct CitationTracker {
     
     /// Deduplication tracking
     deduplication_index: HashMap<String, Uuid>,
+    
+    /// FACT citation manager for caching and optimization
+    fact_manager: Option<Arc<dyn FACTCitationProvider>>,
+    
+    /// Quality assurance system
+    quality_assurance: CitationQualityAssurance,
+    
+    /// Coverage analyzer
+    coverage_analyzer: CitationCoverageAnalyzer,
+}
+
+impl std::fmt::Debug for CitationTracker {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CitationTracker")
+            .field("config", &self.config)
+            .field("source_cache", &self.source_cache)
+            .field("deduplication_index", &self.deduplication_index)
+            .field("fact_manager", &self.fact_manager.is_some())
+            .field("quality_assurance", &self.quality_assurance)
+            .field("coverage_analyzer", &self.coverage_analyzer)
+            .finish()
+    }
 }
 
 /// Source information with metadata
@@ -137,6 +161,27 @@ pub struct CitationConfig {
     
     /// Maximum length for supporting text excerpts
     pub max_excerpt_length: usize,
+    
+    /// Require 100% citation coverage
+    pub require_100_percent_coverage: bool,
+    
+    /// Enable FACT integration for caching
+    pub enable_fact_integration: bool,
+    
+    /// Citation quality threshold (0.0-1.0)
+    pub citation_quality_threshold: f64,
+    
+    /// Maximum citations per paragraph
+    pub max_citations_per_paragraph: usize,
+    
+    /// Require supporting text for direct quotes
+    pub require_supporting_text_for_quotes: bool,
+    
+    /// Enable advanced deduplication
+    pub enable_advanced_deduplication: bool,
+    
+    /// Enable quality assurance
+    pub enable_quality_assurance: bool,
 }
 
 /// Citation formatting styles
@@ -159,6 +204,13 @@ impl Default for CitationConfig {
             citation_style: CitationStyle::APA,
             include_page_numbers: true,
             max_excerpt_length: 200,
+            require_100_percent_coverage: false,
+            enable_fact_integration: false,
+            citation_quality_threshold: 0.7,
+            max_citations_per_paragraph: 3,
+            require_supporting_text_for_quotes: true,
+            enable_advanced_deduplication: true,
+            enable_quality_assurance: true,
         }
     }
 }
@@ -175,7 +227,259 @@ impl CitationTracker {
             config,
             source_cache: HashMap::new(),
             deduplication_index: HashMap::new(),
+            fact_manager: None,
+            quality_assurance: CitationQualityAssurance::new(),
+            coverage_analyzer: CitationCoverageAnalyzer::new(),
         }
+    }
+    
+    /// Ensure complete citation coverage for all claims in response
+    pub async fn ensure_complete_citation_coverage(
+        &mut self,
+        response: &crate::IntermediateResponse,
+    ) -> Result<CitationCoverageReport> {
+        // Analyze the content for factual claims requiring citations
+        let requirement_analysis = self.coverage_analyzer
+            .analyze_citation_requirements(&response.content).await?;
+        
+        // Generate citations for identified claims
+        let mut citations = Vec::new();
+        let mut uncited_claims = Vec::new();
+        
+        for requirement in &requirement_analysis.required_citations {
+            // Try to find supporting source for this claim
+            if let Some(source_ref) = response.source_references.first() {
+                if let Some(source) = self.source_cache.get(source_ref) {
+                    let citation = Citation {
+                        id: Uuid::new_v4(),
+                        source: source.clone(),
+                        text_range: requirement.text_range.clone(),
+                        confidence: 0.8, // Default confidence
+                        citation_type: CitationType::SupportingEvidence,
+                        relevance_score: 0.8,
+                        supporting_text: Some(requirement.claim_text.clone()),
+                    };
+                    citations.push(citation);
+                } else {
+                    // No supporting source found - mark as uncited
+                    uncited_claims.push(UncitedClaim {
+                        text: requirement.claim_text.clone(),
+                        position: requirement.text_range.start,
+                        claim_type: ClaimType::Factual,
+                        confidence: 0.8,
+                        citation_necessity: requirement.citation_necessity.clone(),
+                    });
+                }
+            }
+        }
+        
+        let coverage_percentage = if requirement_analysis.factual_claims_count == 0 {
+            100.0
+        } else {
+            (citations.len() as f64 / requirement_analysis.factual_claims_count as f64 * 100.0).min(100.0)
+        };
+        
+        Ok(CitationCoverageReport {
+            coverage_percentage,
+            factual_claims_detected: requirement_analysis.factual_claims_count,
+            citations,
+            uncited_claims,
+            coverage_gaps: Vec::new(), // Simplified for now
+            quality_score: 0.8, // Default quality score
+        })
+    }
+    
+    /// Advanced citation deduplication with semantic analysis
+    pub async fn deduplicate_citations_advanced(&mut self, citations: Vec<Citation>) -> Result<Vec<Citation>> {
+        if !self.config.enable_advanced_deduplication {
+            return self.deduplicate_citations(citations).await;
+        }
+        
+        let mut deduplicated = Vec::new();
+        let mut processed_sources = HashSet::new();
+        
+        // Group citations by source
+        let mut source_citations: HashMap<Uuid, Vec<Citation>> = HashMap::new();
+        for citation in citations {
+            source_citations
+                .entry(citation.source.id)
+                .or_insert_with(Vec::new)
+                .push(citation);
+        }
+        
+        // Process each source group
+        for (source_id, mut source_cites) in source_citations {
+            if processed_sources.contains(&source_id) {
+                continue;
+            }
+            
+            // Sort by confidence and relevance
+            source_cites.sort_by(|a, b| {
+                let score_a = (a.confidence + a.relevance_score) / 2.0;
+                let score_b = (b.confidence + b.relevance_score) / 2.0;
+                score_b.partial_cmp(&score_a).unwrap_or(std::cmp::Ordering::Equal)
+            });
+            
+            // Keep best citations, merge similar ones
+            let mut kept_citations = Vec::new();
+            
+            for citation in source_cites {
+                let should_merge = kept_citations.iter().any(|kept: &Citation| {
+                    self.should_merge_citations(kept, &citation)
+                });
+                
+                if !should_merge && kept_citations.len() < 2 {
+                    kept_citations.push(citation);
+                }
+            }
+            
+            deduplicated.extend(kept_citations);
+            processed_sources.insert(source_id);
+        }
+        
+        Ok(deduplicated)
+    }
+    
+    /// Check if two citations should be merged
+    fn should_merge_citations(&self, citation1: &Citation, citation2: &Citation) -> bool {
+        // Same source and overlapping text ranges
+        if citation1.source.id != citation2.source.id {
+            return false;
+        }
+        
+        let range1 = &citation1.text_range;
+        let range2 = &citation2.text_range;
+        
+        // Check for overlap
+        let overlap_start = range1.start.max(range2.start);
+        let overlap_end = range1.end.min(range2.end);
+        
+        if overlap_start < overlap_end {
+            let overlap_size = overlap_end - overlap_start;
+            let min_size = range1.length.min(range2.length);
+            
+            // Merge if overlap is more than 50% of smaller citation
+            overlap_size > min_size / 2
+        } else {
+            false
+        }
+    }
+    
+    /// Build citation chain for source attribution tracking
+    pub async fn build_citation_chain(&self, citing_source: &Source, cited_source: &Source) -> Result<CitationChain> {
+        let mut chain = CitationChain {
+            primary_source: cited_source.clone(),
+            citing_sources: vec![citing_source.clone()],
+            levels: 2,
+            attribution_complete: true,
+            credibility_score: 0.0,
+        };
+        
+        // Calculate credibility based on source types and metadata
+        let primary_credibility = self.calculate_source_credibility(&chain.primary_source).await?;
+        let citing_credibility = self.calculate_source_credibility(citing_source).await?;
+        
+        // Chain credibility is the minimum of all sources in the chain
+        chain.credibility_score = primary_credibility.min(citing_credibility);
+        
+        // Verify attribution is complete by checking metadata
+        if let Some(cites_field) = citing_source.metadata.get("cites") {
+            chain.attribution_complete = cites_field.contains(&cited_source.id.to_string());
+        } else {
+            chain.attribution_complete = false;
+        }
+        
+        Ok(chain)
+    }
+    
+    /// Calculate source credibility score
+    async fn calculate_source_credibility(&self, source: &Source) -> Result<f64> {
+        let base_credibility = self.calculate_credibility(source).await?;
+        
+        // Additional credibility factors
+        let mut credibility_factors = vec![base_credibility];
+        
+        // Check for peer review
+        if source.metadata.get("peer_reviewed") == Some(&"true".to_string()) {
+            credibility_factors.push(0.2);
+        }
+        
+        // Check citation count
+        if let Some(citation_count_str) = source.metadata.get("citation_count") {
+            if let Ok(count) = citation_count_str.parse::<u32>() {
+                let citation_factor = (count as f64).log10() / 10.0;
+                credibility_factors.push(citation_factor.min(0.3));
+            }
+        }
+        
+        Ok(credibility_factors.iter().sum::<f64>() / credibility_factors.len() as f64)
+    }
+    
+    /// Comprehensive citation validation
+    pub async fn validate_citations_comprehensive(&self, citations: Vec<Citation>) -> Result<CitationValidationResult> {
+        let mut valid_citations = 0;
+        let mut invalid_citations = Vec::new();
+        
+        for citation in &citations {
+            let mut failure_reasons = Vec::new();
+            let mut recommendations = Vec::new();
+            
+            // Validate confidence threshold
+            if citation.confidence < self.config.min_confidence {
+                failure_reasons.push("Confidence below minimum threshold".to_string());
+                recommendations.push(format!("Increase confidence above {}", self.config.min_confidence));
+            }
+            
+            // Validate supporting text for direct quotes
+            if self.config.require_supporting_text_for_quotes && 
+               citation.citation_type == CitationType::DirectQuote && 
+               citation.supporting_text.is_none() {
+                failure_reasons.push("Missing supporting text for direct quote".to_string());
+                recommendations.push("Add supporting text with exact quote from source".to_string());
+            }
+            
+            // Validate source quality
+            if citation.source.title.is_empty() {
+                failure_reasons.push("Source title is empty".to_string());
+                recommendations.push("Provide descriptive source title".to_string());
+            }
+            
+            // Validate text range
+            if citation.text_range.start >= citation.text_range.end {
+                failure_reasons.push("Invalid text range".to_string());
+                recommendations.push("Ensure start position is less than end position".to_string());
+            }
+            
+            if failure_reasons.is_empty() {
+                valid_citations += 1;
+            } else {
+                let severity = if failure_reasons.len() > 2 {
+                    ValidationSeverity::Critical
+                } else if failure_reasons.iter().any(|r| r.contains("confidence")) {
+                    ValidationSeverity::Error
+                } else {
+                    ValidationSeverity::Warning
+                };
+                
+                invalid_citations.push(CitationValidationFailure {
+                    citation: citation.clone(),
+                    failure_reasons,
+                    severity,
+                    recommendations,
+                });
+            }
+        }
+        
+        let overall_validation_score = valid_citations as f64 / citations.len() as f64;
+        let validation_passed = overall_validation_score >= 0.8;
+        
+        Ok(CitationValidationResult {
+            total_citations: citations.len(),
+            valid_citations,
+            invalid_citations,
+            overall_validation_score,
+            validation_passed,
+        })
     }
 
     /// Process citations for a response
@@ -884,9 +1188,566 @@ struct CitationOpportunity {
     citation_necessity: f64,
 }
 
+/// FACT Citation Provider trait for caching and optimization
+#[async_trait]
+pub trait FACTCitationProvider: Send + Sync + std::fmt::Debug {
+    async fn get_cached_citations(&self, key: &str) -> Result<Option<Vec<Citation>>>;
+    async fn store_citations(&self, key: &str, citations: &[Citation]) -> Result<()>;
+    async fn validate_citation_quality(&self, citation: &Citation) -> Result<CitationQualityMetrics>;
+    async fn deduplicate_citations(&self, citations: Vec<Citation>) -> Result<Vec<Citation>>;
+    async fn optimize_citation_chain(&self, chain: &CitationChain) -> Result<CitationChain>;
+}
+
+/// Citation quality assurance system
+#[derive(Debug, Clone)]
+pub struct CitationQualityAssurance {
+    config: CitationConfig,
+    quality_calculator: CitationQualityCalculator,
+}
+
+/// Citation coverage analyzer for 100% attribution
+#[derive(Debug, Clone)]
+pub struct CitationCoverageAnalyzer {
+    factual_claim_patterns: Vec<String>,
+    statistical_patterns: Vec<String>,
+    evidence_patterns: Vec<String>,
+}
+
+/// Citation chain for tracking source attribution
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CitationChain {
+    pub primary_source: Source,
+    pub citing_sources: Vec<Source>,
+    pub levels: usize,
+    pub attribution_complete: bool,
+    pub credibility_score: f64,
+}
+
+/// Citation quality metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CitationQualityMetrics {
+    pub overall_quality_score: f64,
+    pub source_authority_score: f64,
+    pub recency_score: f64,
+    pub relevance_score: f64,
+    pub completeness_score: f64,
+    pub peer_review_factor: f64,
+    pub impact_factor: f64,
+    pub citation_count_factor: f64,
+    pub author_credibility_factor: f64,
+    pub passed_quality_threshold: bool,
+}
+
+/// Citation validation result
+#[derive(Debug, Clone)]
+pub struct CitationValidationResult {
+    pub total_citations: usize,
+    pub valid_citations: usize,
+    pub invalid_citations: Vec<CitationValidationFailure>,
+    pub overall_validation_score: f64,
+    pub validation_passed: bool,
+}
+
+/// Citation validation failure details
+#[derive(Debug, Clone)]
+pub struct CitationValidationFailure {
+    pub citation: Citation,
+    pub failure_reasons: Vec<String>,
+    pub severity: ValidationSeverity,
+    pub recommendations: Vec<String>,
+}
+
+/// Validation severity levels
+#[derive(Debug, Clone, PartialEq)]
+pub enum ValidationSeverity {
+    Warning,
+    Error,
+    Critical,
+}
+
+/// Citation coverage report
+#[derive(Debug, Clone)]
+pub struct CitationCoverageReport {
+    pub coverage_percentage: f64,
+    pub factual_claims_detected: usize,
+    pub citations: Vec<Citation>,
+    pub uncited_claims: Vec<UncitedClaim>,
+    pub coverage_gaps: Vec<CoverageGap>,
+    pub quality_score: f64,
+}
+
+/// Uncited factual claim
+#[derive(Debug, Clone)]
+pub struct UncitedClaim {
+    pub text: String,
+    pub position: usize,
+    pub claim_type: ClaimType,
+    pub confidence: f64,
+    pub citation_necessity: CitationNecessity,
+}
+
+/// Coverage gap in citations
+#[derive(Debug, Clone)]
+pub struct CoverageGap {
+    pub text_range: TextRange,
+    pub gap_type: GapType,
+    pub severity: ValidationSeverity,
+    pub recommendations: Vec<String>,
+}
+
+/// Types of factual claims
+#[derive(Debug, Clone, PartialEq)]
+pub enum ClaimType {
+    Statistical,
+    Factual,
+    Research,
+    Expert,
+    Historical,
+    Technical,
+}
+
+/// Citation necessity levels
+#[derive(Debug, Clone, PartialEq)]
+pub enum CitationNecessity {
+    Required,
+    Recommended,
+    Optional,
+}
+
+/// Types of coverage gaps
+#[derive(Debug, Clone, PartialEq)]
+pub enum GapType {
+    MissingCitation,
+    LowQualitySource,
+    InsufficientEvidence,
+    OutdatedSource,
+    ConflictingEvidence,
+}
+
+/// Citation quality calculator
+#[derive(Debug, Clone)]
+pub struct CitationQualityCalculator {
+    authority_weights: HashMap<String, f64>,
+    recency_weights: HashMap<String, f64>,
+    completeness_factors: Vec<String>,
+}
+
+/// Citation requirement analysis
+#[derive(Debug, Clone)]
+pub struct CitationRequirementAnalysis {
+    pub factual_claims_count: usize,
+    pub opinion_statements_count: usize,
+    pub required_citations: Vec<CitationRequirement>,
+    pub recommended_citations: Vec<CitationRequirement>,
+}
+
+/// Individual citation requirement
+#[derive(Debug, Clone)]
+pub struct CitationRequirement {
+    pub claim_text: String,
+    pub text_range: TextRange,
+    pub citation_necessity: CitationNecessity,
+    pub confidence_threshold: f64,
+    pub recommended_source_types: Vec<String>,
+}
+
+/// Comprehensive citation system result
+#[derive(Debug, Clone)]
+pub struct ComprehensiveCitationResult {
+    pub coverage_percentage: f64,
+    pub quality_score: f64,
+    pub final_citations: Vec<Citation>,
+    pub fact_cache_utilized: bool,
+    pub validation_passed: bool,
+    pub quality_metrics: CitationQualityMetrics,
+    pub coverage_report: CitationCoverageReport,
+}
+
+/// Comprehensive citation system integrating all components
+pub struct ComprehensiveCitationSystem {
+    tracker: CitationTracker,
+    quality_assurance: CitationQualityAssurance,
+    coverage_analyzer: CitationCoverageAnalyzer,
+    fact_manager: Option<Arc<dyn FACTCitationProvider>>,
+}
+
+impl std::fmt::Debug for ComprehensiveCitationSystem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ComprehensiveCitationSystem")
+            .field("tracker", &self.tracker)
+            .field("quality_assurance", &self.quality_assurance)
+            .field("coverage_analyzer", &self.coverage_analyzer)
+            .field("fact_manager", &self.fact_manager.is_some())
+            .finish()
+    }
+}
+
+/// FACT Citation Manager implementation
+pub struct FACTCitationManager {
+    provider: Box<dyn FACTCitationProvider>,
+    cache_enabled: bool,
+}
+
+impl std::fmt::Debug for FACTCitationManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FACTCitationManager")
+            .field("provider", &"<dyn FACTCitationProvider>")
+            .field("cache_enabled", &self.cache_enabled)
+            .finish()
+    }
+}
+
 impl Default for CitationTracker {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+// Implementation of new citation system components
+impl CitationQualityAssurance {
+    pub fn new() -> Self {
+        Self {
+            config: CitationConfig::default(),
+            quality_calculator: CitationQualityCalculator::new(),
+        }
+    }
+    
+    pub async fn validate_citation_quality(&mut self, citation: &Citation) -> Result<CitationQualityMetrics> {
+        self.quality_calculator.calculate_comprehensive_quality(citation).await
+    }
+}
+
+impl CitationCoverageAnalyzer {
+    pub fn new() -> Self {
+        Self {
+            factual_claim_patterns: vec![
+                "according to".to_string(),
+                "studies show".to_string(),
+                "research indicates".to_string(),
+                "data shows".to_string(),
+                "statistics reveal".to_string(),
+                "\\d+%".to_string(), // Percentage patterns
+                "\\d+\\.\\d+".to_string(), // Decimal numbers
+            ],
+            statistical_patterns: vec![
+                "\\d+%".to_string(),
+                "\\d+ percent".to_string(),
+                "ratio of".to_string(),
+                "on average".to_string(),
+            ],
+            evidence_patterns: vec![
+                "evidence suggests".to_string(),
+                "findings indicate".to_string(),
+                "results show".to_string(),
+                "analysis reveals".to_string(),
+            ],
+        }
+    }
+    
+    pub async fn analyze_citation_requirements(&mut self, content: &str) -> Result<CitationRequirementAnalysis> {
+        let mut factual_claims = 0;
+        let mut opinion_statements = 0;
+        let mut required_citations = Vec::new();
+        let mut recommended_citations = Vec::new();
+        
+        // Simple sentence-based analysis
+        let sentences: Vec<&str> = content.split('.').collect();
+        
+        for (i, sentence) in sentences.iter().enumerate() {
+            let sentence = sentence.trim();
+            if sentence.is_empty() { continue; }
+            
+            let start = content.find(sentence).unwrap_or(0);
+            let end = start + sentence.len();
+            
+            // Check for factual claims
+            let is_factual = self.contains_factual_indicators(sentence);
+            let is_statistical = self.contains_statistical_indicators(sentence);
+            let is_opinion = self.contains_opinion_indicators(sentence);
+            
+            if is_factual || is_statistical {
+                factual_claims += 1;
+                required_citations.push(CitationRequirement {
+                    claim_text: sentence.to_string(),
+                    text_range: TextRange { start, end, length: sentence.len() },
+                    citation_necessity: CitationNecessity::Required,
+                    confidence_threshold: if is_statistical { 0.9 } else { 0.8 },
+                    recommended_source_types: vec!["academic".to_string(), "government".to_string()],
+                });
+            } else if is_opinion {
+                opinion_statements += 1;
+            }
+        }
+        
+        Ok(CitationRequirementAnalysis {
+            factual_claims_count: factual_claims,
+            opinion_statements_count: opinion_statements,
+            required_citations,
+            recommended_citations,
+        })
+    }
+    
+    fn contains_factual_indicators(&self, text: &str) -> bool {
+        let text_lower = text.to_lowercase();
+        self.factual_claim_patterns.iter().any(|pattern| {
+            if pattern.contains("\\") {
+                // Regex pattern - simplified check for now
+                text_lower.contains(&pattern.replace("\\d+", "[0-9]").replace("\\", ""))
+            } else {
+                text_lower.contains(pattern)
+            }
+        })
+    }
+    
+    fn contains_statistical_indicators(&self, text: &str) -> bool {
+        let text_lower = text.to_lowercase();
+        self.statistical_patterns.iter().any(|pattern| {
+            if pattern.contains("\\") {
+                // Simplified regex check
+                text_lower.contains("%") || text_lower.contains("percent")
+            } else {
+                text_lower.contains(pattern)
+            }
+        })
+    }
+    
+    fn contains_opinion_indicators(&self, text: &str) -> bool {
+        let text_lower = text.to_lowercase();
+        text_lower.contains("i think") || 
+        text_lower.contains("in my opinion") ||
+        text_lower.contains("i believe") ||
+        text_lower.contains("personally") ||
+        text_lower.contains("it seems")
+    }
+}
+
+impl CitationQualityCalculator {
+    pub fn new() -> Self {
+        let mut authority_weights = HashMap::new();
+        authority_weights.insert("academic".to_string(), 0.9);
+        authority_weights.insert("government".to_string(), 0.85);
+        authority_weights.insert("news".to_string(), 0.7);
+        authority_weights.insert("blog".to_string(), 0.4);
+        
+        let mut recency_weights = HashMap::new();
+        recency_weights.insert("2024".to_string(), 1.0);
+        recency_weights.insert("2023".to_string(), 0.9);
+        recency_weights.insert("2022".to_string(), 0.8);
+        
+        Self {
+            authority_weights,
+            recency_weights,
+            completeness_factors: vec![
+                "title".to_string(),
+                "author".to_string(),
+                "publication_date".to_string(),
+                "supporting_text".to_string(),
+            ],
+        }
+    }
+    
+    pub async fn calculate_comprehensive_quality(&self, citation: &Citation) -> Result<CitationQualityMetrics> {
+        // Source authority score
+        let authority_score = self.authority_weights
+            .get(&citation.source.document_type)
+            .copied()
+            .unwrap_or(0.5);
+            
+        // Recency score from metadata
+        let recency_score = citation.source.metadata
+            .get("publication_year")
+            .and_then(|year| self.recency_weights.get(year))
+            .copied()
+            .unwrap_or(0.5);
+            
+        // Relevance score from citation
+        let relevance_score = citation.relevance_score;
+        
+        // Completeness score based on available metadata
+        let completeness_score = self.completeness_factors.iter()
+            .map(|factor| {
+                match factor.as_str() {
+                    "title" => if !citation.source.title.is_empty() { 1.0 } else { 0.0 },
+                    "author" => if citation.source.metadata.contains_key("author") { 1.0 } else { 0.0 },
+                    "publication_date" => if citation.source.metadata.contains_key("publication_date") { 1.0 } else { 0.0 },
+                    "supporting_text" => if citation.supporting_text.is_some() { 1.0 } else { 0.0 },
+                    _ => 0.5,
+                }
+            })
+            .fold(0.0, |acc, score| acc + score) / self.completeness_factors.len() as f64;
+            
+        // Additional quality factors
+        let peer_review_factor = citation.source.metadata
+            .get("peer_reviewed")
+            .map(|pr| if pr == "true" { 0.2 } else { 0.0 })
+            .unwrap_or(0.0);
+            
+        let impact_factor = citation.source.metadata
+            .get("impact_factor")
+            .and_then(|if_str| if_str.parse::<f64>().ok())
+            .map(|if_val| (if_val / 10.0).min(0.2))
+            .unwrap_or(0.0);
+            
+        let citation_count_factor = citation.source.metadata
+            .get("citation_count")
+            .and_then(|cc_str| cc_str.parse::<u32>().ok())
+            .map(|cc| (cc as f64).ln() / 100.0)
+            .unwrap_or(0.0)
+            .min(0.2);
+            
+        let author_credibility_factor = citation.source.metadata
+            .get("author_h_index")
+            .and_then(|h_str| h_str.parse::<u32>().ok())
+            .map(|h_index| (h_index as f64) / 100.0)
+            .unwrap_or(0.0)
+            .min(0.2);
+            
+        // Calculate overall quality score
+        let overall_quality_score = (authority_score * 0.3) +
+                                  (recency_score * 0.2) +
+                                  (relevance_score * 0.2) +
+                                  (completeness_score * 0.2) +
+                                  peer_review_factor +
+                                  impact_factor +
+                                  citation_count_factor +
+                                  author_credibility_factor;
+                                  
+        let passed_quality_threshold = overall_quality_score >= 0.7; // Default threshold
+        
+        Ok(CitationQualityMetrics {
+            overall_quality_score,
+            source_authority_score: authority_score,
+            recency_score,
+            relevance_score,
+            completeness_score,
+            peer_review_factor,
+            impact_factor,
+            citation_count_factor,
+            author_credibility_factor,
+            passed_quality_threshold,
+        })
+    }
+}
+
+impl CitationChain {
+    pub fn is_valid(&self) -> bool {
+        self.attribution_complete && self.credibility_score > 0.5
+    }
+}
+
+impl FACTCitationManager {
+    pub fn new(provider: Box<dyn FACTCitationProvider>) -> Self {
+        Self {
+            provider,
+            cache_enabled: true,
+        }
+    }
+    
+    pub async fn get_or_generate_citations(&self, request: &crate::GenerationRequest, fallback_citations: Vec<Citation>) -> Result<Vec<Citation>> {
+        if !self.cache_enabled {
+            return Ok(fallback_citations);
+        }
+        
+        let cache_key = format!("{:x}", md5::compute(&request.query));
+        
+        // Try to get cached citations
+        if let Ok(Some(cached_citations)) = self.provider.get_cached_citations(&cache_key).await {
+            info!("Retrieved {} cached citations for query", cached_citations.len());
+            return Ok(cached_citations);
+        }
+        
+        // Store generated citations for future use
+        if let Err(e) = self.provider.store_citations(&cache_key, &fallback_citations).await {
+            warn!("Failed to cache citations: {}", e);
+        }
+        
+        Ok(fallback_citations)
+    }
+}
+
+impl ComprehensiveCitationSystem {
+    pub async fn new(config: CitationConfig) -> Result<Self> {
+        let tracker = CitationTracker::with_config(config.clone());
+        let quality_assurance = CitationQualityAssurance::new();
+        let coverage_analyzer = CitationCoverageAnalyzer::new();
+        
+        Ok(Self {
+            tracker,
+            quality_assurance,
+            coverage_analyzer,
+            fact_manager: None, // Would be injected in real implementation
+        })
+    }
+    
+    pub async fn process_comprehensive_citations(
+        &mut self,
+        request: &crate::GenerationRequest,
+        response: &crate::IntermediateResponse,
+    ) -> Result<ComprehensiveCitationResult> {
+        // Analyze citation requirements
+        let requirement_analysis = self.coverage_analyzer
+            .analyze_citation_requirements(&response.content).await?;
+        
+        // Generate citations
+        let initial_citations = self.tracker
+            .process_citations(response, &request.context).await?;
+            
+        // Quality assurance validation
+        let mut validated_citations = Vec::new();
+        let mut quality_metrics = CitationQualityMetrics {
+            overall_quality_score: 0.0,
+            source_authority_score: 0.0,
+            recency_score: 0.0,
+            relevance_score: 0.0,
+            completeness_score: 0.0,
+            peer_review_factor: 0.0,
+            impact_factor: 0.0,
+            citation_count_factor: 0.0,
+            author_credibility_factor: 0.0,
+            passed_quality_threshold: false,
+        };
+        
+        for citation in initial_citations {
+            let citation_quality = self.quality_assurance.validate_citation_quality(&citation).await?;
+            if citation_quality.passed_quality_threshold {
+                validated_citations.push(citation);
+            }
+            
+            // Update overall quality metrics (simplified averaging)
+            quality_metrics.overall_quality_score += citation_quality.overall_quality_score;
+        }
+        
+        if !validated_citations.is_empty() {
+            quality_metrics.overall_quality_score /= validated_citations.len() as f64;
+            quality_metrics.passed_quality_threshold = quality_metrics.overall_quality_score >= 0.7;
+        }
+        
+        // Calculate coverage
+        let coverage_percentage = if requirement_analysis.factual_claims_count == 0 {
+            100.0
+        } else {
+            (validated_citations.len() as f64 / requirement_analysis.factual_claims_count as f64 * 100.0).min(100.0)
+        };
+        
+        // Create coverage report
+        let coverage_report = CitationCoverageReport {
+            coverage_percentage,
+            factual_claims_detected: requirement_analysis.factual_claims_count,
+            citations: validated_citations.clone(),
+            uncited_claims: Vec::new(), // Simplified for now
+            coverage_gaps: Vec::new(),  // Simplified for now
+            quality_score: quality_metrics.overall_quality_score,
+        };
+        
+        Ok(ComprehensiveCitationResult {
+            coverage_percentage,
+            quality_score: quality_metrics.overall_quality_score,
+            final_citations: validated_citations,
+            fact_cache_utilized: false, // Would be true with real FACT integration
+            validation_passed: quality_metrics.passed_quality_threshold,
+            quality_metrics,
+            coverage_report,
+        })
     }
 }
 

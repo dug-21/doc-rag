@@ -1042,13 +1042,13 @@ async fn test_error_handling_resilience() {
     let edge_cases = vec![
         "",                                    // Empty query
         "?",                                  // Single character
-        "a".repeat(2000),                     // Very long query
+        &"a".repeat(2000),                     // Very long query
         "ñoño español 中文 العربية 🚀",        // Unicode and emojis
         "   \n\t  ",                          // Whitespace only
         "SELECT * FROM users; DROP TABLE users;", // SQL injection attempt
     ];
 
-    for query in edge_cases {
+    for query in edge_cases.iter() {
         match system.process_query_end_to_end(query).await {
             Ok(result) => {
                 // Should handle gracefully
@@ -1314,7 +1314,7 @@ async fn test_production_readiness() {
     let mut performance_results = Vec::new();
     let mut accuracy_results = Vec::new();
 
-    for query in production_queries {
+    for query in &production_queries {
         match system.process_query_end_to_end(query).await {
             Ok(result) => {
                 performance_results.push(result.performance_metrics.total_time);
@@ -1459,7 +1459,7 @@ async fn test_comprehensive_system_validation() {
     let mut handles = Vec::new();
 
     for i in 0..concurrent_requests {
-        let system_clone = &system;
+        let system_clone = system.clone();
         let query = format!("Concurrent test query number {}", i);
         
         let handle = tokio::spawn(async move {

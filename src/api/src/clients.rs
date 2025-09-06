@@ -518,41 +518,78 @@ pub struct StorageServiceClient<'a> {
 impl<'a> StorageServiceClient<'a> {
     /// Count chunks for a specific document
     pub async fn count_chunks_for_document(&self, document_id: Uuid) -> Result<usize> {
-        // Mock implementation - in reality this would query storage service
-        warn!("Mock implementation: count_chunks_for_document for {}", document_id);
-        Ok(0)
+        let url = format!("{}/documents/{}/chunks/count", self.base_url, document_id);
+        let response = self.client
+            .get(&url)
+            .timeout(self.timeout)
+            .send()
+            .await
+            .context("Failed to send count chunks request")?;
+            
+        if response.status().is_success() {
+            let count: usize = response.json().await
+                .context("Failed to parse chunk count response")?;
+            Ok(count)
+        } else {
+            Err(anyhow::anyhow!("Storage service returned error: {}", response.status()))
+        }
     }
 
     /// Get processing history from storage  
     pub async fn get_processing_history(&self) -> Result<crate::models::ProcessingHistory> {
-        // Mock implementation - in reality this would query storage service
-        warn!("Mock implementation: get_processing_history");
-        Ok(crate::models::ProcessingHistory {
-            entries: vec![],
-            total_processed: 0,
-            last_updated: chrono::Utc::now(),
-        })
+        let url = format!("{}/processing/history", self.client.base_url);
+        let response = self.client.http_client
+            .get(&url)
+            .timeout(self.client.timeout)
+            .send()
+            .await
+            .context("Failed to send processing history request")?;
+            
+        if response.status().is_success() {
+            let history: crate::models::ProcessingHistory = response.json().await
+                .context("Failed to parse processing history response")?;
+            Ok(history)
+        } else {
+            Err(anyhow::anyhow!("Storage service returned error: {}", response.status()))
+        }
     }
 
     /// Get recent documents
     pub async fn get_recent_documents(&self, limit: usize) -> Result<Vec<crate::models::RecentDocument>> {
-        // Mock implementation - in reality this would query storage service
-        warn!("Mock implementation: get_recent_documents with limit {}", limit);
-        Ok(vec![])
+        let url = format!("{}/documents/recent?limit={}", self.client.base_url, limit);
+        let response = self.client.http_client
+            .get(&url)
+            .timeout(self.client.timeout)
+            .send()
+            .await
+            .context("Failed to send recent documents request")?;
+            
+        if response.status().is_success() {
+            let documents: Vec<crate::models::RecentDocument> = response.json().await
+                .context("Failed to parse recent documents response")?;
+            Ok(documents)
+        } else {
+            Err(anyhow::anyhow!("Storage service returned error: {}", response.status()))
+        }
     }
 
     /// Get processing statistics
     pub async fn get_processing_statistics(&self) -> Result<crate::models::ProcessingStatistics> {
-        // Mock implementation - in reality this would query storage service
-        warn!("Mock implementation: get_processing_statistics");
-        Ok(crate::models::ProcessingStatistics {
-            total_processing_tasks: 0,
-            successful_tasks: 0,
-            failed_tasks: 0,
-            average_processing_time_ms: 0.0,
-            processing_by_stage: vec![],
-            last_updated: chrono::Utc::now(),
-        })
+        let url = format!("{}/processing/statistics", self.client.base_url);
+        let response = self.client.http_client
+            .get(&url)
+            .timeout(self.client.timeout)
+            .send()
+            .await
+            .context("Failed to send processing statistics request")?;
+            
+        if response.status().is_success() {
+            let stats: crate::models::ProcessingStatistics = response.json().await
+                .context("Failed to parse processing statistics response")?;
+            Ok(stats)
+        } else {
+            Err(anyhow::anyhow!("Storage service returned error: {}", response.status()))
+        }
     }
 
     /// Get storage usage information

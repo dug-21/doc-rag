@@ -43,6 +43,7 @@ once_cell = "1.19"
 # Hashing and utilities
 blake3 = "1.5"
 chrono = { version = "0.4", features = ["serde"] }
+md5 = "0.7"
 
 # HTTP client for external validations
 reqwest = { version = "0.11", features = ["json", "stream"] }
@@ -51,7 +52,8 @@ reqwest = { version = "0.11", features = ["json", "stream"] }
 dashmap = "5.5"
 
 # FACT caching integration
-fact-tools = { version = "1.0.0", features = ["default", "network"] }
+fact-tools = { version = "1.0.0", features = ["default", "network"], optional = true }
+# fact = { workspace = true }
 
 # CLI support
 clap = { version = "4.4", features = ["derive"] }
@@ -73,10 +75,11 @@ quickcheck_macros = "1.0"
 toml = "0.8"
 
 [features]
-default = ["validation", "streaming", "metrics"]
+default = ["validation", "streaming", "metrics", "fact-integration"]
 validation = []
 streaming = []
 metrics = ["metrics-exporter-prometheus"]
+fact-integration = ["fact-tools"]
 
 [[bin]]
 name = "response-generator"

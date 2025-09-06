@@ -81,7 +81,7 @@ ndarray = { version = "0.15", features = ["serde"] }
 # Phase 1 Rework: Library Integration (Design Principle #2)
 ruv-fann = "0.1.6"  # Neural networks for boundary detection and classification
 daa-orchestrator = { git = "https://github.com/ruvnet/daa.git", branch = "main" }  # Decentralized Autonomous Agents Orchestrator
-# fact = { git = "https://github.com/ruvnet/FACT.git", branch = "main" }  # Intelligent caching (temporarily disabled)
+fact = { git = "https://github.com/ruvnet/FACT.git", branch = "main" }  # Intelligent caching system
 
 # Vector databases
 qdrant-client = "1.7"

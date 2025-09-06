@@ -5,7 +5,7 @@
 //! is functioning correctly.
 
 use std::collections::HashMap;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use uuid::Uuid;
 
 /// Simple validation test to ensure the test framework is working

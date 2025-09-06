@@ -60,6 +60,7 @@ pub mod entities;
 pub mod error;
 pub mod extractor;
 pub mod metrics;
+pub mod performance_optimizer; // High-performance <2s query processing
 pub mod query;
 pub mod strategy;
 pub mod types;

@@ -17,6 +17,8 @@ pub mod boundary;         // Legacy pattern-based detection (now using neural in
 pub mod chunk;
 pub mod metadata;
 pub mod neural_chunker;
+pub mod neural_chunker_working; // Working implementation that compiles
+pub mod neural_trainer;   // High-performance training system
 pub mod references_simple;
 pub use references_simple as references;
 
@@ -38,6 +40,29 @@ pub enum ChunkerError {
     BoundaryDetectionError(String),
     #[error("Metadata extraction error: {0}")]
     MetadataError(String),
+    #[error("Neural error: {0}")]
+    NeuralError(String),
+    #[error("Training error: {0}")]
+    TrainingError(String),
+    #[error("Model persistence error: {0}")]
+    ModelPersistenceError(String),
+    #[error("IO error: {0}")]
+    IoError(String),
+    #[error("Serialization error: {0}")]
+    SerializationError(String),
+}
+
+// Custom From implementations for better error handling
+impl From<std::io::Error> for ChunkerError {
+    fn from(err: std::io::Error) -> Self {
+        Self::IoError(err.to_string())
+    }
+}
+
+impl From<serde_json::Error> for ChunkerError {
+    fn from(err: serde_json::Error) -> Self {
+        Self::SerializationError(err.to_string())
+    }
 }
 
 pub type Result<T> = std::result::Result<T, ChunkerError>;

@@ -68,10 +68,23 @@ async fn initialize_tracing() -> Result<()> {
     // Add OpenTelemetry layer if Jaeger endpoint is configured
     #[cfg(feature = "tracing")]
     let subscriber = {
-        if std::env::var("JAEGER_ENDPOINT").is_ok() {
-            // TODO: Add OpenTelemetry support when properly configured
-            // For now, just use the basic subscriber
-            subscriber
+        if let Ok(jaeger_endpoint) = std::env::var("JAEGER_ENDPOINT") {
+            // OpenTelemetry integration with Jaeger tracing
+            use tracing_opentelemetry::OpenTelemetryLayer;
+            use opentelemetry::trace::TracerProvider;
+            use opentelemetry_jaeger::JaegerPipeline;
+            
+            if let Ok(tracer) = JaegerPipeline::new()
+                .with_endpoint(&jaeger_endpoint)
+                .with_service_name("doc-rag-integration")
+                .install_simple()
+                .map(|provider| provider.tracer("doc-rag"))
+            {
+                subscriber.with(OpenTelemetryLayer::new(tracer))
+            } else {
+                warn!("Failed to initialize Jaeger tracer, falling back to standard logging");
+                subscriber
+            }
         } else {
             subscriber
         }
