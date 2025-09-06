@@ -1,7 +1,6 @@
 use axum::{
     extract::Request,
-    http::{StatusCode, HeaderMap},
-    middleware::Next,
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     Json,
 };
@@ -57,7 +56,7 @@ where
             
             // Check if response indicates an error that needs special handling
             if response.status().is_server_error() {
-                let (parts, body) = response.into_parts();
+                let (parts, _body) = response.into_parts();
                 
                 // Try to extract error information from the response
                 let error_response = create_error_response(

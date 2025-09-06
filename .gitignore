@@ -20,11 +20,8 @@ target
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+
 # Claude Flow generated files
-.claude/
-archmemory/
-.roo/
-.roomodes
 .claude/settings.local.json
 .mcp.json
 claude-flow.config.json

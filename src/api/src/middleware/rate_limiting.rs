@@ -1,7 +1,5 @@
 use axum::{
     extract::{ConnectInfo, Request},
-    http::{HeaderMap, StatusCode},
-    middleware::Next,
     response::Response,
 };
 use dashmap::DashMap;
@@ -10,11 +8,10 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use tokio::time::sleep;
 use tower::{Layer, Service};
 use tracing::{debug, warn};
 
-use crate::{config::ApiConfig, ApiError, middleware::error_handling::handle_rate_limit_error};
+use crate::{config::ApiConfig, middleware::error_handling::handle_rate_limit_error};
 use axum::response::IntoResponse;
 
 /// Rate limiting configuration
@@ -461,7 +458,7 @@ mod tests {
         assert!(store.check_rate_limit(client_id).await.is_err());
         
         // Wait for window to slide
-        sleep(Duration::from_millis(150)).await;
+        tokio::time::sleep(Duration::from_millis(150)).await;
         
         // Should be able to make requests again
         assert!(store.check_rate_limit(client_id).await.is_ok());

@@ -1,6 +1,6 @@
 use axum::{
     extract::{ConnectInfo, MatchedPath, Request},
-    http::{HeaderMap, Method, StatusCode, Uri, Version},
+    http::{Method, StatusCode},
     middleware::Next,
     response::Response,
 };
@@ -9,7 +9,7 @@ use std::{
     time::Instant,
 };
 use tower::{Layer, Service};
-use tracing::{info, warn, Span};
+use tracing::{info, warn};
 use uuid::Uuid;
 
 #[derive(Clone)]

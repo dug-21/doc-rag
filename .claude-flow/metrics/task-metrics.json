@@ -1,10 +1,114 @@
 [
   {
-    "id": "cmd-hooks-1754853113490",
-    "type": "hooks",
+    "id": "cmd-memory-1757124238879",
+    "type": "memory",
     "success": true,
-    "duration": 28.05237500000004,
-    "timestamp": 1754853113518,
+    "duration": 1.7194999999999965,
+    "timestamp": 1757124238881,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757124307191",
+    "type": "memory",
+    "success": true,
+    "duration": 2.1353750000000105,
+    "timestamp": 1757124307193,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757124372016",
+    "type": "memory",
+    "success": true,
+    "duration": 1.3644999999999925,
+    "timestamp": 1757124372017,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757124410215",
+    "type": "memory",
+    "success": true,
+    "duration": 1.2674999999999983,
+    "timestamp": 1757124410216,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125372315",
+    "type": "memory",
+    "success": true,
+    "duration": 2.633250000000004,
+    "timestamp": 1757125372317,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125449926",
+    "type": "memory",
+    "success": true,
+    "duration": 2.400874999999999,
+    "timestamp": 1757125449929,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125456032",
+    "type": "memory",
+    "success": true,
+    "duration": 2.6717499999999887,
+    "timestamp": 1757125456035,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125457159",
+    "type": "memory",
+    "success": true,
+    "duration": 1.572375000000008,
+    "timestamp": 1757125457160,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125458282",
+    "type": "memory",
+    "success": true,
+    "duration": 2.582166000000001,
+    "timestamp": 1757125458285,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125459340",
+    "type": "memory",
+    "success": true,
+    "duration": 2.5176660000000055,
+    "timestamp": 1757125459343,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125460442",
+    "type": "memory",
+    "success": true,
+    "duration": 2.373625000000004,
+    "timestamp": 1757125460444,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125461546",
+    "type": "memory",
+    "success": true,
+    "duration": 2.699458000000007,
+    "timestamp": 1757125461549,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-memory-1757125479336",
+    "type": "memory",
+    "success": true,
+    "duration": 2.413250000000005,
+    "timestamp": 1757125479339,
+    "metadata": {}
+  },
+  {
+    "id": "cmd-init-1757127432797",
+    "type": "init",
+    "success": true,
+    "duration": 16895.601291,
+    "timestamp": 1757127449692,
     "metadata": {}
   }
 ]

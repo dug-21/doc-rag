@@ -1,6 +1,5 @@
 use axum::{
     extract::Request,
-    middleware::Next,
     response::Response,
 };
 use prometheus::{
@@ -11,7 +10,6 @@ use std::{
     time::Instant,
 };
 use tower::{Layer, Service};
-use tracing::warn;
 
 /// Metrics collection middleware
 #[derive(Clone)]
@@ -294,7 +292,7 @@ impl MetricsRegistry {
     }
 
     /// Record cache hit/miss
-    pub fn record_cache_access(&self, cache_type: &str, hit: bool) {
+    pub fn record_cache_access(&self, _cache_type: &str, hit: bool) {
         if hit {
             self.cache_hits_total.inc();
         } else {
