@@ -11,6 +11,8 @@ use tower_http::{
     trace::TraceLayer,
 };
 use tracing::{info, warn};
+use dashmap::DashMap;
+use serde_json::Value;
 
 use crate::{
     config::ApiConfig,
@@ -27,11 +29,24 @@ pub struct ApiServer {
     config: Arc<ApiConfig>,
     clients: Arc<ComponentClients>,
     metrics: Arc<MetricsRegistry>,
+    mongodb: mongodb::Client,
+    cache: Arc<DashMap<String, Value>>,
 }
 
 impl ApiServer {
     pub async fn new(config: Arc<ApiConfig>) -> Result<Self> {
         info!("Initializing Doc-RAG API Gateway");
+
+        // Initialize MongoDB connection
+        let mongodb_url = std::env::var("MONGODB_URL")
+            .unwrap_or_else(|_| "mongodb://localhost:27017".to_string());
+        let mongodb = mongodb::Client::with_uri_str(&mongodb_url).await
+            .context("Failed to connect to MongoDB")?;
+        info!("Connected to MongoDB at {}", mongodb_url);
+
+        // Initialize in-memory cache (replacing Redis)
+        let cache = Arc::new(DashMap::new());
+        info!("Initialized in-memory cache (DashMap) - replacing Redis");
 
         // Initialize component clients
         let clients = ComponentClients::new(config.clone()).await
@@ -66,6 +81,8 @@ impl ApiServer {
             config,
             clients: Arc::new(clients),
             metrics: Arc::new(metrics),
+            mongodb,
+            cache,
         })
     }
 
@@ -142,11 +159,13 @@ impl ApiServer {
             .layer(ErrorHandlingLayer::new());
 
         routes
-            .with_state(AppState {
+            .with_state(Arc::new(AppState {
                 config: self.config.clone(),
                 clients: self.clients.clone(),
                 metrics: self.metrics.clone(),
-            })
+                mongodb: self.mongodb.clone(),
+                cache: self.cache.clone(),
+            }))
             .layer(middleware)
     }
 
@@ -205,23 +224,25 @@ pub struct AppState {
     pub config: Arc<ApiConfig>,
     pub clients: Arc<ComponentClients>,
     pub metrics: Arc<MetricsRegistry>,
+    pub mongodb: mongodb::Client,
+    pub cache: Arc<DashMap<String, Value>>,
 }
 
-// Implement axum State extraction for AppState
-impl axum::extract::FromRef<AppState> for Arc<ApiConfig> {
-    fn from_ref(app_state: &AppState) -> Self {
+// Implement axum State extraction for Arc<AppState>
+impl axum::extract::FromRef<Arc<AppState>> for Arc<ApiConfig> {
+    fn from_ref(app_state: &Arc<AppState>) -> Self {
         app_state.config.clone()
     }
 }
 
-impl axum::extract::FromRef<AppState> for Arc<ComponentClients> {
-    fn from_ref(app_state: &AppState) -> Self {
+impl axum::extract::FromRef<Arc<AppState>> for Arc<ComponentClients> {
+    fn from_ref(app_state: &Arc<AppState>) -> Self {
         app_state.clients.clone()
     }
 }
 
-impl axum::extract::FromRef<AppState> for Arc<MetricsRegistry> {
-    fn from_ref(app_state: &AppState) -> Self {
+impl axum::extract::FromRef<Arc<AppState>> for Arc<MetricsRegistry> {
+    fn from_ref(app_state: &Arc<AppState>) -> Self {
         app_state.metrics.clone()
     }
 }

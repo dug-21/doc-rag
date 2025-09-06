@@ -12,19 +12,25 @@ use crate::{
         admin, auth, documents, files, health, metrics, queries,
     },
     middleware::{
-        auth::{auth_middleware, AuthMiddleware},
+        // auth::{auth_middleware, AuthMiddleware}, // Unused
         metrics::MetricsMiddleware,
-        rate_limiting::RateLimitingLayer,
+        // rate_limiting::RateLimitingLayer, // Unused
     },
+    enhanced_handlers::{handle_upload, handle_query, handle_system_dependencies},
     server::AppState,
 };
 
-pub fn create_routes(config: Arc<ApiConfig>) -> Router<AppState> {
+pub fn create_routes(config: Arc<ApiConfig>) -> Router<Arc<AppState>> {
     // Create auth middleware (temporarily disabled)
     // let auth_middleware_instance = AuthMiddleware::new(config.clone());
     
     // Build the router with nested route groups
     Router::new()
+        // Phase 2 root-level endpoints (for compatibility with testing)
+        .route("/upload", post(handle_upload))  // Direct access to upload
+        .route("/query", post(handle_query))    // Direct access to query
+        .route("/system/dependencies", get(handle_system_dependencies))
+        
         // Health and system endpoints (public)
         .nest("/health", health_routes())
         
@@ -55,7 +61,7 @@ pub fn create_routes(config: Arc<ApiConfig>) -> Router<AppState> {
         // ))
 }
 
-fn health_routes() -> Router<AppState> {
+fn health_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/", get(health::health_check))
         .route("/ready", get(health::readiness_check))
@@ -63,7 +69,7 @@ fn health_routes() -> Router<AppState> {
         .route("/components", get(health::component_health))
 }
 
-fn auth_routes() -> Router<AppState> {
+fn auth_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/login", post(auth::login))
         .route("/refresh", post(auth::refresh_token))
@@ -71,8 +77,13 @@ fn auth_routes() -> Router<AppState> {
         .route("/me", get(auth::user_info))
 }
 
-fn api_routes() -> Router<AppState> {
+fn api_routes() -> Router<Arc<AppState>> {
     Router::new()
+        // Phase 2 endpoints with mandatory dependencies
+        .route("/upload", post(handle_upload))  // Uses ruv-FANN for chunking
+        .route("/query", post(handle_query))    // Uses full pipeline: DAA→FACT→ruv-FANN
+        .route("/system/dependencies", get(handle_system_dependencies))
+        
         // Document processing
         .route("/ingest", post(documents::ingest_document))
         .route("/ingest/batch", post(documents::batch_ingest))
@@ -83,8 +94,8 @@ fn api_routes() -> Router<AppState> {
         .route("/files/:file_id", get(files::get_file_info))
         .route("/files/:file_id", delete(files::delete_file))
         
-        // Query processing
-        .route("/query", post(queries::process_query))
+        // Query processing (legacy endpoints)
+        .route("/query/v1", post(queries::process_query))
         // .route("/query/stream", post(queries::stream_query_response)) // TODO: Fix streaming handler
         .route("/queries/history", get(queries::get_query_history))
         .route("/queries/metrics", get(queries::get_query_metrics))
@@ -93,7 +104,7 @@ fn api_routes() -> Router<AppState> {
         .route("/queries/:query_id/similar", get(queries::get_similar_queries))
 }
 
-fn admin_routes() -> Router<AppState> {
+fn admin_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/system/info", get(admin::system_info))
         .route("/system/components", get(admin::component_status))

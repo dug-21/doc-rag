@@ -2,6 +2,7 @@ pub mod config;
 pub mod server;
 pub mod routes;
 pub mod handlers;
+pub mod enhanced_handlers;  // ruv-FANN enhanced handlers
 pub mod middleware;
 pub mod clients;
 pub mod models;
@@ -10,11 +11,17 @@ pub mod metrics;
 pub mod tracing;
 pub mod security;
 pub mod validation;
+pub mod pipeline;  // Phase 2 pipeline with mandatory dependencies
+pub mod integration;  // Phase 1 Integration: ruv-FANN, DAA, and FACT
+
+#[cfg(test)]
+pub mod integration_test;  // Standalone integration tests
 
 pub use config::ApiConfig;
 pub use server::ApiServer;
 pub use errors::ApiError;
 pub use models::*;
+pub use integration::{IntegrationManager, IntegrationConfig, SystemHealth};
 
 // Re-export commonly used types
 pub type Result<T> = std::result::Result<T, ApiError>;

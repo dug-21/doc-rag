@@ -8,7 +8,7 @@ use url::Url;
 pub struct ApiConfig {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
-    pub redis: RedisConfig,
+    // redis: RedisConfig removed - replaced with in-memory cache
     pub security: SecurityConfig,
     pub components: ComponentsConfig,
     pub observability: ObservabilityConfig,
@@ -36,13 +36,14 @@ pub struct DatabaseConfig {
     pub idle_timeout_secs: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RedisConfig {
-    pub url: String,
-    pub max_connections: u32,
-    pub connection_timeout_secs: u64,
-    pub command_timeout_secs: u64,
-}
+// RedisConfig removed - replaced with in-memory cache (DashMap)
+// #[derive(Debug, Clone, Serialize, Deserialize)]
+// pub struct RedisConfig {
+//     pub url: String,
+//     pub max_connections: u32,
+//     pub connection_timeout_secs: u64,
+//     pub command_timeout_secs: u64,
+// }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityConfig {
@@ -116,12 +117,7 @@ impl Default for ApiConfig {
                 connect_timeout_secs: 30,
                 idle_timeout_secs: 600,
             },
-            redis: RedisConfig {
-                url: "redis://localhost:6379".to_string(),
-                max_connections: 50,
-                connection_timeout_secs: 5,
-                command_timeout_secs: 10,
-            },
+            // redis: RedisConfig removed - using in-memory cache instead
             security: SecurityConfig {
                 jwt_secret: "your-secret-key-change-in-production".to_string(),
                 jwt_expiration_hours: 24,
@@ -233,9 +229,10 @@ impl ApiConfig {
             config.database.url = db_url;
         }
         
-        if let Ok(redis_url) = std::env::var("REDIS_URL") {
-            config.redis.url = redis_url;
-        }
+        // Redis configuration removed - using in-memory cache instead
+        // if let Ok(redis_url) = std::env::var("REDIS_URL") {
+        //     config.redis.url = redis_url;
+        // }
 
         if let Ok(jwt_secret) = std::env::var("JWT_SECRET") {
             config.security.jwt_secret = jwt_secret;
@@ -300,7 +297,7 @@ impl ApiConfig {
         // Validate URLs
         for (name, url) in [
             ("database", &self.database.url),
-            ("redis", &self.redis.url),
+            // ("redis", &self.redis.url), // Removed - using in-memory cache
             ("chunker", &self.components.chunker.url),
             ("embedder", &self.components.embedder.url),
             ("storage", &self.components.storage.url),
@@ -383,11 +380,11 @@ min_connections = 5
 connect_timeout_secs = 30
 idle_timeout_secs = 600
 
-[redis]
-url = "redis://localhost:6379"
-max_connections = 25
-connection_timeout_secs = 5
-command_timeout_secs = 10
+# [redis] - Redis configuration removed, using in-memory cache instead
+# url = "redis://localhost:6379"
+# max_connections = 25
+# connection_timeout_secs = 5
+# command_timeout_secs = 10
 
 [security]
 jwt_secret = "super-secret-key-for-testing-purposes-only"
