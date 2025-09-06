@@ -1897,9 +1897,9 @@ async fn get_system_load() -> f64 {
 
 /// Get real system resource usage
 async fn get_system_resources() -> ResourceStatus {
-    let mut cpu_usage = 0.0;
-    let mut memory_usage = 0.0;
-    let mut disk_usage = 0.0;
+    let mut cpu_usage: f64 = 0.0;
+    let mut memory_usage: f64 = 0.0;
+    let mut disk_usage: f64 = 0.0;
     let network_usage: f64 = 5.0; // Network usage is hard to get quickly, use estimate
     
     // Get CPU usage
