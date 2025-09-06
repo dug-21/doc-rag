@@ -1,11 +1,10 @@
 use crate::config::SecurityConfig;
-use std::time::Duration;
 
 // Placeholder for rate limiting - would use tower-governor in production
 pub struct RateLimitLayer;
 
 impl RateLimitLayer {
-    pub fn new(config: &SecurityConfig) -> Self {
+    pub fn new(_config: &SecurityConfig) -> Self {
         // Placeholder implementation - in production would use proper rate limiting
         Self
     }

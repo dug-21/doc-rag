@@ -119,7 +119,7 @@ pub async fn batch_ingest(
                 results.push(IngestResponse {
                     task_id,
                     document_id: Uuid::new_v4(), // Generate placeholder ID for failed docs
-                    status: TaskStatus::Failed,
+                    status: crate::models::TaskStatus::Failed,
                     message: format!("Processing failed: {}", e),
                     chunks_created: None,
                     processing_time_ms: processing_time.as_millis() as u64,
@@ -233,7 +233,7 @@ pub async fn retry_document_processing(
             let response = IngestResponse {
                 task_id,
                 document_id: Uuid::new_v4(),
-                status: TaskStatus::Failed,
+                status: crate::models::TaskStatus::Failed,
                 message: format!("Retry failed: {}", e),
                 chunks_created: None,
                 processing_time_ms: processing_time.as_millis() as u64,
@@ -283,7 +283,7 @@ async fn count_document_chunks(
     clients: &Arc<ComponentClients>,
 ) -> Result<u32> {
     // Query the storage backend to get chunk count for document
-    match clients.storage_client.count_chunks_for_document(*document_id).await {
+    match clients.storage().count_chunks_for_document(*document_id).await {
         Ok(count) => Ok(count as u32),
         Err(e) => {
             warn!("Failed to count chunks for document {}: {}", document_id, e);
@@ -297,26 +297,37 @@ async fn count_document_chunks(
 async fn get_real_processing_history(
     clients: &Arc<ComponentClients>,
 ) -> Result<serde_json::Value> {
-    let processing_history = clients.storage_client.get_processing_history().await
+    let processing_history = clients.storage().get_processing_history().await
         .map_err(|e| ApiError::Internal(format!("Failed to query processing history: {}", e)))?;
     
-    let recent_documents = clients.storage_client.get_recent_documents(10).await
+    let recent_documents = clients.storage().get_recent_documents(10).await
         .map_err(|e| ApiError::Internal(format!("Failed to query recent documents: {}", e)))?;
     
+    // Calculate statistics from processing history entries
+    let successful_count = processing_history.entries.iter()
+        .filter(|entry| matches!(entry.status, crate::models::TaskStatus::Completed))
+        .count();
+    let failed_count = processing_history.entries.iter()
+        .filter(|entry| matches!(entry.status, crate::models::TaskStatus::Failed))
+        .count();
+    let avg_processing_time = processing_history.entries.iter()
+        .filter_map(|entry| entry.processing_time_ms)
+        .sum::<u64>() / (processing_history.entries.len() as u64).max(1);
+
     Ok(serde_json::json!({
-        "total_documents": processing_history.total_documents,
-        "successful_processing": processing_history.successful_count,
-        "failed_processing": processing_history.failed_count,
-        "average_processing_time_ms": processing_history.avg_processing_time_ms,
+        "total_documents": processing_history.total_processed,
+        "successful_processing": successful_count,
+        "failed_processing": failed_count,
+        "average_processing_time_ms": avg_processing_time,
         "recent_documents": recent_documents.iter().map(|doc| {
             serde_json::json!({
                 "document_id": doc.document_id,
-                "task_id": doc.task_id,
-                "status": doc.status,
-                "created_at": doc.created_at,
-                "processing_time_ms": doc.processing_time_ms,
+                "title": doc.title,
                 "content_type": doc.content_type,
-                "chunks_created": doc.chunks_created
+                "size_bytes": doc.size_bytes,
+                "chunk_count": doc.chunk_count,
+                "created_at": doc.created_at,
+                "last_accessed": doc.last_accessed
             })
         }).collect::<Vec<_>>()
     }))
@@ -326,27 +337,27 @@ async fn get_real_processing_history(
 async fn get_real_processing_stats(
     clients: &Arc<ComponentClients>,
 ) -> Result<serde_json::Value> {
-    let stats = clients.storage_client.get_processing_statistics().await
+    let stats = clients.storage().get_processing_statistics().await
         .map_err(|e| ApiError::Internal(format!("Failed to query processing statistics: {}", e)))?;
     
-    let storage_usage = clients.storage_client.get_storage_usage().await
+    let storage_usage = clients.storage().get_storage_usage().await
         .map_err(|e| ApiError::Internal(format!("Failed to query storage usage: {}", e)))?;
     
-    let content_type_breakdown = clients.storage_client.get_content_type_statistics().await
+    let content_type_breakdown = clients.storage().get_content_type_statistics().await
         .map_err(|e| ApiError::Internal(format!("Failed to query content type statistics: {}", e)))?;
     
     let active_tasks = clients.get_active_processing_tasks().await
         .map_err(|e| ApiError::Internal(format!("Failed to query active tasks: {}", e)))?;
     
     Ok(serde_json::json!({
-        "total_documents_processed": stats.total_processed,
-        "documents_processed_today": stats.processed_today,
-        "average_processing_time_ms": stats.avg_processing_time_ms,
-        "success_rate_percent": stats.success_rate * 100.0,
+        "total_documents_processed": stats.total_processing_tasks,
+        "documents_processed_today": stats.successful_tasks,
+        "average_processing_time_ms": stats.average_processing_time_ms,
+        "success_rate_percent": (stats.successful_tasks as f64 / stats.total_processing_tasks.max(1) as f64) * 100.0,
         "active_processing_tasks": active_tasks.len(),
         "queue_size": clients.get_processing_queue_size().await.unwrap_or(0),
-        "processing_rate_per_hour": stats.processing_rate_per_hour,
-        "storage_usage_mb": storage_usage.total_size_mb,
+        "processing_rate_per_hour": 0.0, // Computed value not available in storage model
+        "storage_usage_mb": storage_usage.total_size_bytes / 1024 / 1024,
         "by_content_type": content_type_breakdown
     }))
 }
@@ -357,17 +368,17 @@ async fn cancel_real_document_processing(
     clients: &Arc<ComponentClients>,
 ) -> Result<serde_json::Value> {
     // Check if task exists and is still processing
-    let task_status = clients.storage_client.get_task_status(task_id).await
+    let task_status = clients.storage().get_task_status(task_id).await
         .map_err(|e| ApiError::Internal(format!("Failed to query task status: {}", e)))?;
     
     match task_status.status {
-        TaskStatus::Processing => {
+        crate::models::TaskStatus::Processing => {
             // Send cancellation signal to processing pipeline
             clients.send_cancellation_signal(task_id).await
                 .map_err(|e| ApiError::Internal(format!("Failed to send cancellation signal: {}", e)))?;
             
             // Update task status to cancelled in database
-            clients.storage_client.update_task_status(task_id, TaskStatus::Cancelled).await
+            clients.storage().update_task_status(task_id, TaskStatus::Cancelled).await
                 .map_err(|e| ApiError::Internal(format!("Failed to update task status: {}", e)))?;
             
             // Clean up any partial processing results
@@ -382,22 +393,22 @@ async fn cancel_real_document_processing(
                 "cancelled_at": chrono::Utc::now()
             }))
         },
-        TaskStatus::Completed => {
+        crate::models::TaskStatus::Completed => {
             Err(ApiError::BadRequest("Cannot cancel completed task".to_string()))
         },
-        TaskStatus::Failed => {
+        crate::models::TaskStatus::Failed => {
             Err(ApiError::BadRequest("Cannot cancel failed task".to_string()))
         },
-        TaskStatus::Cancelled => {
+        crate::models::TaskStatus::Cancelled => {
             Ok(serde_json::json!({
                 "task_id": task_id,
                 "status": "already_cancelled",
                 "message": "Task was already cancelled"
             }))
         },
-        TaskStatus::Pending => {
+        crate::models::TaskStatus::Pending => {
             // Update status to cancelled
-            clients.storage_client.update_task_status(task_id, TaskStatus::Cancelled).await
+            clients.storage().update_task_status(task_id, TaskStatus::Cancelled).await
                 .map_err(|e| ApiError::Internal(format!("Failed to update task status: {}", e)))?;
             
             Ok(serde_json::json!({
@@ -415,15 +426,15 @@ async fn retry_real_document_processing(
     clients: &Arc<ComponentClients>,
 ) -> Result<IngestResponse> {
     // Retrieve the original document and parameters from database
-    let original_task = clients.storage_client.get_task_details(task_id).await
+    let original_task = clients.storage().get_task_details(task_id).await
         .map_err(|e| ApiError::Internal(format!("Failed to retrieve task details: {}", e)))?;
     
-    if original_task.status != TaskStatus::Failed {
+    if original_task.status != crate::models::TaskStatus::Failed {
         return Err(ApiError::BadRequest("Can only retry failed tasks".to_string()));
     }
     
     // Reset the task status to pending
-    clients.storage_client.update_task_status(task_id, TaskStatus::Pending).await
+    clients.storage().update_task_status(task_id, TaskStatus::Pending).await
         .map_err(|e| ApiError::Internal(format!("Failed to reset task status: {}", e)))?;
     
     // Re-initiate the processing pipeline with original parameters

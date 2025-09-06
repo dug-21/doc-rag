@@ -3,7 +3,7 @@ use axum::{
     response::{Json, Sse},
     http::StatusCode,
 };
-use futures::stream::{self, StreamExt};
+use futures::stream::StreamExt;
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::{
     clients::ComponentClients,
     models::{
-        QueryRequest, QueryResponse, StreamingQueryResponse, QueryHistoryRequest,
+        QueryRequest, QueryResponse, QueryHistoryRequest,
         QueryHistoryResponse, QueryMetrics
     },
     validation::validate_query_request,
@@ -60,17 +60,16 @@ pub async fn process_query(
 }
 
 /// Stream query response for real-time processing  
-#[axum::debug_handler]
 pub async fn stream_query_response(
     State(clients): State<Arc<ComponentClients>>,
     Json(request): Json<QueryRequest>,
-) -> Result<Sse<ReceiverStream<tokio::sync::mpsc::Receiver<Result<axum::response::sse::Event, axum::Error>>>>> {
+) -> std::result::Result<Sse<ReceiverStream<tokio::sync::mpsc::Receiver<std::result::Result<axum::response::sse::Event, std::convert::Infallible>>>>, ApiError> {
     info!("Starting streaming query: query_id={}", request.query_id);
 
     // Validate the query request
     validate_query_request(&request)?;
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<Result<axum::response::sse::Event, axum::Error>>(100);
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<axum::response::sse::Event, std::convert::Infallible>>(100);
     let query_id = request.query_id;
 
     // Spawn task to handle streaming response

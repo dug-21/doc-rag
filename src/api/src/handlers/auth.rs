@@ -5,13 +5,13 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tracing::{info, warn, error};
+use tracing::info;
 
 use crate::{
     config::ApiConfig,
     models::{LoginRequest, AuthResponse, UserInfo, UserRole},
     middleware::auth::{generate_jwt_token, generate_refresh_token, AuthExtension},
-    validation::{validate_login_request, validate_email, validate_password_strength},
+    validation::{validate_login_request, validate_email},
     Result, ApiError,
 };
 

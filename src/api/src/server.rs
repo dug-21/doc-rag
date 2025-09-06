@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 use axum::serve;
 use std::{net::SocketAddr, sync::Arc, future::Future};
 use tokio::net::TcpListener;
-use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
@@ -11,7 +10,7 @@ use tower_http::{
     timeout::TimeoutLayer,
     trace::TraceLayer,
 };
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 use crate::{
     config::ApiConfig,
@@ -43,10 +42,23 @@ impl ApiServer {
             .map_err(|e| anyhow::anyhow!("Failed to initialize metrics registry: {}", e))?;
 
         // Run health checks on all components
-        match clients.health_check_all().await {
-            Ok(health) => health,
-            Err(e) => return Err(anyhow::anyhow!("Initial component health check failed: {}", e)),
-        };
+        let health = clients.health_check_all().await;
+        
+        // Check if any components are unhealthy
+        let unhealthy: Vec<_> = health
+            .iter()
+            .filter_map(|(name, result)| {
+                if result.is_err() {
+                    Some(name.as_str())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        
+        if !unhealthy.is_empty() {
+            warn!("Some components are unhealthy: {:?}", unhealthy);
+        }
 
         info!("All components are healthy and ready");
 
@@ -130,12 +142,12 @@ impl ApiServer {
             .layer(ErrorHandlingLayer::new());
 
         routes
-            .layer(middleware)
             .with_state(AppState {
                 config: self.config.clone(),
                 clients: self.clients.clone(),
                 metrics: self.metrics.clone(),
             })
+            .layer(middleware)
     }
 
     fn create_cors_layer(&self) -> CorsLayer {

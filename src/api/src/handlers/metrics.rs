@@ -1,6 +1,6 @@
 use axum::{
     extract::State,
-    response::{IntoResponse, Response},
+    response::Response,
     http::{StatusCode, header},
 };
 use prometheus::{Encoder, TextEncoder};
