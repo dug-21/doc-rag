@@ -68,21 +68,16 @@ async fn initialize_tracing() -> Result<()> {
     // Add OpenTelemetry layer if Jaeger endpoint is configured
     #[cfg(feature = "tracing")]
     let subscriber = {
-        if let Ok(jaeger_endpoint) = std::env::var("JAEGER_ENDPOINT") {
-            use tracing_opentelemetry::OpenTelemetryLayer;
-            use opentelemetry_jaeger::JaegerTraceExporter;
-            
-            let tracer = opentelemetry_jaeger::new_agent_pipeline()
-                .with_endpoint(&jaeger_endpoint)
-                .with_service_name("doc-rag-integration")
-                .install_simple()
-                .map_err(|e| integration::IntegrationError::TracingError(e.to_string()))?;
-            
-            subscriber.with(OpenTelemetryLayer::new(tracer))
+        if std::env::var("JAEGER_ENDPOINT").is_ok() {
+            // TODO: Add OpenTelemetry support when properly configured
+            // For now, just use the basic subscriber
+            subscriber
         } else {
             subscriber
         }
     };
+    #[cfg(not(feature = "tracing"))]
+    let subscriber = subscriber;
     
     subscriber.try_init()
         .map_err(|e| integration::IntegrationError::Internal(format!("Failed to initialize tracing: {}", e)))?;
@@ -95,11 +90,13 @@ async fn load_configuration() -> Result<IntegrationConfig> {
     // Try to load from config file first
     let config = if let Ok(config_path) = std::env::var("CONFIG_FILE") {
         info!("Loading configuration from file: {}", config_path);
-        IntegrationConfig::from_file(&config_path)?
+        IntegrationConfig::from_file(&config_path)
+            .map_err(|e| integration::IntegrationError::ConfigurationError(e.to_string()))?
     } else {
         // Load from environment variables
         info!("Loading configuration from environment variables");
-        IntegrationConfig::from_env()?
+        IntegrationConfig::from_env()
+            .map_err(|e| integration::IntegrationError::ConfigurationError(e.to_string()))?
     };
     
     // Validate configuration

@@ -126,14 +126,13 @@ pub mod metrics;
 pub mod message_bus;
 pub mod temp_types;
 
-// Re-export key types
+// Re-export key types (avoid conflicts)
 pub use daa_orchestrator::*;
 pub use pipeline::*;
 pub use health::*;
 pub use gateway::*;
-pub use error::*;
+pub use error::{EnhancedError, ErrorContext, RecoveryStrategy};
 pub use config::*;
-pub use metrics::*;
 pub use message_bus::*;
 pub use temp_types::*;
 
@@ -160,7 +159,7 @@ pub struct SystemIntegration {
     /// Message bus for inter-component communication
     message_bus: Arc<MessageBus>,
     /// System metrics
-    metrics: Arc<RwLock<SystemMetrics>>,
+    metrics: Arc<RwLock<LocalSystemMetrics>>,
 }
 
 impl SystemIntegration {
@@ -203,7 +202,7 @@ impl SystemIntegration {
             ).await?
         );
         
-        let metrics = Arc::new(RwLock::new(SystemMetrics::new()));
+        let metrics = Arc::new(RwLock::new(LocalSystemMetrics::new()));
         
         let system = Self {
             id: Uuid::new_v4(),
@@ -334,7 +333,7 @@ impl SystemIntegration {
     }
     
     /// Get system metrics
-    pub async fn metrics(&self) -> SystemMetrics {
+    pub async fn metrics(&self) -> LocalSystemMetrics {
         self.metrics.read().await.clone()
     }
     
@@ -346,7 +345,7 @@ impl SystemIntegration {
     /// Update system metrics
     async fn update_metrics<F>(&self, updater: F) 
     where 
-        F: FnOnce(&mut SystemMetrics),
+        F: FnOnce(&mut LocalSystemMetrics),
     {
         let mut metrics = self.metrics.write().await;
         updater(&mut metrics);
@@ -445,9 +444,9 @@ pub struct Citation {
     pub excerpt: String,
 }
 
-/// System metrics collection
+/// System metrics collection (local definition)
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-pub struct SystemMetrics {
+pub struct LocalSystemMetrics {
     /// System start time
     pub start_time: Option<chrono::DateTime<chrono::Utc>>,
     /// Total queries processed
@@ -459,12 +458,12 @@ pub struct SystemMetrics {
     /// Average processing time
     pub avg_processing_time_ms: f64,
     /// Component metrics
-    pub component_metrics: std::collections::HashMap<String, ComponentMetrics>,
+    pub component_metrics: std::collections::HashMap<String, LocalComponentMetrics>,
 }
 
-/// Component-specific metrics
+/// Component-specific metrics (local definition)
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-pub struct ComponentMetrics {
+pub struct LocalComponentMetrics {
     /// Requests processed
     pub requests: u64,
     /// Successful requests
@@ -477,7 +476,7 @@ pub struct ComponentMetrics {
     pub circuit_breaker_state: String,
 }
 
-impl SystemMetrics {
+impl LocalSystemMetrics {
     /// Create new metrics instance
     pub fn new() -> Self {
         Self {
@@ -524,7 +523,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_system_metrics() {
-        let mut metrics = SystemMetrics::new();
+        let mut metrics = LocalSystemMetrics::new();
         assert!(metrics.start_time.is_some());
         assert_eq!(metrics.success_rate(), 0.0);
         

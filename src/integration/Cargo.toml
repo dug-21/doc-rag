@@ -19,6 +19,11 @@ tokio = { workspace = true }
 futures = { workspace = true }
 async-trait = { workspace = true }
 
+# Phase 1 Rework: Library Integration
+daa-orchestrator = { workspace = true }
+ruv-fann = { workspace = true }
+# fact = { workspace = true } # Temporarily disabled due to repository issues
+
 # HTTP and networking
 axum = { workspace = true }
 tower = { workspace = true }
