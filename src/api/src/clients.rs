@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use base64::prelude::*;
 use reqwest::{Client, Response, StatusCode};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::time::timeout;
@@ -10,24 +11,29 @@ use uuid::Uuid;
 use crate::{
     config::{ApiConfig, ServiceConfig},
     models::{
-        QueryRequest, QueryResponse, DocumentStatus, TaskStatus, 
-        HealthStatus, QueryHistoryRequest, QueryHistoryResponse,
-        QueryMetrics, StreamingQueryResponse
+        api::{QueryRequest, QueryResponse, DocumentStatus, TaskStatus, 
+              HealthStatus, QueryHistoryRequest, QueryHistoryResponse,
+              QueryMetrics, StreamingQueryResponse, ChunkingStrategy},
+        storage::{ProcessingHistory, ProcessingStatistics, StorageUsage, 
+                  ContentTypeStatistics, RecentDocument, TaskDetails},
+        domain::{ProcessingTask, DomainTaskStatus},
     },
     ApiError,
 };
 
+
+
 /// Client for communicating with all Doc-RAG components
 pub struct ComponentClients {
-    config: Arc<ApiConfig>,
-    http_client: Client,
-    chunker_client: ServiceClient,
-    embedder_client: ServiceClient,
-    storage_client: ServiceClient,
-    retriever_client: ServiceClient,
-    query_processor_client: ServiceClient,
-    response_generator_client: ServiceClient,
-    mcp_adapter_client: ServiceClient,
+    pub config: Arc<ApiConfig>,
+    pub http_client: Client,
+    pub chunker_client: ServiceClient,
+    pub embedder_client: ServiceClient,
+    pub storage_client: ServiceClient,
+    pub retriever_client: ServiceClient,
+    pub query_processor_client: ServiceClient,
+    pub response_generator_client: ServiceClient,
+    pub mcp_adapter_client: ServiceClient,
 }
 
 impl ComponentClients {
@@ -133,7 +139,7 @@ impl ComponentClients {
         task_id: Uuid,
         content: String,
         metadata: Option<Value>,
-        chunking_strategy: Option<crate::models::ChunkingStrategy>,
+        chunking_strategy: Option<ChunkingStrategy>,
     ) -> Result<Uuid> {
         info!("Starting document ingestion pipeline: task_id={}", task_id);
 
@@ -227,7 +233,7 @@ impl ComponentClients {
     async fn chunk_document(
         &self,
         content: String,
-        strategy: Option<crate::models::ChunkingStrategy>,
+        strategy: Option<ChunkingStrategy>,
     ) -> Result<Vec<String>> {
         let request = json!({
             "content": content,
@@ -419,9 +425,200 @@ impl ComponentClients {
         // Implement graceful shutdown logic here
         Ok(())
     }
+
+    /// Get storage service with domain-specific methods
+    pub fn storage(&self) -> StorageServiceClient<'_> {
+        StorageServiceClient {
+            client: &self.storage_client,
+        }
+    }
+    
+    /// Get all active processing tasks across services
+    pub async fn get_active_processing_tasks(&self) -> Result<Vec<ProcessingTask>> {
+        let response = self.storage_client
+            .get("/processing/tasks/active")
+            .await?;
+        let tasks: Vec<ProcessingTask> = response.json().await
+            .context("Failed to parse processing tasks response")?;
+        Ok(tasks)
+    }
+    
+    /// Get current processing queue size
+    pub async fn get_processing_queue_size(&self) -> Result<usize> {
+        let response = self.query_processor_client
+            .get("/queue/size")
+            .await?;
+        let result: serde_json::Value = response.json().await
+            .context("Failed to parse queue size response")?;
+        Ok(result["size"].as_u64().unwrap_or(0) as usize)
+    }
+    
+    /// Send cancellation signal for a task
+    pub async fn send_cancellation_signal(&self, task_id: Uuid) -> Result<()> {
+        // Orchestrate cancellation across services
+        let cancel_data = serde_json::json!({
+            "task_id": task_id,
+            "action": "cancel"
+        });
+        
+        // Notify query processor
+        self.query_processor_client
+            .post("/tasks/cancel", &cancel_data)
+            .await?;
+        
+        // Notify storage to mark as cancelled
+        self.storage_client
+            .post(&format!("/tasks/{}/cancel", task_id), &cancel_data)
+            .await?;
+        
+        Ok(())
+    }
+    
+    /// Reprocess a document with original parameters
+    pub async fn reprocess_document(
+        &self,
+        task_id: Uuid,
+        content: String,
+        metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+        chunking_strategy: Option<ChunkingStrategy>,
+    ) -> Result<Uuid> {
+        // This would be similar to process_document_ingestion but with task_id reuse
+        self.process_document_ingestion(task_id, content, metadata, chunking_strategy).await
+    }
+    
+    /// Clean up partial processing for a document
+    pub async fn cleanup_partial_processing(&self, document_id: Uuid) -> Result<()> {
+        // Orchestrate cleanup across services
+        
+        // Remove partial chunks from storage
+        self.storage_client
+            .delete(&format!("/documents/{}/chunks/partial", document_id))
+            .await?;
+        
+        // Clear embeddings
+        self.embedder_client
+            .delete(&format!("/documents/{}/embeddings", document_id))
+            .await?;
+        
+        // Clear any cached queries
+        self.query_processor_client
+            .delete(&format!("/cache/document/{}", document_id))
+            .await?;
+        
+        Ok(())
+    }
+
+}
+
+/// Storage service client wrapper that provides domain-specific methods
+pub struct StorageServiceClient<'a> {
+    client: &'a ServiceClient,
+}
+
+impl<'a> StorageServiceClient<'a> {
+    /// Count chunks for a specific document
+    pub async fn count_chunks_for_document(&self, document_id: Uuid) -> Result<usize> {
+        // Mock implementation - in reality this would query storage service
+        warn!("Mock implementation: count_chunks_for_document for {}", document_id);
+        Ok(0)
+    }
+
+    /// Get processing history from storage  
+    pub async fn get_processing_history(&self) -> Result<crate::models::ProcessingHistory> {
+        // Mock implementation - in reality this would query storage service
+        warn!("Mock implementation: get_processing_history");
+        Ok(crate::models::ProcessingHistory {
+            entries: vec![],
+            total_processed: 0,
+            last_updated: chrono::Utc::now(),
+        })
+    }
+
+    /// Get recent documents
+    pub async fn get_recent_documents(&self, limit: usize) -> Result<Vec<crate::models::RecentDocument>> {
+        // Mock implementation - in reality this would query storage service
+        warn!("Mock implementation: get_recent_documents with limit {}", limit);
+        Ok(vec![])
+    }
+
+    /// Get processing statistics
+    pub async fn get_processing_statistics(&self) -> Result<crate::models::ProcessingStatistics> {
+        // Mock implementation - in reality this would query storage service
+        warn!("Mock implementation: get_processing_statistics");
+        Ok(crate::models::ProcessingStatistics {
+            total_processing_tasks: 0,
+            successful_tasks: 0,
+            failed_tasks: 0,
+            average_processing_time_ms: 0.0,
+            processing_by_stage: vec![],
+            last_updated: chrono::Utc::now(),
+        })
+    }
+
+    /// Get storage usage information
+    pub async fn get_storage_usage(&self) -> Result<crate::models::StorageUsage> {
+        // Mock implementation - in reality this would query storage service
+        warn!("Mock implementation: get_storage_usage");
+        Ok(crate::models::StorageUsage {
+            total_documents: 0,
+            total_chunks: 0,
+            total_size_bytes: 0,
+            storage_by_type: vec![],
+            last_updated: chrono::Utc::now(),
+        })
+    }
+
+    /// Get content type statistics
+    pub async fn get_content_type_statistics(&self) -> Result<crate::models::ContentTypeStatistics> {
+        // Mock implementation - in reality this would query storage service
+        warn!("Mock implementation: get_content_type_statistics");
+        Ok(crate::models::ContentTypeStatistics {
+            statistics: vec![],
+            total_types: 0,
+            most_common_type: None,
+            last_updated: chrono::Utc::now(),
+        })
+    }
+
+    /// Get task status
+    pub async fn get_task_status(&self, task_id: Uuid) -> Result<crate::models::TaskStatusResponse> {
+        // Mock implementation - in reality this would query storage service
+        warn!("Mock implementation: get_task_status for {}", task_id);
+        Ok(crate::models::TaskStatusResponse {
+            task_id,
+            status: TaskStatus::Processing,
+            message: Some("Processing document".to_string()),
+            progress_percent: Some(50),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        })
+    }
+
+    /// Update task status
+    pub async fn update_task_status(&self, task_id: Uuid, status: crate::models::TaskStatus) -> Result<()> {
+        // Mock implementation - in reality this would update storage service
+        warn!("Mock implementation: update_task_status for {} to {:?}", task_id, status);
+        Ok(())
+    }
+
+    /// Get task details
+    pub async fn get_task_details(&self, task_id: Uuid) -> Result<TaskDetails> {
+        // Mock implementation - in reality this would query storage service
+        warn!("Mock implementation: get_task_details for {}", task_id);
+        Ok(TaskDetails {
+            task_id,
+            document_id: Some(Uuid::new_v4()),
+            content: Some("mock content".to_string()),
+            metadata: None,
+            status: TaskStatus::Processing,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        })
+    }
 }
 
 /// Individual service client wrapper
+#[derive(Clone)]
 struct ServiceClient {
     name: String,
     base_url: String,
@@ -510,6 +707,22 @@ impl ServiceClient {
                 self.name,
                 error_text
             ))
+        }
+    }
+
+    async fn delete(&self, path: &str) -> Result<Response> {
+        let url = format!("{}{}", self.base_url, path);
+        let response = timeout(
+            Duration::from_secs(self.config.timeout_secs),
+            self.client.delete(&url).send()
+        ).await
+        .context("Request timeout")?
+        .context("Request failed")?;
+        
+        if response.status().is_success() {
+            Ok(response)
+        } else {
+            Err(anyhow::anyhow!("Delete request failed: {}", response.status()))
         }
     }
 }
