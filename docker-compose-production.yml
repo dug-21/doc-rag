@@ -1,0 +1,215 @@
+version: '3.8'
+
+# Production Docker Compose for Phase 2 Doc-RAG System
+# Implements mandatory dependencies: ruv-FANN, DAA-Orchestrator, FACT
+
+services:
+  # Main API Service with mandatory dependencies
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.rust
+    container_name: doc-rag-api
+    ports:
+      - "8080:8080"
+    environment:
+      # Rust logging
+      - RUST_LOG=info,api=debug,ruv_fann=info,daa_orchestrator=info,fact=info
+      - RUST_BACKTRACE=1
+      
+      # Database connections
+      - MONGODB_URL=mongodb://mongodb:27017/doc_rag
+      - REDIS_URL=redis://redis:6379
+      
+      # Mandatory dependency paths
+      - RUV_FANN_MODEL_PATH=/app/models/ruv-fann
+      - DAA_ORCHESTRATOR_CONFIG=/app/config/daa.toml
+      - FACT_CACHE_PATH=/app/cache/fact
+      
+      # Feature flags - ALL mandatory
+      - ENABLE_RUV_FANN=true
+      - ENABLE_DAA_ORCHESTRATOR=true
+      - ENABLE_FACT_CACHE=true
+      - ENABLE_BYZANTINE_CONSENSUS=true
+      - BYZANTINE_THRESHOLD=0.67
+      
+      # Performance requirements
+      - MAX_CACHE_RETRIEVAL_MS=50
+      - MAX_NEURAL_PROCESSING_MS=200
+      - MAX_CONSENSUS_MS=500
+      - MAX_TOTAL_RESPONSE_MS=2000
+      
+    volumes:
+      # Models for ruv-FANN (read-only)
+      - ./models/ruv-fann:/app/models/ruv-fann:ro
+      
+      # DAA configuration (read-only)
+      - ./config/daa.toml:/app/config/daa.toml:ro
+      
+      # FACT cache (read-write for persistence)
+      - ./data/fact-cache:/app/cache/fact
+      
+      # Document uploads
+      - ./data/uploads:/app/uploads
+      
+      # Logs
+      - ./logs:/app/logs
+      
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    restart: unless-stopped
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # MongoDB for document storage
+  mongodb:
+    image: mongo:7.0
+    container_name: doc-rag-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=doc_rag
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-secure_password}
+    volumes:
+      - ./data/mongo:/data/db
+      - ./backup/mongo:/backup
+      - ./init/mongo:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Redis for FACT caching
+  redis:
+    image: redis:7.2-alpine
+    container_name: doc-rag-redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --save 300 10
+      --save 900 1
+    volumes:
+      - ./data/redis:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  # Vector database for embeddings
+  qdrant:
+    image: qdrant/qdrant:v1.7.0
+    container_name: doc-rag-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__LOG_LEVEL=INFO
+    restart: unless-stopped
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: doc-rag-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: unless-stopped
+
+  # Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: doc-rag-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: doc-rag-jaeger
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: unless-stopped
+
+networks:
+  default:
+    name: doc-rag-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  mongo-data:
+    driver: local
+  redis-data:
+    driver: local
+  qdrant-data:
+    driver: local
+  fact-cache:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local

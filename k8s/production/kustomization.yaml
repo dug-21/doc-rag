@@ -1,0 +1,244 @@
+# Kustomization for Production Deployment
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: doc-rag-production
+  annotations:
+    config.kubernetes.io/local-config: "true"
+
+# Namespace for production deployment
+namespace: doc-rag-prod
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: doc-rag
+  app.kubernetes.io/instance: production
+  app.kubernetes.io/version: v1.0.0
+  app.kubernetes.io/managed-by: kustomize
+  environment: production
+
+# Resources to include
+resources:
+  - ../base/namespace.yaml
+  - ../base/configmap.yaml
+  - ../base/secrets.yaml
+  - ../base/api-deployment.yaml
+  - ../base/api-service.yaml
+  - ../base/chunker-deployment.yaml
+  - ../base/embedder-deployment.yaml
+  - ../base/retriever-deployment.yaml
+  - ../base/query-processor-deployment.yaml
+  - ../base/response-generator-deployment.yaml
+  - ../base/postgres-statefulset.yaml
+  - ../base/redis-deployment.yaml
+  - ../base/qdrant-statefulset.yaml
+  - ../base/monitoring-stack.yaml
+  - ../base/ingress.yaml
+  - ../base/networkpolicies.yaml
+  - ../base/podsecuritypolicy.yaml
+  - hpa.yaml
+  - pdb.yaml
+  - servicemonitor.yaml
+  - backup-cronjob.yaml
+
+# Images with production tags
+images:
+  - name: doc-rag/api
+    newTag: v1.0.0
+  - name: doc-rag/chunker  
+    newTag: v1.0.0
+  - name: doc-rag/embedder
+    newTag: v1.0.0
+  - name: doc-rag/retriever
+    newTag: v1.0.0
+  - name: doc-rag/query-processor
+    newTag: v1.0.0
+  - name: doc-rag/response-generator
+    newTag: v1.0.0
+
+# Patches for production environment
+patches:
+  # API Service - Production scaling
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: api-deployment
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 5
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "1000m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "2Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "4000m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "8Gi"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: ENVIRONMENT
+          value: "production"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: RUST_LOG
+          value: "info"
+
+  # Chunker Service - GPU nodes
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment  
+      name: chunker-deployment
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+      - op: add
+        path: /spec/template/spec/nodeSelector
+        value:
+          accelerator: nvidia-tesla-v100
+      - op: add
+        path: /spec/template/spec/containers/0/resources/limits/nvidia.com~1gpu
+        value: 1
+
+  # Embedder Service - GPU nodes
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: embedder-deployment
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+      - op: add
+        path: /spec/template/spec/nodeSelector
+        value:
+          accelerator: nvidia-tesla-v100
+      - op: add
+        path: /spec/template/spec/containers/0/resources/limits/nvidia.com~1gpu
+        value: 1
+
+  # PostgreSQL - Production storage
+  - target:
+      group: apps
+      version: v1
+      kind: StatefulSet
+      name: postgres-statefulset
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "4Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "8Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: "500Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: "fast-ssd"
+
+  # Redis - Production configuration
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: redis-deployment
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "2Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "4Gi"
+
+  # Qdrant - Production storage
+  - target:
+      group: apps
+      version: v1
+      kind: StatefulSet
+      name: qdrant-statefulset
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "4Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "8Gi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: "1Ti"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: "fast-ssd"
+
+# ConfigMap generator for production config
+configMapGenerator:
+  - name: doc-rag-config
+    behavior: merge
+    literals:
+      - RUST_LOG=info
+      - ENVIRONMENT=production
+      - METRICS_ENABLED=true
+      - TRACING_ENABLED=true
+      - CACHE_TTL=3600
+      - MAX_CONCURRENT_REQUESTS=1000
+      - RATE_LIMIT_ENABLED=true
+      - SECURITY_HEADERS_ENABLED=true
+
+# Secret generator for production secrets
+secretGenerator:
+  - name: doc-rag-secrets
+    behavior: merge
+    literals:
+      - database-password=REPLACE_WITH_VAULT_REF
+      - redis-password=REPLACE_WITH_VAULT_REF
+      - jwt-secret=REPLACE_WITH_VAULT_REF
+    type: Opaque
+
+# Replacements for dynamic values
+replacements:
+  - source:
+      kind: ConfigMap
+      name: doc-rag-config
+      fieldPath: data.DATABASE_URL
+    targets:
+      - select:
+          kind: Deployment
+          name: api-deployment
+        fieldPaths:
+          - spec.template.spec.containers.0.env.[name=DATABASE_URL].value
+
+# Replicas for production scaling
+replicas:
+  - name: api-deployment
+    count: 5
+  - name: chunker-deployment
+    count: 3
+  - name: embedder-deployment
+    count: 3
+  - name: retriever-deployment
+    count: 3
+  - name: query-processor-deployment
+    count: 4
+  - name: response-generator-deployment
+    count: 4
+
+# Annotations for production monitoring
+commonAnnotations:
+  deployment.kubernetes.io/revision: "1"
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: "doc-rag-production"
