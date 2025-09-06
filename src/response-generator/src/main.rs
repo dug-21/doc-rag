@@ -144,7 +144,7 @@ async fn generate_response(
 ) -> Result<()> {
     info!("Generating response for query: {}", query);
     
-    let mut generator = ResponseGenerator::new(config);
+    let mut generator = ResponseGenerator::new(config).await;
     
     // Parse output format
     let output_format = match format.to_lowercase().as_str() {
@@ -232,7 +232,7 @@ async fn run_benchmark(
 ) -> Result<()> {
     info!("Running benchmark with {} queries", num_queries);
     
-    let mut generator = ResponseGenerator::new(config);
+    let mut generator = ResponseGenerator::new(config).await;
     let test_queries = generate_test_queries(num_queries);
     
     let mut results = Vec::new();
@@ -344,7 +344,7 @@ async fn run_interactive_mode(config: Config) -> Result<()> {
     println!("Response Generator Interactive Mode");
     println!("Type 'exit' to quit, 'help' for commands");
     
-    let mut generator = ResponseGenerator::new(config);
+    let mut generator = ResponseGenerator::new(config).await;
     let stdin = std::io::stdin();
     
     loop {
