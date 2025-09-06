@@ -5,7 +5,7 @@
 
 use crate::{Result, ChunkerError, boundary::{BoundaryInfo, BoundaryType}};
 use crate::neural_chunker::{NeuralChunker, NeuralChunkerConfig, AccuracyMetrics, ModelMetadata};
-use ruv_fann::{Network, TrainData};
+use ruv_fann::{Network, TrainingData};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -253,7 +253,7 @@ impl NeuralTrainer {
         let mut patience_counter = 0;
         
         // Configure optimal training parameters
-        best_network.set_training_algorithm(ruv_fann::TrainAlgorithm::Rprop);
+        best_network.set_training_algorithm(ruv_fann::TrainingAlgorithm::Rprop);
         best_network.set_learning_rate(0.01);
         best_network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
         best_network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
@@ -313,7 +313,7 @@ impl NeuralTrainer {
         let mut network = Network::new(&layers);
         
         // Configure for semantic understanding
-        network.set_training_algorithm(ruv_fann::TrainAlgorithm::Rprop);
+        network.set_training_algorithm(ruv_fann::TrainingAlgorithm::Rprop);
         network.set_learning_rate(0.005);
         network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
         network.set_activation_function_output(ruv_fann::ActivationFunction::Linear);

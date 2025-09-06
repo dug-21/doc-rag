@@ -65,15 +65,13 @@ impl NeuralChunker {
         
         // Save boundary detector
         // ruv-FANN serialization - use to_bytes for saving networks
-        let boundary_bytes = self.boundary_detector.to_bytes().map_err(|e| ChunkerError::External(format!("Failed to serialize boundary network: {}", e)))?;
-        std::fs::write(&boundary_path, boundary_bytes).map_err(|e| ChunkerError::Io(e))?;
-            .map_err(|e| crate::ChunkerError::NeuralError(format!("Failed to save boundary detector: {:?}", e)))?;
+        let boundary_bytes = self.boundary_detector.to_bytes().map_err(|e| crate::ChunkerError::NeuralError(format!("Failed to serialize boundary network: {}", e)))?;
+        std::fs::write(&boundary_path, boundary_bytes).map_err(|e| crate::ChunkerError::IoError(format!("Failed to write boundary detector: {}", e)))?;
         
         // Save semantic analyzer
         // ruv-FANN serialization - use to_bytes for saving networks
-        let semantic_bytes = self.semantic_analyzer.to_bytes().map_err(|e| ChunkerError::External(format!("Failed to serialize semantic network: {}", e)))?;
-        std::fs::write(&semantic_path, semantic_bytes).map_err(|e| ChunkerError::Io(e))?;
-            .map_err(|e| crate::ChunkerError::NeuralError(format!("Failed to save semantic analyzer: {:?}", e)))?;
+        let semantic_bytes = self.semantic_analyzer.to_bytes().map_err(|e| crate::ChunkerError::NeuralError(format!("Failed to serialize semantic network: {}", e)))?;
+        std::fs::write(&semantic_path, semantic_bytes).map_err(|e| crate::ChunkerError::IoError(format!("Failed to write semantic analyzer: {}", e)))?;
         
         // Save metadata
         let metadata = ModelMetadata {
@@ -103,12 +101,12 @@ impl NeuralChunker {
         
         // Load networks
         // ruv-FANN deserialization - use from_bytes for loading networks
-        let boundary_bytes = std::fs::read(&boundary_path).map_err(|e| ChunkerError::Io(e))?;
+        let boundary_bytes = std::fs::read(&boundary_path).map_err(|e| crate::ChunkerError::IoError(format!("Failed to read boundary detector: {}", e)))?;
         let boundary_detector = Network::from_bytes(&boundary_bytes)
             .map_err(|e| crate::ChunkerError::NeuralError(format!("Failed to load boundary detector: {:?}", e)))?;
         
         // ruv-FANN deserialization - use from_bytes for loading networks
-        let semantic_bytes = std::fs::read(&semantic_path).map_err(|e| ChunkerError::Io(e))?;
+        let semantic_bytes = std::fs::read(&semantic_path).map_err(|e| crate::ChunkerError::IoError(format!("Failed to read semantic analyzer: {}", e)))?;
         let semantic_analyzer = Network::from_bytes(&semantic_bytes)
             .map_err(|e| crate::ChunkerError::NeuralError(format!("Failed to load semantic analyzer: {:?}", e)))?;
         
@@ -322,7 +320,7 @@ impl NeuralChunker {
         let target_mse = 0.025; // Target for 95%+ accuracy
         
         for epoch in 0..5000 {
-            let mse = network.train(&training_data).map_err(|e| ChunkerError::External(format!("Training epoch failed: {}", e)))?;
+            let mse = network.train(&training_data).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
             
             if mse < best_mse {
                 best_mse = mse;
@@ -361,7 +359,7 @@ impl NeuralChunker {
         let target_mse = 0.01;
         
         for epoch in 0..3000 {
-            let mse = network.train(&training_data).map_err(|e| ChunkerError::External(format!("Training epoch failed: {}", e)))?;
+            let mse = network.train(&training_data).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
             
             if mse < best_mse {
                 best_mse = mse;

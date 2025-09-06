@@ -63,7 +63,7 @@ clap = { version = "4.4", features = ["derive", "env"] }
 
 # Database and storage
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json"] }
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager", "streams"] }
+# redis = { version = "0.24", features = ["tokio-comp", "connection-manager", "streams"] } # Removed: Replaced with FACT cache
 minio = "0.1"
 mongodb = { version = "2.7", features = ["tokio-runtime"] }
 bson = { version = "2.7", features = ["chrono-0_4"] }
