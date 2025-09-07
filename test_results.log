@@ -3,104 +3,239 @@ package:   /Users/dmf/repos/doc-rag/src/response-generator/Cargo.toml
 workspace: /Users/dmf/repos/doc-rag/Cargo.toml
 warning: output filename collision.
 The example target `basic_usage` in package `response-generator v0.1.0 (/Users/dmf/repos/doc-rag/src/response-generator)` has the same output filename as the example target `basic_usage` in package `embedder v0.1.0 (/Users/dmf/repos/doc-rag/src/embedder)`.
-Colliding filename is: /Users/dmf/repos/doc-rag/target/debug/examples/basic_usage
+Colliding filename is: /Users/dmf/repos/doc-rag/target/release/examples/basic_usage
 The targets should have unique names.
 Consider changing their names to be unique or compiling them separately.
 This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
 warning: output filename collision.
 The example target `basic_usage` in package `response-generator v0.1.0 (/Users/dmf/repos/doc-rag/src/response-generator)` has the same output filename as the example target `basic_usage` in package `embedder v0.1.0 (/Users/dmf/repos/doc-rag/src/embedder)`.
-Colliding filename is: /Users/dmf/repos/doc-rag/target/debug/examples/basic_usage.dSYM
+Colliding filename is: /Users/dmf/repos/doc-rag/target/release/examples/basic_usage.dSYM
 The targets should have unique names.
 Consider changing their names to be unique or compiling them separately.
 This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
 warning: output filename collision.
 The example target `basic_usage` in package `storage v0.1.0 (/Users/dmf/repos/doc-rag/src/storage)` has the same output filename as the example target `basic_usage` in package `response-generator v0.1.0 (/Users/dmf/repos/doc-rag/src/response-generator)`.
-Colliding filename is: /Users/dmf/repos/doc-rag/target/debug/examples/basic_usage
+Colliding filename is: /Users/dmf/repos/doc-rag/target/release/examples/basic_usage
 The targets should have unique names.
 Consider changing their names to be unique or compiling them separately.
 This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
 warning: output filename collision.
 The example target `basic_usage` in package `storage v0.1.0 (/Users/dmf/repos/doc-rag/src/storage)` has the same output filename as the example target `basic_usage` in package `response-generator v0.1.0 (/Users/dmf/repos/doc-rag/src/response-generator)`.
-Colliding filename is: /Users/dmf/repos/doc-rag/target/debug/examples/basic_usage.dSYM
+Colliding filename is: /Users/dmf/repos/doc-rag/target/release/examples/basic_usage.dSYM
 The targets should have unique names.
 Consider changing their names to be unique or compiling them separately.
 This may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>.
+   Compiling lock_api v0.4.13
+   Compiling either v1.15.0
    Compiling serde_json v1.0.143
-   Compiling sct v0.7.1
-   Compiling rustls-webpki v0.101.7
-   Compiling idna_adapter v1.2.1
-   Compiling h2 v0.3.27
-   Compiling tokio-stream v0.1.17
-   Compiling gemm-common v0.17.1
-   Compiling zeroize v1.8.1
-   Compiling httparse v1.10.1
-   Compiling security-framework-sys v2.14.0
-   Compiling core-foundation v0.9.4
-   Compiling base64ct v1.8.0
-   Compiling gemm-f32 v0.18.2
-   Compiling http v1.3.1
-   Compiling idna v1.1.0
-   Compiling rustls-pki-types v1.12.0
-   Compiling crc32fast v1.5.0
-   Compiling pem-rfc7468 v0.7.0
+   Compiling icu_normalizer v2.0.0
+   Compiling futures-executor v0.3.31
+   Compiling ring v0.17.14
+   Compiling regex v1.11.2
+   Compiling mime_guess v2.0.5
+   Compiling matchers v0.2.0
+   Compiling tracing-serde v0.2.0
+   Compiling webpki-roots v0.25.4
+   Compiling utf8parse v0.2.2
+   Compiling is_terminal_polyfill v1.70.1
+   Compiling colorchoice v1.0.4
+   Compiling anstyle-parse v0.2.7
+   Compiling anstyle-query v1.1.4
+   Compiling strsim v0.11.1
+   Compiling ciborium-ll v0.2.2
+   Compiling parking_lot v0.12.4
+   Compiling dashmap v5.5.3
+   Compiling serde_urlencoded v0.7.1
    Compiling native-tls v0.2.14
-   Compiling rustls v0.21.12
-   Compiling tokio-test v0.4.4
+   Compiling rayon v1.11.0
+   Compiling futures v0.3.31
+   Compiling anstream v0.6.20
+   Compiling itertools v0.10.5
+   Compiling ciborium v0.2.2
+   Compiling tokio v1.47.1
+   Compiling idna_adapter v1.2.1
+   Compiling idna v1.1.0
+   Compiling clap_builder v4.5.47
+   Compiling minimal-lexical v0.2.1
+   Compiling wait-timeout v0.2.1
+   Compiling quick-error v1.2.3
+   Compiling bit-vec v0.8.0
    Compiling url v2.5.7
-   Compiling security-framework v2.11.1
-   Compiling base64 v0.22.1
+   Compiling rusty-fork v0.3.0
    Compiling tracing-subscriber v0.3.20
    Compiling tinytemplate v1.2.1
-   Compiling adler2 v2.0.1
-   Compiling gemm-f16 v0.18.2
+   Compiling nom v7.1.3
+   Compiling bit-set v0.8.0
+   Compiling sct v0.7.1
+   Compiling rustls-webpki v0.101.7
+   Compiling criterion-plot v0.5.0
+   Compiling rand_xorshift v0.4.0
+   Compiling unarray v0.1.4
+   Compiling toml_datetime v0.6.11
+   Compiling rustls v0.21.12
+   Compiling proptest v1.7.0
+   Compiling serde_spanned v0.6.9
+   Compiling ucd-trie v0.1.7
+   Compiling deranged v0.5.3
+   Compiling pest v2.8.1
+   Compiling toml_edit v0.22.27
+   Compiling pathdiff v0.2.3
+   Compiling indexmap v1.9.3
+   Compiling bincode v1.3.3
+   Compiling metrics v0.21.1
+   Compiling sha2 v0.10.9
+   Compiling hashbrown v0.13.1
+   Compiling byteorder v1.5.0
+   Compiling fact v0.1.0 (/Users/dmf/repos/doc-rag/src/fact)
+   Compiling unicode-segmentation v1.12.0
+   Compiling clap v4.5.47
+   Compiling rawpointer v0.2.1
    Compiling criterion v0.5.1
+   Compiling matrixmultiply v0.3.10
+   Compiling approx v0.4.0
+   Compiling metrics-util v0.15.1
+   Compiling json5 v0.4.1
+   Compiling gemm-common v0.18.2
+   Compiling gemm-common v0.17.1
+   Compiling time v0.3.43
+   Compiling ndarray v0.15.6
+   Compiling zeroize v1.8.1
+   Compiling base64 v0.13.1
+   Compiling linked-hash-map v0.5.6
+   Compiling idna v0.4.0
+   Compiling metrics v0.22.4
+   Compiling httparse v1.10.1
+   Compiling indexmap v2.11.0
+   Compiling toml v0.8.23
+   Compiling tokio-util v0.7.16
+   Compiling tokio-rustls v0.24.1
+   Compiling tokio-native-tls v0.3.1
+   Compiling h2 v0.3.27
+   Compiling tokio-stream v0.1.17
    Compiling validator v0.16.1
+   Compiling ruv-fann v0.1.6
+   Compiling tokio-test v0.4.4
+   Compiling rustls-pki-types v1.12.0
+   Compiling security-framework-sys v2.14.0
+   Compiling core-foundation v0.9.4
+   Compiling hashlink v0.8.4
+   Compiling base64ct v1.8.0
+   Compiling security-framework v2.11.1
+   Compiling pem-rfc7468 v0.7.0
+   Compiling gemm-f32 v0.18.2
+   Compiling const-random v0.1.18
+   Compiling http v1.3.1
+   Compiling crc32fast v1.5.0
+   Compiling adler2 v2.0.1
+   Compiling base64 v0.22.1
    Compiling miniz_oxide v0.8.9
    Compiling ureq-proto v0.5.1
-   Compiling tokio-rustls v0.24.1
+   Compiling gemm-f16 v0.18.2
+   Compiling num v0.4.3
+   Compiling dlv-list v0.5.2
+   Compiling prometheus v0.13.4
+   Compiling der v0.7.10
    Compiling rustls-pemfile v2.2.0
    Compiling webpki-root-certs v1.0.2
-   Compiling der v0.7.10
-   Compiling gemm-f32 v0.17.1
-   Compiling ordered-multimap v0.7.3
+   Compiling gemm-c32 v0.18.2
    Compiling gemm-c64 v0.18.2
    Compiling gemm-f64 v0.18.2
-   Compiling hyper v0.14.32
-   Compiling gemm-c32 v0.18.2
-   Compiling xattr v1.5.1
+   Compiling gemm-f32 v0.17.1
    Compiling socks v0.3.4
+   Compiling xattr v1.5.1
    Compiling filetime v0.2.26
    Compiling utf-8 v0.7.6
-   Compiling tar v0.4.44
-   Compiling ruv-fann v0.1.6
+   Compiling hyper v0.14.32
+   Compiling serde_yaml v0.9.34+deprecated
    Compiling ureq v3.1.0
-   Compiling gemm v0.18.2
+   Compiling tar v0.4.44
+   Compiling yoke v0.7.5
    Compiling gemm-f16 v0.17.1
-   Compiling rust-ini v0.20.0
+   Compiling gemm v0.18.2
+   Compiling num_enum v0.7.4
+   Compiling ordered-multimap v0.7.3
    Compiling flate2 v1.1.2
-   Compiling safetensors v0.4.5
-   Compiling gemm-f64 v0.17.1
-   Compiling hyper-tls v0.5.0
-   Compiling hyper-rustls v0.24.2
-   Compiling metrics-exporter-prometheus v0.12.2
-   Compiling reqwest v0.11.27
-   Compiling gemm-c32 v0.17.1
    Compiling gemm-c64 v0.17.1
+   Compiling gemm-c32 v0.17.1
+   Compiling gemm-f64 v0.17.1
+   Compiling safetensors v0.4.5
+   Compiling hmac v0.12.1
+   Compiling memmap2 v0.9.8
+   Compiling libloading v0.8.8
    Compiling pkg-config v0.3.32
-   Compiling ug v0.1.0
-   Compiling ort-sys v2.0.0-rc.10
-   Compiling config v0.14.1
+   Compiling arraydeque v0.5.1
+   Compiling yaml-rust2 v0.8.1
    Compiling gemm v0.17.1
-   Compiling ndarray v0.16.1
+   Compiling ug v0.1.0
+   Compiling rust-ini v0.20.0
+   Compiling ort-sys v2.0.0-rc.10
+   Compiling zip v1.1.4
+   Compiling convert_case v0.6.0
+   Compiling ron v0.8.1
+   Compiling unicode-properties v0.1.3
+   Compiling bit-vec v0.6.3
+   Compiling tap v1.0.1
+   Compiling matches v0.1.10
+   Compiling semver-parser v0.7.0
+   Compiling dlv-list v0.3.0
+   Compiling bit-set v0.5.3
+   Compiling wyz v0.5.1
+   Compiling config v0.14.1
+   Compiling ordered-multimap v0.4.3
+   Compiling semver v0.9.0
+   Compiling idna v0.2.3
+   Compiling stringprep v0.1.5
+   Compiling serde_with v1.14.0
+   Compiling radium v0.7.0
+   Compiling md-5 v0.10.6
    Compiling candle-core v0.8.4
-   Compiling smallvec v2.0.0-alpha.10
-   Compiling config v0.13.4
-   Compiling blake3 v1.8.2
-   Compiling fact-tools v1.0.0
+   Compiling funty v2.0.0
    Compiling trust-dns-proto v0.21.2
-   Compiling response-generator v0.1.0 (/Users/dmf/repos/doc-rag/src/response-generator)
+   Compiling rust-ini v0.18.0
+   Compiling bitvec v1.0.1
+   Compiling rustc_version v0.2.3
+   Compiling fancy-regex v0.13.0
+   Compiling ron v0.7.1
+   Compiling lru-cache v0.1.2
+   Compiling yaml-rust v0.4.5
+   Compiling hyper-rustls v0.24.2
+   Compiling hyper-tls v0.5.0
+   Compiling reqwest v0.11.27
+   Compiling metrics-exporter-prometheus v0.12.2
+   Compiling ndarray v0.16.1
+   Compiling serde_bytes v0.11.17
+   Compiling toml v0.5.11
+   Compiling serde_plain v1.0.2
+   Compiling resolv-conf v0.7.4
+   Compiling smallvec v2.0.0-alpha.10
+   Compiling rustc_version_runtime v0.2.1
+   Compiling trust-dns-resolver v0.21.2
+   Compiling sha-1 v0.10.1
+   Compiling config v0.13.4
    Compiling bson v2.15.0
+   Compiling pbkdf2 v0.11.0
+   Compiling approx v0.5.1
+   Compiling socket2 v0.4.10
+   Compiling strsim v0.10.0
+   Compiling path-slash v0.2.1
+   Compiling unicode-width v0.2.1
+   Compiling take_mut v0.2.2
+   Compiling constant_time_eq v0.3.1
+   Compiling getopts v0.2.24
+   Compiling arrayref v0.3.9
+   Compiling blake3 v1.8.2
+   Compiling pulldown-cmark v0.9.6
+   Compiling md5 v0.7.0
    Compiling bollard-stubs v1.42.0-rc.3
+   Compiling cipher v0.3.0
+   Compiling opaque-debug v0.3.1
+   Compiling sprs v0.11.1
+   Compiling smartcore v0.3.2
+   Compiling des v0.7.0
+   Compiling crypto-mac v0.11.1
+   Compiling daa v0.5.0
+   Compiling response-generator v0.1.0 (/Users/dmf/repos/doc-rag/src/response-generator)
+   Compiling fuzzy-matcher v0.3.7
 warning: unused import: `citation::Source`
  --> src/response-generator/src/builder.rs:6:5
   |
@@ -115,24 +250,98 @@ warning: unused import: `error`
 6 | use tracing::{debug, instrument, warn, info, error};
   |                                              ^^^^^
 
+warning: unused import: `ResponseError`
+ --> src/response-generator/src/fact_cache_impl.rs:8:28
+  |
+8 | use crate::error::{Result, ResponseError};
+  |                            ^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src/response-generator/src/fact_cache_optimized.rs:9:5
+  |
+9 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `RwLock`
+  --> src/response-generator/src/fact_cache_optimized.rs:13:19
+   |
+13 | use tokio::sync::{RwLock, Semaphore};
+   |                   ^^^^^^
+
+warning: unused import: `warn`
+  --> src/response-generator/src/fact_cache_optimized.rs:14:28
+   |
+14 | use tracing::{debug, info, warn};
+   |                            ^^^^
+
+warning: unused import: `uuid::Uuid`
+  --> src/response-generator/src/fact_cache_optimized.rs:15:5
+   |
+15 | use uuid::Uuid;
+   |     ^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+  --> src/response-generator/src/mongodb_integration.rs:11:5
+   |
+11 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `uuid::Uuid`
+  --> src/response-generator/src/mongodb_integration.rs:15:5
+   |
+15 | use uuid::Uuid;
+   |     ^^^^^^^^^^
+
+warning: unused imports: `DateTime` and `Utc`
+  --> src/response-generator/src/mongodb_integration.rs:16:14
+   |
+16 | use chrono::{DateTime, Utc};
+   |              ^^^^^^^^  ^^^
+
+warning: unused import: `anyhow`
+  --> src/response-generator/src/mongodb_integration.rs:17:31
+   |
+17 | use anyhow::{Result, Context, anyhow};
+   |                               ^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+  --> src/response-generator/src/mongodb_integration.rs:18:5
+   |
+18 | use async_trait::async_trait;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `error`
+  --> src/response-generator/src/mongodb_integration.rs:19:27
+   |
+19 | use tracing::{info, warn, error, debug, instrument};
+   |                           ^^^^^
+
+warning: unused import: `CacheSource`
+  --> src/response-generator/src/mongodb_integration.rs:23:36
+   |
+23 |     FACTCacheManager, CacheResult, CacheSource
+   |                                    ^^^^^^^^^^^
+
+   Compiling candle-nn v0.8.4
+   Compiling ort v2.0.0-rc.10
 warning: unused variable: `context`
-   --> src/response-generator/src/lib.rs:275:13
+   --> src/response-generator/src/lib.rs:282:13
     |
-275 |         let context = ProcessingContext::new(&request);
+282 |         let context = ProcessingContext::new(&request);
     |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
     |
     = note: `#[warn(unused_variables)]` on by default
 
 warning: unused variable: `builder`
-   --> src/response-generator/src/lib.rs:278:17
+   --> src/response-generator/src/lib.rs:285:17
     |
-278 |         let mut builder = ResponseBuilder::new(request.clone());
+285 |         let mut builder = ResponseBuilder::new(request.clone());
     |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_builder`
 
 warning: variable does not need to be mutable
-   --> src/response-generator/src/lib.rs:278:13
+   --> src/response-generator/src/lib.rs:285:13
     |
-278 |         let mut builder = ResponseBuilder::new(request.clone());
+285 |         let mut builder = ResponseBuilder::new(request.clone());
     |             ----^^^^^^^
     |             |
     |             help: remove this `mut`
@@ -147,6 +356,7 @@ warning: variable does not need to be mutable
     |             |
     |             help: remove this `mut`
 
+   Compiling mongodb v2.8.2
 warning: variable does not need to be mutable
    --> src/response-generator/src/cache.rs:259:23
     |
@@ -181,11 +391,346 @@ warning: variable does not need to be mutable
      |             |
      |             help: remove this `mut`
 
-   Compiling candle-nn v0.8.4
-   Compiling ort v2.0.0-rc.10
-   Compiling trust-dns-resolver v0.21.2
-   Compiling cipher v0.3.0
-   Compiling des v0.7.0
+   Compiling candle-transformers v0.8.4
+error[E0599]: no variant or associated item named `CacheError` found for enum `ResponseError` in the current scope
+   --> src/response-generator/src/fact_cache_optimized.rs:257:88
+    |
+257 | ....await.map_err(|_| ResponseError::CacheError("Failed to acquire access permit".to_string()))?;
+    |                                      ^^^^^^^^^^ variant or associated item not found in `ResponseError`
+    |
+   ::: src/response-generator/src/error.rs:11:1
+    |
+11  | pub enum ResponseError {
+    | ---------------------- variant or associated item `CacheError` not found for this enum
+    |
+note: if you're trying to build a new `ResponseError` consider using one of the following associated functions:
+      ResponseError::config
+      ResponseError::invalid_request
+      ResponseError::generation_failed
+      ResponseError::validation_failed
+      and 10 others
+   --> src/response-generator/src/error.rs:133:5
+    |
+133 |     pub fn config<S: Into<String>>(message: S) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+138 |     pub fn invalid_request<S: Into<String>>(message: S) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+143 |     pub fn generation_failed<S: Into<String>>(reason: S) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+148 |     pub fn validation_failed<S: Into<String>>(details: S) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0609]: no field `created_at` on type `dashmap::mapref::multiple::RefMulti<'_, std::string::String, L2CacheEntry>`
+   --> src/response-generator/src/fact_cache_optimized.rs:702:48
+    |
+702 |             let age = now.duration_since(entry.created_at);
+    |                                                ^^^^^^^^^^ unknown field
+    |
+help: one of the expressions' fields has a field of the same name
+    |
+702 |             let age = now.duration_since(entry.metadata.created_at);
+    |                                                +++++++++
+
+   Compiling linfa v0.7.1
+error[E0609]: no field `data` on type `CacheResult`
+   --> src/response-generator/src/mongodb_integration.rs:428:77
+    |
+428 |             let response: GeneratedResponse = serde_json::from_value(cached.data)
+    |                                                                             ^^^^ unknown field
+
+error[E0609]: no field `source` on type `CacheResult`
+   --> src/response-generator/src/mongodb_integration.rs:434:43
+    |
+434 |                 cache_source: Some(cached.source.to_string()),
+    |                                           ^^^^^^ unknown field
+
+error[E0308]: mismatched types
+   --> src/response-generator/src/mongodb_integration.rs:545:35
+    |
+545 |         match self.fact_cache.get(cache_key).await {
+    |                               --- ^^^^^^^^^ expected `&GenerationRequest`, found `&str`
+    |                               |
+    |                               arguments to this method are incorrect
+    |
+    = note: expected reference `&GenerationRequest`
+               found reference `&str`
+note: method defined here
+   --> src/response-generator/src/cache.rs:221:18
+    |
+221 |     pub async fn get(&self, request: &GenerationRequest) -> Result<CacheResult> {
+    |                  ^^^        ---------------------------
+
+error[E0308]: mismatched types
+   --> src/response-generator/src/mongodb_integration.rs:558:9
+    |
+558 |         self.base_generator.generate(optimized_request).await
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Result<GeneratedResponse, Error>`, found `Result<GeneratedResponse, ResponseError>`
+    |
+    = note: expected enum `std::result::Result<_, anyhow::Error>`
+               found enum `std::result::Result<_, ResponseError>`
+
+error[E0599]: no method named `set` found for struct `Arc<FACTCacheManager>` in the current scope
+   --> src/response-generator/src/mongodb_integration.rs:603:25
+    |
+603 |         self.fact_cache.set(cache_key, cached_data, Some(ttl)).await
+    |                         ^^^
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following trait defines an item `set`, perhaps you need to implement it:
+            candidate #1: `bitflags::traits::Flags`
+help: there is a method `get` with a similar name, but with different arguments
+   --> src/response-generator/src/cache.rs:221:5
+    |
+221 |     pub async fn get(&self, request: &GenerationRequest) -> Result<CacheResult> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   Compiling whatlang v0.16.4
+error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+   --> src/response-generator/src/fact_cache_impl.rs:187:20
+    |
+187 |         confidence.min(1.0)
+    |                    ^^^
+    |
+help: you must specify a type for this binding, like `f32`
+    |
+174 |         let mut confidence: f32 = 0.5; // Base confidence
+    |                           +++++
+
+error[E0277]: the trait bound `AtomicU64: Clone` is not satisfied
+  --> src/response-generator/src/fact_cache_optimized.rs:87:5
+   |
+76 | #[derive(Debug, Clone, Serialize, Deserialize)]
+   |                 ----- in this derive macro expansion
+...
+87 |     pub access_count: AtomicU64,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Clone` is not implemented for `AtomicU64`
+
+error[E0277]: the trait bound `std::time::Instant: Serialize` is not satisfied
+    --> src/response-generator/src/fact_cache_optimized.rs:76:24
+     |
+76   | #[derive(Debug, Clone, Serialize, Deserialize)]
+     |                        ^^^^^^^^^ the trait `Serialize` is not implemented for `std::time::Instant`
+...
+82   |     /// Creation timestamp
+     |     ---------------------- required by a bound introduced by this call
+     |
+     = note: for local types consider adding `#[derive(serde::Serialize)]` to your `std::time::Instant` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Serialize`:
+               &'a T
+               &'a mut T
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+               (T0, T1, T2, T3)
+               (T0, T1, T2, T3, T4)
+             and 272 others
+note: required by a bound in `_::_serde::ser::SerializeStruct::serialize_field`
+    --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.219/src/ser/mod.rs:1866:21
+     |
+1864 |     fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Self::Error>
+     |        --------------- required by a bound in this associated function
+1865 |     where
+1866 |         T: ?Sized + Serialize;
+     |                     ^^^^^^^^^ required by this bound in `SerializeStruct::serialize_field`
+     = note: this error originates in the derive macro `Serialize` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `std::time::Instant: Deserialize<'_>` is not satisfied
+    --> src/response-generator/src/fact_cache_optimized.rs:83:21
+     |
+83   |     pub created_at: Instant,
+     |                     ^^^^^^^ the trait `Deserialize<'_>` is not implemented for `std::time::Instant`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `std::time::Instant` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a serde_json::value::RawValue
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 292 others
+note: required by a bound in `next_element`
+    --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.219/src/de/mod.rs:1732:12
+     |
+1730 |     fn next_element<T>(&mut self) -> Result<Option<T>, Self::Error>
+     |        ------------ required by a bound in this associated function
+1731 |     where
+1732 |         T: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `SeqAccess::next_element`
+
+error[E0277]: the trait bound `std::time::Instant: Deserialize<'_>` is not satisfied
+    --> src/response-generator/src/fact_cache_optimized.rs:85:24
+     |
+85   |     pub last_accessed: Instant,
+     |                        ^^^^^^^ the trait `Deserialize<'_>` is not implemented for `std::time::Instant`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `std::time::Instant` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a serde_json::value::RawValue
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 292 others
+note: required by a bound in `next_element`
+    --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.219/src/de/mod.rs:1732:12
+     |
+1730 |     fn next_element<T>(&mut self) -> Result<Option<T>, Self::Error>
+     |        ------------ required by a bound in this associated function
+1731 |     where
+1732 |         T: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `SeqAccess::next_element`
+
+error[E0277]: the trait bound `std::time::Instant: Deserialize<'_>` is not satisfied
+    --> src/response-generator/src/fact_cache_optimized.rs:83:21
+     |
+83   |     pub created_at: Instant,
+     |                     ^^^^^^^ the trait `Deserialize<'_>` is not implemented for `std::time::Instant`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `std::time::Instant` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a serde_json::value::RawValue
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 292 others
+note: required by a bound in `next_value`
+    --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.219/src/de/mod.rs:1871:12
+     |
+1869 |     fn next_value<V>(&mut self) -> Result<V, Self::Error>
+     |        ---------- required by a bound in this associated function
+1870 |     where
+1871 |         V: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `MapAccess::next_value`
+
+error[E0277]: the trait bound `std::time::Instant: Deserialize<'_>` is not satisfied
+    --> src/response-generator/src/fact_cache_optimized.rs:85:24
+     |
+85   |     pub last_accessed: Instant,
+     |                        ^^^^^^^ the trait `Deserialize<'_>` is not implemented for `std::time::Instant`
+     |
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `std::time::Instant` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+     = help: the following other types implement trait `Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a serde_json::value::RawValue
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+             and 292 others
+note: required by a bound in `next_value`
+    --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.219/src/de/mod.rs:1871:12
+     |
+1869 |     fn next_value<V>(&mut self) -> Result<V, Self::Error>
+     |        ---------- required by a bound in this associated function
+1870 |     where
+1871 |         V: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `MapAccess::next_value`
+
+error[E0277]: the trait bound `std::time::Instant: Deserialize<'_>` is not satisfied
+  --> src/response-generator/src/fact_cache_optimized.rs:76:35
+   |
+76 | #[derive(Debug, Clone, Serialize, Deserialize)]
+   |                                   ^^^^^^^^^^^ the trait `Deserialize<'_>` is not implemented for `std::time::Instant`
+   |
+   = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `std::time::Instant` type
+   = note: for types from other crates check whether the crate offers a `serde` feature flag
+   = help: the following other types implement trait `Deserialize<'de>`:
+             &'a Path
+             &'a [u8]
+             &'a serde_json::value::RawValue
+             &'a str
+             ()
+             (T,)
+             (T0, T1)
+             (T0, T1, T2)
+           and 292 others
+note: required by a bound in `_::_serde::__private::de::missing_field`
+  --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.219/src/private/de.rs:25:8
+   |
+23 | pub fn missing_field<'de, V, E>(field: &'static str) -> Result<V, E>
+   |        ------------- required by a bound in this function
+24 | where
+25 |     V: Deserialize<'de>,
+   |        ^^^^^^^^^^^^^^^^ required by this bound in `missing_field`
+   = note: this error originates in the derive macro `Deserialize` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no variant or associated item named `Plain` found for enum `OutputFormat` in the current scope
+   --> src/response-generator/src/mongodb_integration.rs:531:49
+    |
+531 |                 crate::formatter::OutputFormat::Plain => 2u8,
+    |                                                 ^^^^^ variant or associated item not found in `OutputFormat`
+    |
+   ::: src/response-generator/src/formatter.rs:42:1
+    |
+42  | pub enum OutputFormat {
+    | --------------------- variant or associated item `Plain` not found for this enum
+
+   Compiling chunker v0.1.0 (/Users/dmf/repos/doc-rag/src/chunker)
+warning: unused import: `warn`
+  --> src/chunker/src/neural_chunker_working.rs:11:21
+   |
+11 | use tracing::{info, warn};
+   |                     ^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `ChunkerError`
+ --> src/chunker/src/neural_trainer_stub.rs:5:21
+  |
+5 | use crate::{Result, ChunkerError, boundary::BoundaryType};
+  |                     ^^^^^^^^^^^^
+
+warning: unused import: `crate::neural_chunker::NeuralChunkerConfig`
+ --> src/chunker/src/neural_trainer_stub.rs:6:5
+  |
+6 | use crate::neural_chunker::NeuralChunkerConfig;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::path::Path`
+ --> src/chunker/src/neural_trainer_stub.rs:8:5
+  |
+8 | use std::path::Path;
+  |     ^^^^^^^^^^^^^^^
+
+warning: unused imports: `DateTime` and `Utc`
+  --> src/chunker/src/neural_trainer_stub.rs:11:14
+   |
+11 | use chrono::{DateTime, Utc};
+   |              ^^^^^^^^  ^^^
+
+warning: unused variable: `misses`
+   --> src/response-generator/src/fact_cache_optimized.rs:724:13
+    |
+724 |         let misses = self.metrics.misses.load(Ordering::Relaxed);
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_misses`
+
+warning: unused variable: `mongo_performance`
+   --> src/response-generator/src/mongodb_integration.rs:614:9
+    |
+614 |         mongo_performance: &QueryPerformanceMetrics,
+    |         ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mongo_performance`
+
 warning: unused variable: `context`
    --> src/response-generator/src/pipeline.rs:102:9
     |
@@ -234,7 +779,36 @@ warning: unused variable: `context`
 663 |         context: &ProcessingContext,
     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
 
-   Compiling candle-transformers v0.8.4
+error[E0599]: no method named `set_learning_rate` found for struct `ruv_fann::Network` in the current scope
+   --> src/chunker/src/neural_trainer.rs:262:22
+    |
+262 |         best_network.set_learning_rate(0.01);
+    |                      ^^^^^^^^^^^^^^^^^ method not found in `Network<_>`
+
+error[E0599]: no method named `train_epoch` found for struct `ruv_fann::Network` in the current scope
+   --> src/chunker/src/neural_trainer.rs:267:42
+    |
+267 |             let train_mse = best_network.train_epoch(train_data);
+    |                                          ^^^^^^^^^^^ method not found in `Network<_>`
+
+error[E0599]: no method named `train_epoch` found for struct `ruv_fann::Network` in the current scope
+   --> src/chunker/src/neural_trainer.rs:330:37
+    |
+330 |             let train_mse = network.train_epoch(train_data);
+    |                                     ^^^^^^^^^^^ method not found in `Network<_>`
+
+error[E0596]: cannot borrow `*boundary_net` as mutable, as it is behind a `&` reference
+   --> src/chunker/src/neural_trainer.rs:377:21
+    |
+377 |             let _ = boundary_net.run(&vec![0.5f32; 12]);
+    |                     ^^^^^^^^^^^^ `boundary_net` is a `&` reference, so the data it refers to cannot be borrowed as mutable
+    |
+help: consider specifying this binding's type
+    |
+358 |         boundary_net: &mut ruv_fann::Network<f32>: &Network<f32>, 
+    |                     +++++++++++++++++++++++++++++
+
+   Compiling hashbrown v0.14.5
 warning: unused variable: `request`
    --> src/response-generator/src/validator.rs:477:9
     |
@@ -265,498 +839,293 @@ warning: unused variable: `request`
 1001 |         request: &GenerationRequest,
      |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
 
-   Compiling mongodb v2.8.2
-warning: field `citation_tracker` is never read
-  --> src/response-generator/src/lib.rs:86:5
+error[E0599]: no method named `map_err` found for struct `Vec<u8>` in the current scope
+  --> src/chunker/src/neural_chunker.rs:68:64
    |
-81 | pub struct ResponseGenerator {
-   |            ----------------- field in this struct
-...
-86 |     citation_tracker: CitationTracker,
-   |     ^^^^^^^^^^^^^^^^
-   |
-   = note: `ResponseGenerator` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-   = note: `#[warn(dead_code)]` on by default
+68 | ...   let boundary_bytes = self.boundary_detector.to_bytes().map_err(|e| crate::ChunkerError::NeuralError(format!("Failed to serialize bo...
+   |                                                              ^^^^^^^ method not found in `Vec<u8>`
 
-warning: field `content` is never read
-   --> src/response-generator/src/lib.rs:549:5
+error[E0599]: no method named `map_err` found for struct `Vec<u8>` in the current scope
+  --> src/chunker/src/neural_chunker.rs:73:64
+   |
+73 | ...   let semantic_bytes = self.semantic_analyzer.to_bytes().map_err(|e| crate::ChunkerError::NeuralError(format!("Failed to serialize se...
+   |                                                              ^^^^^^^ method not found in `Vec<u8>`
+
+error[E0599]: no function or associated item named `new` found for struct `TrainingData` in the current scope
+   --> src/chunker/src/neural_chunker.rs:163:59
     |
-546 | struct TextSegment {
-    |        ----------- field in this struct
-...
-549 |     content: String,
-    |     ^^^^^^^
-    |
-    = note: `TextSegment` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: field `relevance_score` is never read
-  --> src/response-generator/src/builder.rs:49:5
-   |
-47 | struct RankedContext {
-   |        ------------- field in this struct
-48 |     chunk: ContextChunk,
-49 |     relevance_score: f64,
-   |     ^^^^^^^^^^^^^^^
-   |
-   = note: `RankedContext` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: field `confidence` is never read
-  --> src/response-generator/src/builder.rs:67:5
-   |
-56 | struct ContentSection {
-   |        -------------- field in this struct
-...
-67 |     confidence: f64,
-   |     ^^^^^^^^^^
-   |
-   = note: `ContentSection` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `query_type` and `expected_sections` are never read
-   --> src/response-generator/src/builder.rs:794:5
-    |
-793 | struct QueryAnalysis {
-    |        ------------- fields in this struct
-794 |     query_type: QueryType,
-    |     ^^^^^^^^^^
-...
-797 |     expected_sections: Vec<SectionType>,
-    |     ^^^^^^^^^^^^^^^^^
-    |
-    = note: `QueryAnalysis` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: field `context_mgr` is never read
-  --> src/response-generator/src/cache.rs:24:5
-   |
-19 | pub struct FACTCacheManager {
-   |            ---------------- field in this struct
-...
-24 |     context_mgr: Arc<SimpleContextManager>,
-   |     ^^^^^^^^^^^
-   |
-   = note: `FACTCacheManager` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
-
-warning: field `config` is never read
-    --> src/response-generator/src/citation.rs:1204:5
-     |
-1203 | pub struct CitationQualityAssurance {
-     |            ------------------------ field in this struct
-1204 |     config: CitationConfig,
-     |     ^^^^^^
-     |
-     = note: `CitationQualityAssurance` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: field `evidence_patterns` is never read
-    --> src/response-generator/src/citation.rs:1213:5
-     |
-1210 | pub struct CitationCoverageAnalyzer {
-     |            ------------------------ field in this struct
-...
-1213 |     evidence_patterns: Vec<String>,
-     |     ^^^^^^^^^^^^^^^^^
-     |
-     = note: `CitationCoverageAnalyzer` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: function `serialize` is never used
-   --> src/response-generator/src/config.rs:585:12
-    |
-585 |     pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
-    |            ^^^^^^^^^
-
-warning: function `deserialize` is never used
-   --> src/response-generator/src/config.rs:592:12
-    |
-592 |     pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
-    |            ^^^^^^^^^^^
-
-   Compiling h2 v0.4.12
-   Compiling testcontainers v0.15.0
-   Compiling crypto-mac v0.11.1
-   Compiling opentelemetry v0.21.0
-   Compiling sprs v0.11.1
-   Compiling tungstenite v0.24.0
-   Compiling daa v0.5.0
-   Compiling hyper v1.7.0
-   Compiling opentelemetry_sdk v0.21.2
-   Compiling linfa v0.7.1
-   Compiling tokio-tungstenite v0.24.0
-   Compiling hyper-util v0.1.16
-   Compiling storage v0.1.0 (/Users/dmf/repos/doc-rag/src/storage)
-   Compiling tower v0.4.13
-warning: unused import: `std::collections::HashMap`
-  --> src/storage/src/lib.rs:13:5
-   |
-13 | use std::collections::HashMap;
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: `#[warn(unused_imports)]` on by default
-
-warning: unused imports: `AggregateOptions`, `Bson`, `CreateIndexOptions`, `DeleteResult`, `Document`, `FindOptions`, `InsertManyResult`, `UpdateResult`, `from_document`, and `to_document`
-  --> src/storage/src/lib.rs:20:30
-   |
-20 |     options::{ClientOptions, CreateIndexOptions, IndexOptions, AggregateOptions, FindOptions},
-   |                              ^^^^^^^^^^^^^^^^^^                ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^
-21 |     bson::{doc, Document, Bson, from_document, to_document},
-   |                 ^^^^^^^^  ^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^
-22 |     IndexModel,
-23 |     results::{InsertManyResult, UpdateResult, DeleteResult},
-   |               ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^
-
-warning: unused import: `futures::stream::TryStreamExt`
-  --> src/storage/src/lib.rs:25:5
-   |
-25 | use futures::stream::TryStreamExt;
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: unused imports: `DateTime` and `Utc`
-  --> src/storage/src/lib.rs:28:14
-   |
-28 | use chrono::{DateTime, Utc};
-   |              ^^^^^^^^  ^^^
-
-warning: unused import: `async_trait::async_trait`
-  --> src/storage/src/lib.rs:30:5
-   |
-30 | use async_trait::async_trait;
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: unused import: `debug`
-  --> src/storage/src/lib.rs:31:34
-   |
-31 | use tracing::{info, warn, error, debug, instrument};
-   |                                  ^^^^^
-
-warning: unused imports: `Collection`, `DeleteOptions`, `DeleteResult`, `InsertManyResult`, `ReadPreference`, `UpdateResult`, and `from_document`
-  --> src/storage/src/operations.rs:10:40
-   |
-10 |     bson::{doc, Document, to_document, from_document},
-   |                                        ^^^^^^^^^^^^^
-11 |     options::{
-12 |         FindOptions, UpdateOptions, DeleteOptions, InsertManyOptions,
-   |                                     ^^^^^^^^^^^^^
-13 |         ReadPreference, WriteConcern, ReadConcern, TransactionOptions,
-   |         ^^^^^^^^^^^^^^
-14 |     },
-15 |     results::{InsertManyResult, UpdateResult, DeleteResult},
-   |               ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^
-16 |     ClientSession, Collection,
-   |                    ^^^^^^^^^^
-
-warning: unused imports: `Deserialize` and `Serialize`
-  --> src/storage/src/operations.rs:19:13
-   |
-19 | use serde::{Deserialize, Serialize};
-   |             ^^^^^^^^^^^  ^^^^^^^^^
-
-warning: unused import: `anyhow`
-  --> src/storage/src/operations.rs:22:31
-   |
-22 | use anyhow::{Result, Context, anyhow};
-   |                               ^^^^^^
-
-warning: unused import: `MetadataDocument`
-  --> src/storage/src/operations.rs:26:43
-   |
-26 | use crate::{VectorStorage, ChunkDocument, MetadataDocument, BulkInsertRequest, BulkInsertResponse, BulkInsertError};
-   |                                           ^^^^^^^^^^^^^^^^
-
-warning: unused import: `Duration`
- --> src/storage/src/search.rs:9:17
-  |
-9 | use std::time::{Duration, Instant};
-  |                 ^^^^^^^^
-
-warning: unused imports: `Bson`, `Cursor`, and `FindOptions`
-  --> src/storage/src/search.rs:13:27
-   |
-13 |     bson::{doc, Document, Bson},
-   |                           ^^^^
-14 |     options::{AggregateOptions, FindOptions},
-   |                                 ^^^^^^^^^^^
-15 |     Cursor,
-   |     ^^^^^^
-
-warning: unused import: `TryStreamExt`
-  --> src/storage/src/search.rs:17:34
-   |
-17 | use futures::stream::{StreamExt, TryStreamExt};
-   |                                  ^^^^^^^^^^^^
-
-warning: unused imports: `debug`, `error`, and `warn`
-  --> src/storage/src/search.rs:23:21
-   |
-23 | use tracing::{info, warn, error, debug, instrument};
-   |                     ^^^^  ^^^^^  ^^^^^
-
-warning: unused imports: `Array1` and `Array2`
-  --> src/storage/src/search.rs:24:15
-   |
-24 | use ndarray::{Array1, Array2};
-   |               ^^^^^^  ^^^^^^
-
-warning: unused import: `ChunkMetadata`
-  --> src/storage/src/search.rs:26:43
-   |
-26 | use crate::{VectorStorage, ChunkDocument, ChunkMetadata};
-   |                                           ^^^^^^^^^^^^^
-
-warning: unused import: `Arc`
- --> src/storage/src/metrics.rs:3:17
-  |
-3 | use std::sync::{Arc, RwLock};
-  |                 ^^^
-
-   Compiling axum v0.7.9
-   Compiling opentelemetry-semantic-conventions v0.13.0
-   Compiling chunker v0.1.0 (/Users/dmf/repos/doc-rag/src/chunker)
-error[E0433]: failed to resolve: could not find `TrainData` in `ruv_fann`
-   --> src/chunker/src/neural_chunker.rs:157:45
-    |
-157 |             let additional_data = ruv_fann::TrainData::new(additional_boundary_inputs, additional_boundary_outputs);
-    |                                             ^^^^^^^^^
-    |                                             |
-    |                                             could not find `TrainData` in `ruv_fann`
-    |                                             help: a struct with a similar name exists: `TrainingData`
-
-error[E0433]: failed to resolve: could not find `TrainAlgorithm` in `ruv_fann`
-   --> src/chunker/src/neural_chunker.rs:307:50
-    |
-307 |         network.set_training_algorithm(ruv_fann::TrainAlgorithm::Rprop);
-    |                                                  ^^^^^^^^^^^^^^
-    |                                                  |
-    |                                                  could not find `TrainAlgorithm` in `ruv_fann`
-    |                                                  help: an enum with a similar name exists: `TrainingAlgorithm`
-
-error[E0433]: failed to resolve: could not find `TrainAlgorithm` in `ruv_fann`
-   --> src/chunker/src/neural_chunker.rs:346:50
-    |
-346 |         network.set_training_algorithm(ruv_fann::TrainAlgorithm::Rprop);
-    |                                                  ^^^^^^^^^^^^^^
-    |                                                  |
-    |                                                  could not find `TrainAlgorithm` in `ruv_fann`
-    |                                                  help: an enum with a similar name exists: `TrainingAlgorithm`
-
-error[E0433]: failed to resolve: could not find `TrainData` in `ruv_fann`
-   --> src/chunker/src/neural_chunker.rs:450:22
-    |
-450 |         Ok(ruv_fann::TrainData::new(inputs, outputs))
-    |                      ^^^^^^^^^
-    |                      |
-    |                      could not find `TrainData` in `ruv_fann`
-    |                      help: a struct with a similar name exists: `TrainingData`
-
-error[E0433]: failed to resolve: could not find `TrainData` in `ruv_fann`
-   --> src/chunker/src/neural_chunker.rs:504:22
-    |
-504 |         Ok(ruv_fann::TrainData::new(inputs, outputs))
-    |                      ^^^^^^^^^
-    |                      |
-    |                      could not find `TrainData` in `ruv_fann`
-    |                      help: a struct with a similar name exists: `TrainingData`
-
-error[E0412]: cannot find type `TrainData` in crate `ruv_fann`
-   --> src/chunker/src/neural_chunker.rs:376:62
-    |
-376 |     fn generate_boundary_training_data() -> Result<ruv_fann::TrainData<f32>> {
-    |                                                              ^^^^^^^^^ help: a struct with a similar name exists: `TrainingData`
-    |
-   ::: /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ruv-fann-0.1.6/src/training/mod.rs:20:1
-    |
-20  | pub struct TrainingData<T: Float> {
-    | --------------------------------- similarly named struct `TrainingData` defined here
-
-error[E0412]: cannot find type `TrainData` in crate `ruv_fann`
-   --> src/chunker/src/neural_chunker.rs:454:62
-    |
-454 |     fn generate_semantic_training_data() -> Result<ruv_fann::TrainData<f32>> {
-    |                                                              ^^^^^^^^^ help: a struct with a similar name exists: `TrainingData`
-    |
-   ::: /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ruv-fann-0.1.6/src/training/mod.rs:20:1
-    |
-20  | pub struct TrainingData<T: Float> {
-    | --------------------------------- similarly named struct `TrainingData` defined here
-
-warning: unused import: `warn`
-  --> src/chunker/src/neural_chunker.rs:12:21
-   |
-12 | use tracing::{info, warn};
-   |                     ^^^^
-   |
-   = note: `#[warn(unused_imports)]` on by default
-
-warning: `response-generator` (lib) generated 34 warnings (run `cargo fix --lib -p response-generator` to apply 6 suggestions)
-   Compiling embedder v0.1.0 (/Users/dmf/repos/doc-rag/src/embedder)
-   Compiling tower-http v0.5.2
-error[E0412]: cannot find type `Session` in crate `ort`
-  --> src/embedder/src/models.rs:38:19
-   |
-38 |     session: ort::Session,
-   |                   ^^^^^^^ not found in `ort`
-   |
-help: consider importing this struct
-   |
-6  + use ort::session::Session;
-   |
-help: if you import `Session`, refer to it directly
-   |
-38 -     session: ort::Session,
-38 +     session: Session,
-   |
-
-error[E0433]: failed to resolve: could not find `Session` in `ort`
-   --> src/embedder/src/models.rs:216:18
-    |
-216 |             ort::Session::builder()?
-    |                  ^^^^^^^ could not find `Session` in `ort`
-    |
-help: consider importing this struct
-    |
-6   + use ort::session::Session;
-    |
-help: if you import `Session`, refer to it directly
-    |
-216 -             ort::Session::builder()?
-216 +             Session::builder()?
-    |
-
-error[E0599]: no method named `save` found for struct `ruv_fann::Network` in the current scope
-  --> src/chunker/src/neural_chunker.rs:67:32
-   |
-67 |         self.boundary_detector.save(&boundary_path.to_string_lossy())
-   |                                ^^^^ method not found in `Network<f32>`
-
-error[E0599]: no method named `save` found for struct `ruv_fann::Network` in the current scope
-  --> src/chunker/src/neural_chunker.rs:71:32
-   |
-71 |         self.semantic_analyzer.save(&semantic_path.to_string_lossy())
-   |                                ^^^^ method not found in `Network<f32>`
-
-error[E0599]: no function or associated item named `load` found for struct `ruv_fann::Network` in the current scope
-   --> src/chunker/src/neural_chunker.rs:101:42
-    |
-101 |         let boundary_detector = Network::load(&boundary_path.to_string_lossy())
-    |                                          ^^^^ function or associated item not found in `Network<_>`
-    |
-note: if you're trying to build a new `ruv_fann::Network<_>` consider using one of the following associated functions:
-      ruv_fann::Network::<T>::new
-      ruv_fann::Network::<T>::from_bytes
-   --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ruv-fann-0.1.6/src/network.rs:38:5
-    |
-38  |       pub fn new(layer_sizes: &[usize]) -> Self {
-    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-...
-326 | /     pub fn from_bytes(bytes: &[u8]) -> Result<Self, NetworkError>
-327 | |     where
-328 | |         T: serde::de::DeserializeOwned,
-329 | |         Network<T>: serde::de::DeserializeOwned,
-    | |________________________________________________^
-
-error[E0599]: no function or associated item named `load` found for struct `ruv_fann::Network` in the current scope
-   --> src/chunker/src/neural_chunker.rs:104:42
-    |
-104 |         let semantic_analyzer = Network::load(&semantic_path.to_string_lossy())
-    |                                          ^^^^ function or associated item not found in `Network<_>`
-    |
-note: if you're trying to build a new `ruv_fann::Network<_>` consider using one of the following associated functions:
-      ruv_fann::Network::<T>::new
-      ruv_fann::Network::<T>::from_bytes
-   --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ruv-fann-0.1.6/src/network.rs:38:5
-    |
-38  |       pub fn new(layer_sizes: &[usize]) -> Self {
-    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-...
-326 | /     pub fn from_bytes(bytes: &[u8]) -> Result<Self, NetworkError>
-327 | |     where
-328 | |         T: serde::de::DeserializeOwned,
-329 | |         Network<T>: serde::de::DeserializeOwned,
-    | |________________________________________________^
+163 |             let additional_data = ruv_fann::TrainingData::new(additional_boundary_inputs, additional_boundary_outputs);
+    |                                                           ^^^ function or associated item not found in `TrainingData<_>`
 
 error[E0599]: no method named `train_epoch` found for struct `ruv_fann::Network` in the current scope
-   --> src/chunker/src/neural_chunker.rs:162:50
+   --> src/chunker/src/neural_chunker.rs:168:50
     |
-162 |                 let mse = self.boundary_detector.train_epoch(&additional_data);
+168 |                 let mse = self.boundary_detector.train_epoch(&additional_data);
     |                                                  ^^^^^^^^^^^ method not found in `Network<f32>`
 
-error[E0599]: no method named `set_learning_rate` found for mutable reference `&mut ruv_fann::Network<f32>` in the current scope
-   --> src/chunker/src/neural_chunker.rs:308:17
+error[E0061]: this method takes 4 arguments but 1 argument was supplied
+   --> src/chunker/src/neural_chunker.rs:323:31
     |
-308 |         network.set_learning_rate(0.01);
-    |                 ^^^^^^^^^^^^^^^^^ method not found in `&mut Network<f32>`
+323 | ...   let mse = network.train(&training_data).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
+    |                         ^^^^^---------------- three arguments of type `&[Vec<f32>]`, `f32`, and `usize` are missing
+    |
+note: expected `&[Vec<f32>]`, found `&TrainingData<f32>`
+   --> src/chunker/src/neural_chunker.rs:323:37
+    |
+323 | ...   let mse = network.train(&training_data).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
+    |                               ^^^^^^^^^^^^^^
+    = note: expected reference `&[Vec<f32>]`
+               found reference `&TrainingData<f32>`
+note: method defined here
+   --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ruv-fann-0.1.6/src/network.rs:256:12
+    |
+256 |     pub fn train(
+    |            ^^^^^
+help: provide the arguments
+    |
+323 -             let mse = network.train(&training_data).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
+323 +             let mse = network.train(/* &[Vec<f32>] */, /* &[Vec<f32>] */, /* f32 */, /* usize */).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
+    |
 
-error[E0599]: no method named `train_epoch` found for mutable reference `&mut ruv_fann::Network<f32>` in the current scope
-   --> src/chunker/src/neural_chunker.rs:317:31
+error[E0308]: mismatched types
+   --> src/chunker/src/neural_chunker.rs:325:22
     |
-317 |             let mse = network.train_epoch(&training_data);
-    |                               ^^^^^^^^^^^ method not found in `&mut Network<f32>`
+325 |             if mse < best_mse {
+    |                ---   ^^^^^^^^ expected `()`, found `f32`
+    |                |
+    |                expected because this is `()`
 
-   Compiling opentelemetry-jaeger v0.20.0
-error[E0599]: no method named `set_learning_rate` found for mutable reference `&mut ruv_fann::Network<f32>` in the current scope
-   --> src/chunker/src/neural_chunker.rs:347:17
+error[E0308]: mismatched types
+   --> src/chunker/src/neural_chunker.rs:326:28
     |
-347 |         network.set_learning_rate(0.005);
-    |                 ^^^^^^^^^^^^^^^^^ method not found in `&mut Network<f32>`
+319 |         let mut best_mse = f32::INFINITY;
+    |                            ------------- expected due to this value
+...
+326 |                 best_mse = mse;
+    |                            ^^^ expected `f32`, found `()`
 
-error[E0599]: no method named `train_epoch` found for mutable reference `&mut ruv_fann::Network<f32>` in the current scope
-   --> src/chunker/src/neural_chunker.rs:356:31
+error[E0277]: `()` doesn't implement `std::fmt::Display`
+   --> src/chunker/src/neural_chunker.rs:329:59
     |
-356 |             let mse = network.train_epoch(&training_data);
-    |                               ^^^^^^^^^^^ method not found in `&mut Network<f32>`
+329 |                     info!("Epoch {}: MSE = {:.6}", epoch, mse);
+    |                                                           ^^^ `()` cannot be formatted with the default formatter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `()`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__macro_support::format_args` which comes from the expansion of the macro `info` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `SessionInputValue<'_>: From<ArrayBase<OwnedRepr<i64>, ndarray::Dim<IxDynImpl>>>` is not satisfied
-   --> src/embedder/src/models.rs:274:30
+error[E0308]: mismatched types
+   --> src/chunker/src/neural_chunker.rs:334:22
     |
-274 |               self.session.run(ort::inputs![
-    |  ______________________________^
-275 | |                 "input_ids" => ndarray::Array2::from_shape_vec(
-276 | |                     (batch_size, seq_len),
-277 | |                     input_ids
-...   |
-282 | |                 )?.into_dyn()
-283 | |             ])?
-    | |_____________^ the trait `From<ArrayBase<OwnedRepr<i64>, ndarray::Dim<IxDynImpl>>>` is not implemented for `SessionInputValue<'_>`
-    |
-    = help: the following other types implement trait `From<T>`:
-              `SessionInputValue<'_>` implements `From<&ort::value::Value<T>>`
-              `SessionInputValue<'_>` implements `From<ValueRef<'_, T>>`
-              `SessionInputValue<'_>` implements `From<ValueRefMut<'_, T>>`
-              `SessionInputValue<'_>` implements `From<ort::value::Value<T>>`
-    = note: this error originates in the macro `ort::inputs` (in Nightly builds, run with -Z macro-backtrace for more info)
+334 |             if mse < target_mse {
+    |                ---   ^^^^^^^^^^ expected `()`, found floating-point number
+    |                |
+    |                expected because this is `()`
 
-warning: unused variable: `options`
-   --> src/storage/src/operations.rs:366:13
+error[E0277]: `()` doesn't implement `std::fmt::Display`
+   --> src/chunker/src/neural_chunker.rs:335:84
     |
-366 |         let options = FindOptions::builder()
-    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_options`
+335 |                 info!("Target accuracy reached at epoch {} with MSE {:.6}", epoch, mse);
+    |                                                                                    ^^^ `()` cannot be formatted with the default formatter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `()`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__macro_support::format_args` which comes from the expansion of the macro `info` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0061]: this method takes 4 arguments but 1 argument was supplied
+   --> src/chunker/src/neural_chunker.rs:362:31
+    |
+362 | ...   let mse = network.train(&training_data).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
+    |                         ^^^^^---------------- three arguments of type `&[Vec<f32>]`, `f32`, and `usize` are missing
+    |
+note: expected `&[Vec<f32>]`, found `&TrainingData<f32>`
+   --> src/chunker/src/neural_chunker.rs:362:37
+    |
+362 | ...   let mse = network.train(&training_data).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
+    |                               ^^^^^^^^^^^^^^
+    = note: expected reference `&[Vec<f32>]`
+               found reference `&TrainingData<f32>`
+note: method defined here
+   --> /Users/dmf/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ruv-fann-0.1.6/src/network.rs:256:12
+    |
+256 |     pub fn train(
+    |            ^^^^^
+help: provide the arguments
+    |
+362 -             let mse = network.train(&training_data).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
+362 +             let mse = network.train(/* &[Vec<f32>] */, /* &[Vec<f32>] */, /* f32 */, /* usize */).map_err(|e| crate::ChunkerError::TrainingError(format!("Training epoch failed: {}", e)))?;
+    |
+
+error[E0308]: mismatched types
+   --> src/chunker/src/neural_chunker.rs:364:22
+    |
+364 |             if mse < best_mse {
+    |                ---   ^^^^^^^^ expected `()`, found `f32`
+    |                |
+    |                expected because this is `()`
+
+error[E0308]: mismatched types
+   --> src/chunker/src/neural_chunker.rs:365:28
+    |
+358 |         let mut best_mse = f32::INFINITY;
+    |                            ------------- expected due to this value
+...
+365 |                 best_mse = mse;
+    |                            ^^^ expected `f32`, found `()`
+
+error[E0277]: `()` doesn't implement `std::fmt::Display`
+   --> src/chunker/src/neural_chunker.rs:367:68
+    |
+367 |                     info!("Semantic epoch {}: MSE = {:.6}", epoch, mse);
+    |                                                                    ^^^ `()` cannot be formatted with the default formatter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `()`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__macro_support::format_args` which comes from the expansion of the macro `info` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0308]: mismatched types
+   --> src/chunker/src/neural_chunker.rs:371:22
+    |
+371 |             if mse < target_mse {
+    |                ---   ^^^^^^^^^^ expected `()`, found floating-point number
+    |                |
+    |                expected because this is `()`
+
+error[E0277]: `()` doesn't implement `std::fmt::Display`
+   --> src/chunker/src/neural_chunker.rs:372:93
+    |
+372 |                 info!("Semantic target accuracy reached at epoch {} with MSE {:.6}", epoch, mse);
+    |                                                                                             ^^^ `()` cannot be formatted with the default formatter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `()`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__macro_support::format_args` which comes from the expansion of the macro `info` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no function or associated item named `new` found for struct `TrainingData` in the current scope
+   --> src/chunker/src/neural_chunker.rs:456:36
+    |
+456 |         Ok(ruv_fann::TrainingData::new(inputs, outputs))
+    |                                    ^^^ function or associated item not found in `TrainingData<_>`
+
+error[E0599]: no function or associated item named `new` found for struct `TrainingData` in the current scope
+   --> src/chunker/src/neural_chunker.rs:510:36
+    |
+510 |         Ok(ruv_fann::TrainingData::new(inputs, outputs))
+    |                                    ^^^ function or associated item not found in `TrainingData<_>`
+
+error[E0599]: no method named `map_err` found for struct `Vec<u8>` in the current scope
+   --> src/chunker/src/neural_chunker_working.rs:193:14
+    |
+192 |           let boundary_bytes = self.boundary_detector.to_bytes()
+    |  ______________________________-
+193 | |             .map_err(|e| ChunkerError::NeuralError(format!("Failed to serialize boundary detector: {:?}", e)))?;
+    | |             -^^^^^^^ method not found in `Vec<u8>`
+    | |_____________|
+    |
+
+error[E0599]: no method named `map_err` found for struct `Vec<u8>` in the current scope
+   --> src/chunker/src/neural_chunker_working.rs:197:14
+    |
+196 |           let semantic_bytes = self.semantic_analyzer.to_bytes()
+    |  ______________________________-
+197 | |             .map_err(|e| ChunkerError::NeuralError(format!("Failed to serialize semantic analyzer: {:?}", e)))?;
+    | |             -^^^^^^^ method not found in `Vec<u8>`
+    | |_____________|
+    |
+
+error[E0599]: no method named `length` found for reference `&TrainingData<f32>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:417:26
+    |
+417 |         for i in 0..data.length() {
+    |                          ^^^^^^ method not found in `&TrainingData<f32>`
+
+error[E0599]: no method named `get_input` found for reference `&TrainingData<f32>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:418:30
+    |
+418 |             let input = data.get_input(i);
+    |                              ^^^^^^^^^ method not found in `&TrainingData<f32>`
+
+error[E0599]: no method named `get_output` found for reference `&TrainingData<f32>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:419:33
+    |
+419 |             let expected = data.get_output(i);
+    |                                 ^^^^^^^^^^ method not found in `&TrainingData<f32>`
+
+error[E0599]: no method named `length` found for reference `&TrainingData<f32>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:437:26
+    |
+437 |         for i in 0..data.length() {
+    |                          ^^^^^^ method not found in `&TrainingData<f32>`
+
+error[E0599]: no method named `get_input` found for reference `&TrainingData<f32>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:438:30
+    |
+438 |             let input = data.get_input(i);
+    |                              ^^^^^^^^^ method not found in `&TrainingData<f32>`
+
+error[E0599]: no method named `get_output` found for reference `&TrainingData<f32>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:439:33
+    |
+439 |             let expected = data.get_output(i);
+    |                                 ^^^^^^^^^^ method not found in `&TrainingData<f32>`
+
+error[E0599]: no method named `length` found for reference `&TrainingData<T>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:463:34
+    |
+463 |         let total_samples = data.length();
+    |                                  ^^^^^^ method not found in `&TrainingData<T>`
+
+error[E0308]: mismatched types
+   --> src/chunker/src/neural_trainer.rs:464:48
+    |
+462 |     fn split_data<T: Clone + Float>(&self, data: &TrainingData<T>) -> Result<(TrainingData<T>, TrainingData<T>)> {
+    |                   - expected this type parameter
+463 |         let total_samples = data.length();
+464 |         let val_size = (total_samples as f64 * self.config.validation_split) as usize;
+    |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected type parameter `T`, found `f64`
+    |
+    = note: expected type parameter `T`
+                         found type `f64`
+
+error[E0599]: no method named `get_input` found for reference `&TrainingData<T>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:473:30
+    |
+473 |             let input = data.get_input(i);
+    |                              ^^^^^^^^^ method not found in `&TrainingData<T>`
+
+error[E0599]: no method named `get_output` found for reference `&TrainingData<T>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:474:31
+    |
+474 |             let output = data.get_output(i);
+    |                               ^^^^^^^^^^ method not found in `&TrainingData<T>`
+
+error[E0599]: no method named `save` found for reference `&ruv_fann::Network<f32>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:609:26
+    |
+609 |             boundary_net.save(&boundary_path.to_string_lossy())
+    |                          ^^^^ method not found in `&Network<f32>`
+
+error[E0599]: no method named `save` found for reference `&ruv_fann::Network<f32>` in the current scope
+   --> src/chunker/src/neural_trainer.rs:612:26
+    |
+612 |             semantic_net.save(&semantic_path.to_string_lossy())
+    |                          ^^^^ method not found in `&Network<f32>`
+
+   Compiling axum-core v0.4.5
+Some errors have detailed explanations: E0277, E0308, E0599, E0609, E0689.
+For more information about an error, try `rustc --explain E0277`.
+warning: `response-generator` (lib) generated 38 warnings
+error: could not compile `response-generator` (lib) due to 16 previous errors; 38 warnings emitted
+warning: build failed, waiting for other jobs to finish...
+warning: unused variable: `j`
+   --> src/chunker/src/neural_trainer.rs:538:22
+    |
+538 |                 for (j, target) in noisy_output.iter_mut().enumerate() {
+    |                      ^ help: if this is intentional, prefix it with an underscore: `_j`
     |
     = note: `#[warn(unused_variables)]` on by default
 
-Some errors have detailed explanations: E0412, E0433, E0599.
-For more information about an error, try `rustc --explain E0412`.
-warning: `chunker` (lib) generated 1 warning
-error: could not compile `chunker` (lib) due to 16 previous errors; 1 warning emitted
-warning: build failed, waiting for other jobs to finish...
-Some errors have detailed explanations: E0277, E0412, E0433.
-For more information about an error, try `rustc --explain E0277`.
-error: could not compile `embedder` (lib) due to 3 previous errors
-warning: constant `OPERATION_TIMEOUT` is never used
-  --> src/storage/src/lib.rs:51:7
-   |
-51 | const OPERATION_TIMEOUT: Duration = Duration::from_secs(30);
-   |       ^^^^^^^^^^^^^^^^^
-   |
-   = note: `#[warn(dead_code)]` on by default
-
-warning: fields `metadata_collection` and `config` are never read
-  --> src/storage/src/lib.rs:59:5
-   |
-55 | pub struct VectorStorage {
-   |            ------------- fields in this struct
-...
-59 |     metadata_collection: Collection<MetadataDocument>,
-   |     ^^^^^^^^^^^^^^^^^^^
-...
-62 |     config: StorageConfig,
-   |     ^^^^^^
-   |
-   = note: `VectorStorage` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
-
-warning: `storage` (lib) generated 20 warnings (run `cargo fix --lib -p storage` to apply 17 suggestions)
+Some errors have detailed explanations: E0061, E0277, E0308, E0596, E0599.
+For more information about an error, try `rustc --explain E0061`.
+warning: `chunker` (lib) generated 6 warnings
+error: could not compile `chunker` (lib) due to 40 previous errors; 6 warnings emitted
