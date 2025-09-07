@@ -323,6 +323,17 @@ impl FACTCacheManager {
         Ok(CacheResult::Miss { key: cache_key })
     }
 
+    /// Set a value in cache with TTL
+    pub async fn set(&self, key: &str, data: serde_json::Value, ttl: Option<Duration>) -> Result<()> {
+        // Store in FACT cache
+        if self.config.enable_fact_cache {
+            if let Ok(mut cache) = self.fact_cache.lock() {
+                cache.set(key, data);
+            }
+        }
+        Ok(())
+    }
+
     /// Store response in cache
     #[instrument(skip(self, response), fields(request_id = %response.request_id))]
     pub async fn store(&self, request: &GenerationRequest, response: &GeneratedResponse) -> Result<()> {

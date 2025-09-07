@@ -418,22 +418,20 @@ impl MongoDBIntegratedGenerator {
         // Step 1: Check FACT cache for existing response
         let cache_start = Instant::now();
         let cache_key = self.generate_cache_key(&request);
-        let cached_response = self.check_fact_cache(&cache_key).await?;
+        let cached_response = self.check_fact_cache(&request).await?;
         let cache_lookup_time = cache_start.elapsed();
         
-        let (response, mongo_performance, cache_performance) = if let Some(cached) = cached_response {
+        let (response, mongo_performance, cache_performance) = if let Some((cached_response, cache_source)) = cached_response {
             info!("Cache hit for request: {}", request.id);
-            
-            // Deserialize cached response
-            let response: GeneratedResponse = serde_json::from_value(cached.data)
-                .context("Failed to deserialize cached response")?;
             
             let cache_perf = CachePerformanceMetrics {
                 lookup_time_ms: cache_lookup_time.as_millis() as u64,
                 cache_status: CacheStatus::Hit,
-                cache_source: Some(cached.source.to_string()),
+                cache_source: Some(format!("{:?}", cache_source)),
                 efficiency_score: 0.95, // High efficiency for cache hits
             };
+            
+            let response = cached_response;
             
             // Mock MongoDB performance for cached responses
             let mongo_perf = QueryPerformanceMetrics {
@@ -528,7 +526,12 @@ impl MongoDBIntegratedGenerator {
             match request.format {
                 crate::formatter::OutputFormat::Json => 0u8,
                 crate::formatter::OutputFormat::Markdown => 1u8,
-                crate::formatter::OutputFormat::Plain => 2u8,
+                crate::formatter::OutputFormat::Text => 2u8,
+                crate::formatter::OutputFormat::Html => 3u8,
+                crate::formatter::OutputFormat::Xml => 4u8,
+                crate::formatter::OutputFormat::Yaml => 5u8,
+                crate::formatter::OutputFormat::Csv => 6u8,
+                crate::formatter::OutputFormat::Custom(_) => 7u8,
             },
             request.max_length.unwrap_or(0),
             request.min_confidence.unwrap_or(0.0)
@@ -540,10 +543,11 @@ impl MongoDBIntegratedGenerator {
     }
     
     /// Check FACT cache for existing response
-    #[instrument(skip(self, cache_key))]
-    async fn check_fact_cache(&self, cache_key: &str) -> Result<Option<CacheResult>> {
-        match self.fact_cache.get(cache_key).await {
-            Ok(result) => Ok(Some(result)),
+    #[instrument(skip(self, request))]
+    async fn check_fact_cache(&self, request: &GenerationRequest) -> Result<Option<(GeneratedResponse, CacheSource)>> {
+        match self.fact_cache.get(request).await {
+            Ok(CacheResult::Hit { response, source, .. }) => Ok(Some((response, source))),
+            Ok(CacheResult::Miss { .. }) => Ok(None),
             Err(_) => Ok(None), // Cache miss or error treated as miss
         }
     }
@@ -556,6 +560,7 @@ impl MongoDBIntegratedGenerator {
         
         // Use the base generator with optimized request
         self.base_generator.generate(optimized_request).await
+            .map_err(|e| anyhow!("Generation failed: {}", e))
     }
     
     /// Optimize generation request for MongoDB performance

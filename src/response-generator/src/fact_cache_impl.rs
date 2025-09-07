@@ -171,7 +171,7 @@ impl IntelligentFACTCache {
     
     /// Calculate confidence score for extracted facts
     fn calculate_fact_confidence(&self, sentence: &str) -> f64 {
-        let mut confidence = 0.5; // Base confidence
+        let mut confidence: f64 = 0.5; // Base confidence
         
         // Boost confidence for factual patterns
         if sentence.contains(" is ") || sentence.contains(" are ") {

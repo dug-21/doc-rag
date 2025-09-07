@@ -6,13 +6,14 @@ use response_generator::{
 };
 use std::collections::HashMap;
 use tokio_test;
+use tokio_stream::StreamExt;
 use uuid::Uuid;
 
 /// Test basic response generation flow
 #[tokio::test]
 async fn test_basic_response_generation() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     let request = GenerationRequest::builder()
         .query("What is Rust programming language?")
@@ -31,7 +32,7 @@ async fn test_basic_response_generation() -> Result<()> {
 #[tokio::test]
 async fn test_response_with_context() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     let context_chunk = ContextChunk {
         content: "Rust is a systems programming language that focuses on safety, speed, and concurrency.".to_string(),
@@ -65,7 +66,7 @@ async fn test_response_with_context() -> Result<()> {
 #[tokio::test]
 async fn test_output_formats() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     let formats = vec![
         OutputFormat::Json,
@@ -94,7 +95,7 @@ async fn test_output_formats() -> Result<()> {
 #[tokio::test]
 async fn test_confidence_threshold() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     // Test with high confidence requirement
     let request = GenerationRequest::builder()
@@ -121,12 +122,13 @@ async fn test_confidence_threshold() -> Result<()> {
 #[tokio::test]
 async fn test_streaming_response() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     let request = GenerationRequest::builder()
         .query("Explain machine learning")
         .build()?;
     
+    let mut generator = generator;
     let stream = generator.generate_stream(request).await?;
     
     // Collect all chunks
@@ -146,7 +148,7 @@ async fn test_streaming_response() -> Result<()> {
 #[tokio::test]
 async fn test_performance_targets() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     let start_time = std::time::Instant::now();
     
@@ -170,7 +172,7 @@ async fn test_performance_targets() -> Result<()> {
 #[tokio::test]
 async fn test_validation_layers() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     let request = GenerationRequest::builder()
         .query("This is a test query with specific requirements")
@@ -197,7 +199,7 @@ async fn test_validation_layers() -> Result<()> {
 #[tokio::test]
 async fn test_citation_tracking() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     // Create multiple context chunks with different sources
     let context_chunks = vec![
@@ -253,7 +255,7 @@ async fn test_citation_tracking() -> Result<()> {
 #[tokio::test]
 async fn test_error_handling() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     // Test with empty query
     let request = GenerationRequest::builder()
@@ -280,7 +282,7 @@ async fn test_error_handling() -> Result<()> {
 #[tokio::test]
 async fn test_concurrent_requests() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     // Create multiple concurrent requests
     let requests = (0..10).map(|i| {
@@ -330,7 +332,7 @@ async fn test_configuration() -> Result<()> {
 #[tokio::test]
 async fn test_memory_management() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     // Generate many responses to test memory management
     for i in 0..50 {
@@ -351,7 +353,7 @@ async fn test_memory_management() -> Result<()> {
 #[tokio::test]
 async fn test_realistic_scenario() -> Result<()> {
     let config = Config::default();
-    let generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config).await;
     
     // Create realistic context chunks
     let context_chunks = vec![

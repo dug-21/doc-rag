@@ -40,6 +40,10 @@ pub enum ResponseError {
     #[error("Citation processing failed: {message}")]
     CitationError { message: String },
 
+    /// Cache operation errors
+    #[error("Cache error: {0}")]
+    CacheError(String),
+
     /// Formatting errors
     #[error("Response formatting failed for format {format:?}: {reason}")]
     FormattingError { format: String, reason: String },

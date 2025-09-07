@@ -5,8 +5,7 @@
 use response_generator::{
     Citation, CitationTracker, CitationConfig, CitationType, Source,
     CitationQualityAssurance, CitationCoverageAnalyzer, 
-    ComprehensiveCitationSystem, IntermediateResponse, Result,
-    citation::TextRange
+    ComprehensiveCitationSystem, IntermediateResponse, Result, TextRange
 };
 use std::collections::HashMap;
 use uuid::Uuid;

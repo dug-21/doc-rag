@@ -79,12 +79,12 @@ pub struct L1CacheEntry {
     pub key: String,
     /// Cached data
     pub data: serde_json::Value,
-    /// Creation timestamp
-    pub created_at: Instant,
-    /// Last access timestamp  
-    pub last_accessed: Instant,
+    /// Creation timestamp (in milliseconds since epoch)
+    pub created_at: u64,
+    /// Last access timestamp (in milliseconds since epoch)
+    pub last_accessed: u64,
     /// Access count for popularity tracking
-    pub access_count: AtomicU64,
+    pub access_count: u64,
     /// Entry size in bytes
     pub size_bytes: usize,
 }
@@ -215,14 +215,17 @@ impl OptimizedFACTCache {
         self.metrics.total_requests.fetch_add(1, Ordering::Relaxed);
         
         // L1 cache lookup (should be <5ms)
-        if let Some(entry) = self.l1_cache.get(key) {
-            entry.access_count.fetch_add(1, Ordering::Relaxed);
-            let mut entry_mut = entry.clone();
-            entry_mut.last_accessed = Instant::now();
+        if let Some(mut entry) = self.l1_cache.get_mut(key) {
+            entry.access_count += 1;
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as u64;
+            entry.last_accessed = now;
             
             self.metrics.l1_hits.fetch_add(1, Ordering::Relaxed);
             self.record_access_time(start_time);
-            return Some(entry_mut.data);
+            return Some(entry.data.clone());
         }
         
         // L2 cache lookup (should be <20ms)
@@ -259,12 +262,17 @@ impl OptimizedFACTCache {
         let size_bytes = self.estimate_size(&value);
         
         // Always put in L1 for immediate access (should be <2ms)
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+        
         let l1_entry = L1CacheEntry {
             key: key.clone(),
             data: value.clone(),
-            created_at: Instant::now(),
-            last_accessed: Instant::now(),
-            access_count: AtomicU64::new(1),
+            created_at: now,
+            last_accessed: now,
+            access_count: 1,
             size_bytes,
         };
         
@@ -410,12 +418,17 @@ impl OptimizedFACTCache {
 
     /// Promote entry from L2 to L1 cache
     async fn promote_to_l1(&self, key: &str, data: &serde_json::Value) {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+            
         let l1_entry = L1CacheEntry {
             key: key.to_string(),
             data: data.clone(),
-            created_at: Instant::now(),
-            last_accessed: Instant::now(),
-            access_count: AtomicU64::new(1),
+            created_at: now,
+            last_accessed: now,
+            access_count: 1,
             size_bytes: self.estimate_size(data),
         };
         
@@ -618,10 +631,15 @@ impl OptimizedFACTCache {
         let mut entries_to_remove = Vec::new();
         let target_remove = self.l1_cache.len() - (self.config.l1_max_entries * 4 / 5);
         
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+            
         for entry in self.l1_cache.iter() {
             let (key, value) = entry.pair();
-            let age = value.last_accessed.elapsed();
-            if age > Duration::from_millis(self.config.l1_ttl_ms / 2) {
+            let age_ms = now.saturating_sub(value.last_accessed);
+            if age_ms > self.config.l1_ttl_ms / 2 {
                 entries_to_remove.push(key.clone());
                 if entries_to_remove.len() >= target_remove {
                     break;
@@ -681,17 +699,23 @@ impl OptimizedFACTCache {
         fact_index: &Arc<DashMap<String, FactIndexEntry>>,
         config: &OptimizedCacheConfig,
     ) {
-        let now = Instant::now();
+        let now = std::time::SystemTime::now();
         let l1_ttl = Duration::from_millis(config.l1_ttl_ms);
         let l2_ttl = Duration::from_millis(config.l2_ttl_ms);
         
-        // L1 cleanup
+        // L1 cleanup - compare timestamps as u64 milliseconds
+        let now_ms = now.duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+            
         let mut l1_expired = Vec::new();
         for entry in l1_cache.iter() {
-            if now.duration_since(entry.last_accessed) > l1_ttl {
+            let age_ms = now_ms.saturating_sub(entry.last_accessed);
+            if age_ms > config.l1_ttl_ms {
                 l1_expired.push(entry.key().clone());
             }
         }
+        let l1_expired_count = l1_expired.len();
         for key in l1_expired {
             l1_cache.remove(&key);
         }
@@ -699,19 +723,23 @@ impl OptimizedFACTCache {
         // L2 cleanup
         let mut l2_expired = Vec::new();
         for entry in l2_cache.iter() {
-            let age = now.duration_since(entry.created_at);
+            let age = match now.duration_since(entry.metadata.created_at) {
+                Ok(d) => d,
+                Err(_) => Duration::MAX,
+            };
             if age > l2_ttl {
                 l2_expired.push(entry.key().clone());
             }
         }
+        let l2_expired_count = l2_expired.len();
         for key in &l2_expired {
             l2_cache.remove(key);
             fact_index.remove(key); // Also remove from fact index
         }
         
-        if !l1_expired.is_empty() || !l2_expired.is_empty() {
+        if l1_expired_count > 0 || l2_expired_count > 0 {
             debug!("Cache cleanup: removed {} L1 entries, {} L2 entries", 
-                   l1_expired.len(), l2_expired.len());
+                   l1_expired_count, l2_expired_count);
         }
     }
 

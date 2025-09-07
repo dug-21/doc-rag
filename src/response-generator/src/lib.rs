@@ -62,7 +62,7 @@ pub use citation::{
     CitationQualityMetrics, CitationValidationResult, CitationCoverageReport,
     FACTCitationProvider, FACTCitationManager, ComprehensiveCitationSystem,
     ComprehensiveCitationResult, CitationType, ValidationSeverity, CitationNecessity,
-    ClaimType, GapType, CitationRequirement, CitationRequirementAnalysis
+    ClaimType, GapType, CitationRequirement, CitationRequirementAnalysis, TextRange
 };
 pub use config::Config;
 pub use error::{ResponseError, Result};
