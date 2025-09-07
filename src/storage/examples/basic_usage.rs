@@ -1,13 +1,12 @@
 //! Basic usage example for MongoDB Vector Storage
 
-use std::collections::HashMap;
 use uuid::Uuid;
 use tokio;
 
 use storage::{
     VectorStorage, StorageConfig, ChunkDocument, ChunkMetadata, CustomFieldValue,
     SearchQuery, SearchType, SearchFilters, SortOptions, SortField, SortDirection,
-    DatabaseOperations, SearchOperations, BulkInsertRequest,
+    DatabaseOperations, SearchOperations, TransactionOperations, BulkInsertRequest,
 };
 
 #[tokio::main]
@@ -69,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match retrieved_chunk {
         Some(chunk) => {
             println!("   ✓ Retrieved chunk: {}", chunk.chunk_id);
-            println!("   ✓ Content: {}", &chunk.content[..50.min(chunk.content.len())] + "...");
+            println!("   ✓ Content: {}...", &chunk.content[..50.min(chunk.content.len())]);
             println!("   ✓ Has embedding: {}", chunk.embedding.is_some());
         }
         None => println!("   ✗ Chunk not found"),

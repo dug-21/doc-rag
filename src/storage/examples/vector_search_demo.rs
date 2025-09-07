@@ -1,13 +1,12 @@
 //! Vector search demonstration with realistic data and performance analysis
 
 use std::time::{Duration, Instant};
-use std::collections::HashMap;
 use uuid::Uuid;
 use tokio;
 
 use storage::{
     VectorStorage, StorageConfig, ChunkDocument, ChunkMetadata, CustomFieldValue,
-    SearchQuery, SearchType, SearchFilters, SortOptions, SortField, SortDirection,
+    SearchQuery, SearchType, SearchFilters,
     VectorSimilarity, DatabaseOperations, SearchOperations,
 };
 
@@ -66,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🔍 Demo 4: Filtered Vector Search");
     println!("=================================");
     
-    demonstrate_filtered_search(&storage, &documents[0].metadata.document_id).await?;
+    demonstrate_filtered_search(&storage, documents[0].metadata.document_id).await?;
     
     // Demonstration 5: Different K Values
     println!("\n📈 Demo 5: K-Nearest Neighbors Analysis");
@@ -406,7 +405,7 @@ async fn demonstrate_k_values(
 
 async fn demonstrate_hybrid_comparison(
     storage: &VectorStorage,
-    documents: &[ChunkDocument],
+    _documents: &[ChunkDocument],
 ) -> Result<(), Box<dyn std::error::Error>> {
     let query_embedding = create_test_embedding(384, 99999);
     let text_query = "artificial intelligence machine learning";
@@ -525,7 +524,9 @@ async fn demonstrate_search_accuracy(
     if general_results.len() >= 10 {
         let scores: Vec<f32> = general_results.iter().map(|r| r.score).collect();
         let score_std = calculate_std_dev(&scores);
-        let score_range = scores.iter().max().unwrap() - scores.iter().min().unwrap();
+        let max_score = scores.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+        let min_score = scores.iter().fold(f32::INFINITY, |a, &b| a.min(b));
+        let score_range = max_score - min_score;
         
         println!("     Score distribution: std_dev={:.4}, range={:.4}", score_std, score_range);
         

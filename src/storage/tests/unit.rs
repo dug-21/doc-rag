@@ -8,7 +8,7 @@ use storage::{
     ChunkDocument, ChunkMetadata, CustomFieldValue, ChunkReference, ReferenceType,
     MetadataDocument, DocumentMetadata, ProcessingStats, QualityMetrics, SecurityLevel,
     VectorSimilarity, SearchQuery, SearchType, SearchFilters, SortOptions, SortField, SortDirection,
-    StorageConfig, VectorSearchConfig, TextSearchConfig, PerformanceConfig, MonitoringConfig,
+    StorageConfig, VectorSearchConfig, TextSearchConfig, PerformanceConfig,
     StorageError, ErrorContext, RecoveryStrategy, WithContext,
     StorageMetrics, OperationMetrics, PerformanceMetrics, ErrorMetrics,
     BulkInsertRequest, BulkInsertResponse, BulkInsertError,
