@@ -52,7 +52,7 @@ use futures::stream::StreamExt;
 use serde::{Deserialize, Serialize};
 // use std::collections::HashMap; // Unused
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio_stream::wrappers::ReceiverStream;
 use tracing::{info, warn, error, debug, instrument};
 use uuid::Uuid;
@@ -64,7 +64,7 @@ use crate::{
     clients::ComponentClients,
     models::{
         QueryRequest, QueryResponse, QueryHistoryRequest,
-        QueryHistoryResponse, QueryMetrics
+        QueryHistoryResponse
     },
     validation::validate_query_request,
     Result, ApiError,
@@ -90,7 +90,7 @@ pub async fn process_query(
     State(clients): State<Arc<ComponentClients>>,
     Json(request): Json<QueryRequest>,
 ) -> Result<Json<QueryResponse>> {
-    let query_start = Instant::now();
+    let _query_start = Instant::now();
     let mrap_loop_id = Uuid::new_v4();
     let coordination_id = Uuid::new_v4();
     
@@ -162,7 +162,7 @@ pub async fn stream_query_response(
     // Validate the query request
     validate_query_request(&request)?;
 
-    let (tx, rx) = tokio::sync::mpsc::channel::<Result<axum::response::sse::Event, std::convert::Infallible>>(100);
+    let (tx, rx) = tokio::sync::mpsc::channel::<axum::response::sse::Event>(100);
     let query_id = request.query_id;
 
     // Spawn task to handle streaming response
@@ -170,14 +170,14 @@ pub async fn stream_query_response(
         match clients.process_streaming_query(request).await {
             Ok(mut stream) => {
                 // Send initial event
-                if let Err(e) = tx.send(Ok(
+                if let Err(e) = tx.send(
                     axum::response::sse::Event::default()
                         .event("query_started")
                         .data(serde_json::json!({
                             "query_id": query_id,
                             "status": "processing"
                         }).to_string())
-                )).await {
+                ).await {
                     warn!("Failed to send initial streaming event: {}", e);
                     return;
                 }
@@ -190,7 +190,7 @@ pub async fn stream_query_response(
                                 .event("chunk")
                                 .data(serde_json::to_string(&chunk_data).unwrap_or_default());
 
-                            if let Err(e) = tx.send(Ok(event)).await {
+                            if let Err(e) = tx.send(event).await {
                                 warn!("Failed to send streaming chunk: {}", e);
                                 break;
                             }
@@ -204,7 +204,7 @@ pub async fn stream_query_response(
                                     "error": e.to_string()
                                 }).to_string());
 
-                            let _ = tx.send(Ok(event)).await;
+                            let _ = tx.send(event).await;
                             break;
                         }
                     }
@@ -218,7 +218,7 @@ pub async fn stream_query_response(
                         "status": "completed"
                     }).to_string());
 
-                let _ = tx.send(Ok(event)).await;
+                let _ = tx.send(event).await;
             }
             Err(e) => {
                 error!("Streaming query failed: query_id={}, error={}", query_id, e);
@@ -230,12 +230,12 @@ pub async fn stream_query_response(
                         "error": e.to_string()
                     }).to_string());
 
-                let _ = tx.send(Ok(event)).await;
+                let _ = tx.send(event).await;
             }
         }
     });
 
-    let stream = ReceiverStream::new(rx);
+    let stream = ReceiverStream::new(rx).map(|event| Ok(event));
     
     Ok(Sse::new(stream)
         .keep_alive(axum::response::sse::KeepAlive::default()))

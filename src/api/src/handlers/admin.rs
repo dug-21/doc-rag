@@ -190,9 +190,9 @@ impl ComponentClients {
     pub async fn store_uploaded_file(
         &self,
         file_id: Uuid,
-        filename: String,
-        content_type: String,
-        file_content: Vec<u8>,
+        _filename: String,
+        _content_type: String,
+        _file_content: Vec<u8>,
     ) -> anyhow::Result<String> {
         // Implementation would store file and return URL/path
         Ok(format!("/files/{}", file_id))

@@ -68,7 +68,7 @@ chrono = { workspace = true }
 url = { workspace = true }
 mime = { workspace = true }
 bytes = { workspace = true }
-# dashmap = { workspace = true } # Disabled - using FACT for caching
+dashmap = { workspace = true } # Re-enabled for compatibility
 arc-swap = { workspace = true }
 once_cell = { workspace = true }
 parking_lot = { workspace = true }

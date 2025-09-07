@@ -134,7 +134,7 @@ pub async fn logout(
     // 3. Clear any server-side sessions
     // 4. Log the logout event for security audit
     
-    if let Some(refresh_token) = logout_request.refresh_token {
+    if let Some(_refresh_token) = logout_request.refresh_token {
         // revoke_refresh_token(&refresh_token).await?;
         info!("Refresh token revoked");
     }

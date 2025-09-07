@@ -1,24 +1,21 @@
 use anyhow::{Context, Result};
 use base64::prelude::*;
 use reqwest::{Client, Response, StatusCode};
-use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::time::timeout;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 use uuid::Uuid;
 
 use crate::{
     config::{ApiConfig, ServiceConfig},
     models::{
         api::{QueryRequest, QueryResponse, DocumentStatus, TaskStatus, 
-              HealthStatus, QueryHistoryRequest, QueryHistoryResponse,
+              QueryHistoryRequest, QueryHistoryResponse,
               QueryMetrics, StreamingQueryResponse, ChunkingStrategy},
-        storage::{ProcessingHistory, ProcessingStatistics, StorageUsage, 
-                  ContentTypeStatistics, RecentDocument, TaskDetails},
-        domain::{ProcessingTask, DomainTaskStatus},
+        storage::{TaskDetails},
+        domain::{ProcessingTask},
     },
-    ApiError,
 };
 
 
@@ -294,7 +291,9 @@ impl ComponentClients {
     }
 
     async fn process_query(&self, request: &QueryRequest) -> Result<Value> {
-        let response = self.query_processor_client.post("/process", request).await?;
+        let request_value = serde_json::to_value(request)
+            .context("Failed to serialize query request")?;
+        let response = self.query_processor_client.post("/process", &request_value).await?;
         let processed: Value = response.json().await
             .context("Failed to parse query processing response")?;
         
@@ -518,10 +517,9 @@ pub struct StorageServiceClient<'a> {
 impl<'a> StorageServiceClient<'a> {
     /// Count chunks for a specific document
     pub async fn count_chunks_for_document(&self, document_id: Uuid) -> Result<usize> {
-        let url = format!("{}/documents/{}/chunks/count", self.base_url, document_id);
-        let response = self.client
+        let url = format!("{}/documents/{}/chunks/count", self.client.base_url, document_id);
+        let response = self.client.client
             .get(&url)
-            .timeout(self.timeout)
             .send()
             .await
             .context("Failed to send count chunks request")?;
@@ -538,9 +536,8 @@ impl<'a> StorageServiceClient<'a> {
     /// Get processing history from storage  
     pub async fn get_processing_history(&self) -> Result<crate::models::ProcessingHistory> {
         let url = format!("{}/processing/history", self.client.base_url);
-        let response = self.client.http_client
+        let response = self.client.client
             .get(&url)
-            .timeout(self.client.timeout)
             .send()
             .await
             .context("Failed to send processing history request")?;
@@ -557,9 +554,8 @@ impl<'a> StorageServiceClient<'a> {
     /// Get recent documents
     pub async fn get_recent_documents(&self, limit: usize) -> Result<Vec<crate::models::RecentDocument>> {
         let url = format!("{}/documents/recent?limit={}", self.client.base_url, limit);
-        let response = self.client.http_client
+        let response = self.client.client
             .get(&url)
-            .timeout(self.client.timeout)
             .send()
             .await
             .context("Failed to send recent documents request")?;
@@ -576,9 +572,8 @@ impl<'a> StorageServiceClient<'a> {
     /// Get processing statistics
     pub async fn get_processing_statistics(&self) -> Result<crate::models::ProcessingStatistics> {
         let url = format!("{}/processing/statistics", self.client.base_url);
-        let response = self.client.http_client
+        let response = self.client.client
             .get(&url)
-            .timeout(self.client.timeout)
             .send()
             .await
             .context("Failed to send processing statistics request")?;

@@ -111,6 +111,7 @@ pub struct TaskDetails {
     pub document_id: Option<Uuid>,
     pub content: Option<String>,
     pub metadata: Option<serde_json::Value>,
+    pub chunking_strategy: Option<crate::models::ChunkingStrategy>,
     pub status: TaskStatus,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

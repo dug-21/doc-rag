@@ -438,10 +438,18 @@ async fn retry_real_document_processing(
         .map_err(|e| ApiError::Internal(format!("Failed to reset task status: {}", e)))?;
     
     // Re-initiate the processing pipeline with original parameters
+    let content = original_task.content.clone().unwrap_or_default();
+    let metadata = original_task.metadata.clone().map(|v| {
+        if let serde_json::Value::Object(map) = v {
+            map.into_iter().collect()
+        } else {
+            std::collections::HashMap::new()
+        }
+    });
     let new_document_id = clients.reprocess_document(
         task_id,
-        original_task.content.clone(),
-        original_task.metadata.clone(),
+        content,
+        metadata,
         original_task.chunking_strategy.clone(),
     ).await
     .map_err(|e| ApiError::Internal(format!("Failed to reinitiate processing: {}", e)))?;

@@ -12,7 +12,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 use uuid::Uuid;
 
 use crate::config::ApiConfig;
@@ -164,33 +164,33 @@ pub struct PerformanceMetrics {
 
 /// Main integration manager for all systems
 pub struct IntegrationManager {
-    config: IntegrationConfig,
-    ruv_fann_manager: Option<Arc<RwLock<RuvFannManager>>>,
-    daa_manager: Option<Arc<RwLock<DaaManager>>>,
-    fact_manager: Option<Arc<RwLock<FactManager>>>,
-    health_status: Arc<RwLock<SystemHealth>>,
-    metrics: Arc<RwLock<IntegrationMetrics>>,
+    pub config: IntegrationConfig,
+    pub ruv_fann_manager: Option<Arc<RwLock<RuvFannManager>>>,
+    pub daa_manager: Option<Arc<RwLock<DaaManager>>>,
+    pub fact_manager: Option<Arc<RwLock<FactManager>>>,
+    pub health_status: Arc<RwLock<SystemHealth>>,
+    pub metrics: Arc<RwLock<IntegrationMetrics>>,
 }
 
 /// ruv-FANN Neural Network Manager
 pub struct RuvFannManager {
-    config: RuvFannConfig,
-    networks: std::collections::HashMap<String, ruv_fann::Network>,
-    training_data: Vec<(Vec<f64>, Vec<f64>)>,
+    pub config: RuvFannConfig,
+    pub networks: std::collections::HashMap<String, ruv_fann::Network>,
+    pub training_data: Vec<(Vec<f64>, Vec<f64>)>,
 }
 
 /// DAA Orchestrator Manager
 pub struct DaaManager {
-    config: DaaConfig,
-    orchestrator: Option<daa_orchestrator::Orchestrator>,
-    agents: std::collections::HashMap<Uuid, daa_orchestrator::Agent>,
+    pub config: DaaConfig,
+    pub orchestrator: Option<daa_orchestrator::Orchestrator>,
+    pub agents: std::collections::HashMap<Uuid, daa_orchestrator::Agent>,
 }
 
 /// FACT Cache Manager
 pub struct FactManager {
-    config: FactConfig,
-    cache: Option<fact::Cache>,
-    stats: fact::CacheStats,
+    pub config: FactConfig,
+    pub cache: Option<fact::Cache>,
+    pub stats: fact::CacheStats,
 }
 
 #[async_trait]
@@ -204,7 +204,7 @@ pub trait SystemManager {
 
 impl IntegrationManager {
     /// Create a new integration manager from API configuration
-    pub fn from_config(api_config: &ApiConfig) -> Self {
+    pub fn from_config(_api_config: &ApiConfig) -> Self {
         let config = IntegrationConfig::default();
         
         Self {
@@ -776,7 +776,6 @@ mod daa_orchestrator {
 // Mock fact module
 mod fact {
     use anyhow::Result;
-    use serde::{Deserialize, Serialize};
 
     #[derive(Clone)]
     pub struct Config {

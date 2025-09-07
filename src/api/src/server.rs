@@ -228,24 +228,8 @@ pub struct AppState {
     pub cache: Arc<DashMap<String, Value>>,
 }
 
-// Implement axum State extraction for Arc<AppState>
-impl axum::extract::FromRef<Arc<AppState>> for Arc<ApiConfig> {
-    fn from_ref(app_state: &Arc<AppState>) -> Self {
-        app_state.config.clone()
-    }
-}
-
-impl axum::extract::FromRef<Arc<AppState>> for Arc<ComponentClients> {
-    fn from_ref(app_state: &Arc<AppState>) -> Self {
-        app_state.clients.clone()
-    }
-}
-
-impl axum::extract::FromRef<Arc<AppState>> for Arc<MetricsRegistry> {
-    fn from_ref(app_state: &Arc<AppState>) -> Self {
-        app_state.metrics.clone()
-    }
-}
+// Note: Removed orphan trait implementations due to orphan rules
+// These types are not defined in this crate, so we cannot implement foreign traits for them
 
 #[cfg(test)]
 mod tests {

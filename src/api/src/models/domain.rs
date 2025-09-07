@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
-use std::collections::HashMap;
 
 // ============================================================================
 // Processing History and Statistics Domain Types

@@ -191,7 +191,7 @@ pub async fn process_file(
 /// Get file processing status
 pub async fn get_file_processing_status(
     Path(file_id): Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(_clients): State<Arc<ComponentClients>>,
     request: Request,
 ) -> Result<Json<serde_json::Value>> {
     let auth_context = request.require_auth_context()?;
@@ -213,7 +213,7 @@ pub async fn get_file_processing_status(
 
 /// List user's uploaded files
 pub async fn list_user_files(
-    State(clients): State<Arc<ComponentClients>>,
+    State(_clients): State<Arc<ComponentClients>>,
     request: Request,
 ) -> Result<Json<serde_json::Value>> {
     let auth_context = request.require_auth_context()?;

@@ -10,9 +10,8 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Instant;
-use tracing::{info, debug, error};
+use tracing::{info, error};
 use uuid::Uuid;
-use serde_json::Value;
 
 // Import the server AppState
 use crate::server::AppState;
@@ -27,7 +26,7 @@ pub struct QueryRequest {
 }
 
 /// Query response 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct QueryResponse {
     pub answer: String,
     pub citations: Vec<Citation>,
@@ -40,7 +39,7 @@ pub struct QueryResponse {
     pub consensus: ConsensusResult,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Citation {
     pub source: String,
     pub page: u32,
@@ -48,14 +47,14 @@ pub struct Citation {
     pub text: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PipelineMetadata {
     pub pattern: String,
     pub steps: Vec<String>,
     pub mrap_executed: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ConsensusResult {
     pub validated: bool,
     pub threshold: f64,

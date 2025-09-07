@@ -54,7 +54,6 @@ fn init_json_tracing(env_filter: EnvFilter) -> Result<()> {
         #[cfg(feature = "tracing")]
         {
             use tracing_opentelemetry::OpenTelemetryLayer;
-            use opentelemetry::trace::TracerProvider;
             use opentelemetry_jaeger::new_agent_pipeline;
 
             let tracer = new_agent_pipeline()
