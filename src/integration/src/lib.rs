@@ -42,6 +42,7 @@ use crate::tracing::TracingSystem;
 pub type Result<T> = std::result::Result<T, IntegrationError>;
 
 pub mod daa_orchestrator;
+pub mod byzantine_consensus;
 pub mod pipeline;
 pub mod health;
 pub mod tracing;
@@ -128,6 +129,7 @@ pub mod temp_types;
 
 // Re-export key types (avoid conflicts)
 pub use daa_orchestrator::*;
+pub use byzantine_consensus::{ByzantineConsensusValidator, ConsensusProposal, ConsensusResult};
 pub use pipeline::*;
 pub use health::*;
 pub use gateway::*;
@@ -148,6 +150,8 @@ pub struct SystemIntegration {
     config: Arc<IntegrationConfig>,
     /// DAA orchestrator (replaces custom coordinator and service discovery)
     daa_orchestrator: Arc<RwLock<DAAOrchestrator>>,
+    /// Byzantine consensus validator with 66% threshold
+    byzantine_consensus: Arc<ByzantineConsensusValidator>,
     /// Processing pipeline
     pipeline: Arc<ProcessingPipeline>,
     /// Health monitoring system
@@ -175,6 +179,9 @@ impl SystemIntegration {
         let mut daa_orchestrator = DAAOrchestrator::new(config.clone()).await?;
         daa_orchestrator.initialize().await?;
         let daa_orchestrator = Arc::new(RwLock::new(daa_orchestrator));
+        
+        // Create Byzantine consensus validator with 66% threshold (minimum 3 nodes)
+        let byzantine_consensus = Arc::new(ByzantineConsensusValidator::new(3).await?);
         
         let pipeline = Arc::new(
             ProcessingPipeline::new(
@@ -208,6 +215,7 @@ impl SystemIntegration {
             id: Uuid::new_v4(),
             config,
             daa_orchestrator,
+            byzantine_consensus,
             pipeline,
             health_monitor,
             gateway,
