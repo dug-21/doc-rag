@@ -1,0 +1,394 @@
+# Prometheus Alerting Rules for Doc-RAG Production System
+groups:
+- name: doc-rag-critical-alerts
+  interval: 30s
+  rules:
+  # API Service Alerts
+  - alert: APIHighErrorRate
+    expr: rate(http_requests_total{job="doc-rag-api",status=~"5.."}[5m]) > 0.01
+    for: 2m
+    labels:
+      severity: critical
+      service: api
+      component: application
+    annotations:
+      summary: "High error rate detected in API service"
+      description: "API error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+      runbook_url: "https://docs.docrag.com/runbooks/high-error-rate"
+
+  - alert: APIHighResponseTime
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="doc-rag-api"}[5m])) > 2
+    for: 3m
+    labels:
+      severity: critical
+      service: api
+      component: application
+    annotations:
+      summary: "API response time is critically high"
+      description: "95th percentile response time is {{ $value }}s (threshold: 2s)"
+      runbook_url: "https://docs.docrag.com/runbooks/high-response-time"
+
+  - alert: APIServiceDown
+    expr: up{job="doc-rag-api"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: api
+      component: application
+    annotations:
+      summary: "API service is down"
+      description: "API service has been down for more than 1 minute"
+      runbook_url: "https://docs.docrag.com/runbooks/service-down"
+
+  # Database Alerts
+  - alert: DatabaseConnectionPoolExhaustion
+    expr: postgres_connections_active / postgres_connections_max > 0.9
+    for: 1m
+    labels:
+      severity: critical
+      service: database
+      component: postgres
+    annotations:
+      summary: "Database connection pool nearly exhausted"
+      description: "Connection pool is {{ $value | humanizePercentage }} full"
+      runbook_url: "https://docs.docrag.com/runbooks/db-connection-pool"
+
+  - alert: DatabaseDown
+    expr: up{job="postgres-exporter"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: database
+      component: postgres
+    annotations:
+      summary: "PostgreSQL database is down"
+      description: "PostgreSQL has been unreachable for more than 1 minute"
+      runbook_url: "https://docs.docrag.com/runbooks/database-down"
+
+  - alert: DatabaseSlowQueries
+    expr: postgres_stat_statements_mean_time_seconds > 5
+    for: 2m
+    labels:
+      severity: critical
+      service: database
+      component: postgres
+    annotations:
+      summary: "Database queries are running very slowly"
+      description: "Average query execution time is {{ $value }}s"
+      runbook_url: "https://docs.docrag.com/runbooks/slow-queries"
+
+  # Redis Cache Alerts
+  - alert: RedisCacheDown
+    expr: up{job="redis-exporter"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: cache
+      component: redis
+    annotations:
+      summary: "Redis cache is down"
+      description: "Redis has been unreachable for more than 1 minute"
+      runbook_url: "https://docs.docrag.com/runbooks/redis-down"
+
+  - alert: RedisMemoryUsageHigh
+    expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+    for: 2m
+    labels:
+      severity: critical
+      service: cache
+      component: redis
+    annotations:
+      summary: "Redis memory usage critically high"
+      description: "Redis memory usage is {{ $value | humanizePercentage }}"
+      runbook_url: "https://docs.docrag.com/runbooks/redis-memory"
+
+  # Vector Database Alerts
+  - alert: QdrantServiceDown
+    expr: up{job="qdrant"} == 0
+    for: 2m
+    labels:
+      severity: critical
+      service: vector-db
+      component: qdrant
+    annotations:
+      summary: "Qdrant vector database is down"
+      description: "Qdrant has been unreachable for more than 2 minutes"
+      runbook_url: "https://docs.docrag.com/runbooks/qdrant-down"
+
+  # Infrastructure Alerts
+  - alert: HighCPUUsage
+    expr: (100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 90
+    for: 3m
+    labels:
+      severity: critical
+      service: infrastructure
+      component: cpu
+    annotations:
+      summary: "High CPU usage detected"
+      description: "CPU usage is {{ $value | humanizePercentage }}"
+      runbook_url: "https://docs.docrag.com/runbooks/high-cpu"
+
+  - alert: HighMemoryUsage
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+    for: 3m
+    labels:
+      severity: critical
+      service: infrastructure
+      component: memory
+    annotations:
+      summary: "High memory usage detected"
+      description: "Memory usage is {{ $value | humanizePercentage }}"
+      runbook_url: "https://docs.docrag.com/runbooks/high-memory"
+
+  - alert: DiskSpaceHigh
+    expr: (node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes > 0.9
+    for: 2m
+    labels:
+      severity: critical
+      service: infrastructure
+      component: storage
+    annotations:
+      summary: "Disk space usage critically high"
+      description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.device }}"
+      runbook_url: "https://docs.docrag.com/runbooks/disk-space"
+
+- name: doc-rag-warning-alerts
+  interval: 60s
+  rules:
+  # Performance Warnings
+  - alert: APIResponseTimeHigh
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="doc-rag-api"}[5m])) > 1
+    for: 5m
+    labels:
+      severity: warning
+      service: api
+      component: application
+    annotations:
+      summary: "API response time is elevated"
+      description: "95th percentile response time is {{ $value }}s (warning threshold: 1s)"
+      runbook_url: "https://docs.docrag.com/runbooks/elevated-response-time"
+
+  - alert: APIErrorRateElevated
+    expr: rate(http_requests_total{job="doc-rag-api",status=~"5.."}[5m]) > 0.005
+    for: 3m
+    labels:
+      severity: warning
+      service: api
+      component: application
+    annotations:
+      summary: "API error rate is elevated"
+      description: "API error rate is {{ $value | humanizePercentage }}"
+      runbook_url: "https://docs.docrag.com/runbooks/elevated-error-rate"
+
+  # Resource Warnings
+  - alert: CPUUsageHigh
+    expr: (100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+    for: 5m
+    labels:
+      severity: warning
+      service: infrastructure
+      component: cpu
+    annotations:
+      summary: "CPU usage is high"
+      description: "CPU usage is {{ $value | humanizePercentage }}"
+
+  - alert: MemoryUsageHigh
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.8
+    for: 5m
+    labels:
+      severity: warning
+      service: infrastructure
+      component: memory
+    annotations:
+      summary: "Memory usage is high"
+      description: "Memory usage is {{ $value | humanizePercentage }}"
+
+  - alert: DatabaseConnectionPoolHigh
+    expr: postgres_connections_active / postgres_connections_max > 0.7
+    for: 3m
+    labels:
+      severity: warning
+      service: database
+      component: postgres
+    annotations:
+      summary: "Database connection pool usage is high"
+      description: "Connection pool is {{ $value | humanizePercentage }} full"
+
+  # Cache Performance
+  - alert: RedisCacheHitRateLow
+    expr: rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) < 0.8
+    for: 5m
+    labels:
+      severity: warning
+      service: cache
+      component: redis
+    annotations:
+      summary: "Redis cache hit rate is low"
+      description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+  - alert: RedisMemoryUsageHigh
+    expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+    for: 5m
+    labels:
+      severity: warning
+      service: cache
+      component: redis
+    annotations:
+      summary: "Redis memory usage is high"
+      description: "Redis memory usage is {{ $value | humanizePercentage }}"
+
+  # Application-Specific Warnings
+  - alert: DocumentProcessingQueueHigh
+    expr: doc_rag_processing_queue_depth > 100
+    for: 3m
+    labels:
+      severity: warning
+      service: processing
+      component: neural-chunker
+    annotations:
+      summary: "Document processing queue is backing up"
+      description: "Queue depth is {{ $value }} documents"
+
+  - alert: NeuralChunkerResponseTimeSlow
+    expr: histogram_quantile(0.95, rate(doc_rag_chunking_duration_seconds_bucket[5m])) > 30
+    for: 3m
+    labels:
+      severity: warning
+      service: processing
+      component: neural-chunker
+    annotations:
+      summary: "Neural chunker response time is slow"
+      description: "95th percentile processing time is {{ $value }}s"
+
+  - alert: VectorSearchLatencyHigh
+    expr: histogram_quantile(0.95, rate(doc_rag_vector_search_duration_seconds_bucket[5m])) > 1
+    for: 2m
+    labels:
+      severity: warning
+      service: search
+      component: qdrant
+    annotations:
+      summary: "Vector search latency is high"
+      description: "95th percentile search time is {{ $value }}s"
+
+- name: doc-rag-business-alerts
+  interval: 300s  # Check every 5 minutes
+  rules:
+  # Business Metric Alerts
+  - alert: DocumentProcessingAccuracyLow
+    expr: doc_rag_processing_accuracy_percentage < 99
+    for: 10m
+    labels:
+      severity: warning
+      service: business
+      component: quality
+    annotations:
+      summary: "Document processing accuracy below target"
+      description: "Processing accuracy is {{ $value }}% (target: 99%)"
+
+  - alert: UserSatisfactionLow
+    expr: doc_rag_user_satisfaction_score < 4.5
+    for: 15m
+    labels:
+      severity: warning
+      service: business
+      component: satisfaction
+    annotations:
+      summary: "User satisfaction score below target"
+      description: "Satisfaction score is {{ $value }} (target: 4.5+)"
+
+  - alert: ActiveUserCountDrop
+    expr: doc_rag_active_users_current < 0.8 * doc_rag_active_users_baseline
+    for: 10m
+    labels:
+      severity: warning
+      service: business
+      component: usage
+    annotations:
+      summary: "Active user count has dropped significantly"
+      description: "Current users: {{ $value }}, Baseline: {{ $labels.baseline }}"
+
+- name: doc-rag-security-alerts
+  interval: 60s
+  rules:
+  # Security Alerts
+  - alert: HighFailedAuthenticationRate
+    expr: rate(doc_rag_auth_failures_total[5m]) > 10
+    for: 2m
+    labels:
+      severity: warning
+      service: security
+      component: authentication
+    annotations:
+      summary: "High rate of authentication failures"
+      description: "{{ $value }} authentication failures per second"
+
+  - alert: SuspiciousAPIUsage
+    expr: rate(http_requests_total{job="doc-rag-api",status="429"}[5m]) > 5
+    for: 3m
+    labels:
+      severity: warning
+      service: security
+      component: rate-limiting
+    annotations:
+      summary: "High rate of rate-limited requests"
+      description: "{{ $value }} rate-limited requests per second"
+
+  - alert: UnauthorizedAccessAttempts
+    expr: rate(http_requests_total{job="doc-rag-api",status="401"}[5m]) > 2
+    for: 2m
+    labels:
+      severity: warning
+      service: security
+      component: authorization
+    annotations:
+      summary: "High rate of unauthorized access attempts"
+      description: "{{ $value }} unauthorized requests per second"
+
+- name: doc-rag-maintenance-alerts
+  interval: 3600s  # Check every hour
+  rules:
+  # Maintenance and Operational Alerts
+  - alert: CertificateExpiryWarning
+    expr: (cert_expiry_timestamp - time()) / 86400 < 30
+    for: 5m
+    labels:
+      severity: warning
+      service: infrastructure
+      component: certificates
+    annotations:
+      summary: "SSL certificate expiring soon"
+      description: "Certificate {{ $labels.cert_name }} expires in {{ $value }} days"
+
+  - alert: BackupFailure
+    expr: doc_rag_backup_success == 0
+    for: 5m
+    labels:
+      severity: critical
+      service: operations
+      component: backup
+    annotations:
+      summary: "Backup operation failed"
+      description: "Last backup attempt failed for {{ $labels.backup_type }}"
+
+  - alert: LogVolumeHigh
+    expr: rate(doc_rag_log_entries_total[1h]) > 1000
+    for: 30m
+    labels:
+      severity: warning
+      service: operations
+      component: logging
+    annotations:
+      summary: "Log volume is unusually high"
+      description: "Generating {{ $value }} log entries per second"
+
+  - alert: ContainerRestartHigh
+    expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+    for: 5m
+    labels:
+      severity: warning
+      service: kubernetes
+      component: containers
+    annotations:
+      summary: "Container restart rate is high"
+      description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last hour"
