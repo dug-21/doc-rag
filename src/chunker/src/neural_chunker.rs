@@ -9,7 +9,7 @@ use ruv_fann::Network;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::fs;
-use tracing::{info, warn};
+use tracing::info;
 
 /// Neural chunker using ruv-FANN for boundary detection
 #[derive(Debug)]

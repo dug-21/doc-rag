@@ -42,6 +42,9 @@ testcontainers = { version = "0.15", optional = true }
 # Neural network arrays
 ndarray = "0.15"
 
+# Cryptographic hashing
+sha2 = "0.10"
+
 [dev-dependencies]
 criterion = { workspace = true }
 proptest = { workspace = true }

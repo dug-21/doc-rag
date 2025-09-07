@@ -363,7 +363,7 @@ impl DatabaseOperations for VectorStorage {
         let start_time = Instant::now();
         
         let filter = doc! { "chunk_id": chunk_id.to_string() };
-        let options = FindOptions::builder()
+        let _options = FindOptions::builder()
             .projection(doc! { "_id": 1 })
             .limit(1)
             .build();

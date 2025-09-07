@@ -35,6 +35,10 @@ pub enum IntegrationError {
     #[error("Configuration error: {0}")]
     ConfigurationError(String),
     
+    /// Consensus error
+    #[error("Consensus error: {0}")]
+    Consensus(String),
+    
     /// Network error
     #[error("Network error: {0}")]
     NetworkError(#[from] reqwest::Error),
@@ -480,8 +484,10 @@ mod tests {
     
     #[test]
     fn test_retryable_errors() {
+        // Create a mock network error using a timeout simulation
+        let mock_error = std::io::Error::new(std::io::ErrorKind::TimedOut, "Connection timed out");
         let retryable = IntegrationError::NetworkError(
-            reqwest::Error::from(url::ParseError::EmptyHost)
+            reqwest::Error::from(mock_error)
         );
         assert!(retryable.is_retryable());
         

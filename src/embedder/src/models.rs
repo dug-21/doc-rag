@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use anyhow::{Result, Context};
-use ort::session::Session;
 use tracing::{info, warn, debug, instrument};
 use tokio::fs;
 use candle_core::IndexOp;
@@ -36,7 +35,7 @@ pub trait EmbeddingModel: Send + Sync {
 /// ONNX Runtime based embedding model
 pub struct OnnxEmbeddingModel {
     #[cfg(feature = "ort")]
-    session: Session,
+    session: ort::session::Session,
     #[cfg(not(feature = "ort"))]
     session: (),
     tokenizer: Box<dyn Tokenizer + Send + Sync>,
@@ -214,7 +213,7 @@ impl OnnxEmbeddingModel {
         // Initialize ONNX Runtime session with ORT 2.0 API
         #[cfg(feature = "ort")]
         let session = {
-            Session::builder()?
+            ort::session::Session::builder()?
                 .commit_from_file(model_path)?
         };
         

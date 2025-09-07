@@ -1041,7 +1041,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_comparison_query_strategy() -> Result<(), QueryError> {
+    async fn test_comparison_query_strategy() -> Result<(), ProcessorError> {
         let config = Arc::new(ProcessorConfig::default());
         let selector = StrategySelector::new(config).await.unwrap();
         
@@ -1056,7 +1056,7 @@ mod tests {
         match selection.strategy {
             SearchStrategy::Hybrid { .. } | SearchStrategy::Semantic { .. } => {},
             _ => {
-                return Err(QueryError::InvalidStrategy(
+                return Err(ProcessorError::InvalidStrategy(
                     format!("Unexpected strategy for comparison query: {:?}", selection.strategy)
                 ));
             }

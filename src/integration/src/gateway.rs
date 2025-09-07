@@ -705,17 +705,21 @@ async fn metrics_middleware(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{IntegrationConfig, ServiceDiscovery, MessageBus, IntegrationCoordinator};
+    use crate::{IntegrationConfig, ServiceDiscovery, MessageBus, DAAOrchestrator};
+    use tokio::sync::RwLock;
     
     async fn create_test_gateway() -> ApiGateway {
         let config = Arc::new(IntegrationConfig::default());
         let service_discovery = Arc::new(ServiceDiscovery::new(config.clone()).await.unwrap());
         let message_bus = Arc::new(MessageBus::new(config.clone()).await.unwrap());
-        let coordinator = Arc::new(
-            IntegrationCoordinator::new(config.clone(), service_discovery, message_bus.clone()).await.unwrap()
-        );
+        
+        // Create a simple stub DAA orchestrator for testing
+        let daa_orchestrator = Arc::new(RwLock::new(
+            DAAOrchestrator::new(config.clone()).await.unwrap()
+        ));
+        
         let pipeline = Arc::new(
-            ProcessingPipeline::new(config.clone(), coordinator, message_bus).await.unwrap()
+            ProcessingPipeline::new(config.clone(), daa_orchestrator, message_bus).await.unwrap()
         );
         let health_monitor = Arc::new(HealthMonitor::new(config.clone(), service_discovery).await.unwrap());
         

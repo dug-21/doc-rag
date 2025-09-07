@@ -25,7 +25,7 @@ use mongodb::{
     bson::{doc, Document, Bson},
     options::{
         ClientOptions, IndexOptions, CreateIndexOptions, FindOptions, AggregateOptions,
-        ReadPreference, WriteConcern, ReadConcern, ConnectionPoolOptions,
+        ReadPreference, WriteConcern, ReadConcern,
     },
     IndexModel,
     results::{CreateIndexResult, DeleteResult},
@@ -522,8 +522,8 @@ impl MongoDBOptimizer {
     }
     
     /// Optimize query execution with performance analysis
-    #[instrument(skip(self, query))]
-    pub async fn optimize_query_execution<T>(&self, query: Document) -> Result<QueryOptimizationResult<T>>
+    #[instrument(skip(self))]
+    pub async fn optimize_query_execution<T>(&self, query: Document) -> Result<QueryOptimizationResult>
     where
         T: serde::de::DeserializeOwned,
     {
@@ -537,7 +537,7 @@ impl MongoDBOptimizer {
         };
         
         // Apply query optimization based on historical performance
-        let optimized_query = if let Some(ref perf_data) = performance_data {
+        let _optimized_query = if let Some(ref perf_data) = performance_data {
             self.apply_query_optimizations(query, perf_data).await?
         } else {
             query
@@ -557,7 +557,7 @@ impl MongoDBOptimizer {
         
         // Generate recommendations if query is slow
         let mut recommendations = Vec::new();
-        if execution_time.as_millis() > self.config.monitoring.slow_query_threshold_ms {
+        if execution_time.as_millis() > self.config.monitoring.slow_query_threshold_ms as u128 {
             recommendations = self.generate_performance_recommendations(&query_signature, execution_time).await?;
         }
         
@@ -571,7 +571,7 @@ impl MongoDBOptimizer {
     }
     
     /// Apply query optimizations based on performance data
-    #[instrument(skip(self, query, performance_data))]
+    #[instrument(skip(self))]
     async fn apply_query_optimizations(
         &self,
         mut query: Document,
@@ -602,13 +602,14 @@ impl MongoDBOptimizer {
     }
     
     /// Rewrite query for better performance
-    #[instrument(skip(self, query))]
+    #[instrument(skip(self))]
     async fn rewrite_query_for_performance(&self, mut query: Document) -> Result<Document> {
         // Example optimizations:
         // 1. Convert $or to $in where possible
         if let Ok(or_conditions) = query.get_array("$or") {
-            if self.can_convert_or_to_in(or_conditions) {
-                query = self.convert_or_to_in(query, or_conditions)?;
+            let or_conditions = or_conditions.clone();
+            if self.can_convert_or_to_in(&or_conditions) {
+                query = self.convert_or_to_in(query, &or_conditions)?;
             }
         }
         
@@ -638,7 +639,7 @@ impl MongoDBOptimizer {
     }
     
     /// Reorder filters by selectivity (most selective first)
-    #[instrument(skip(self, query))]
+    #[instrument(skip(self))]
     async fn reorder_filters_by_selectivity(&self, query: Document) -> Result<Document> {
         // In practice, this would analyze index statistics and cardinality
         // For now, return the query as-is
@@ -651,14 +652,14 @@ impl MongoDBOptimizer {
     }
     
     /// Get optimal index hint for a query
-    #[instrument(skip(self, query))]
+    #[instrument(skip(self))]
     async fn get_optimal_index_hint(&self, _query: &Document) -> Result<Document> {
         // Simplified implementation - would analyze query pattern and return optimal index
         Ok(doc! { "hybrid_search_compound_idx": 1 })
     }
     
     /// Add performance hints to query
-    #[instrument(skip(self, query))]
+    #[instrument(skip(self))]
     async fn add_performance_hints(&self, mut query: Document) -> Result<Document> {
         // Add read preference for better performance
         query.insert("$readPreference", "secondaryPreferred");
@@ -670,7 +671,7 @@ impl MongoDBOptimizer {
     }
     
     /// Generate query signature for performance tracking
-    #[instrument(skip(self, query))]
+    #[instrument(skip(self))]
     fn generate_query_signature(&self, query: &Document) -> String {
         // Create a normalized signature that represents the query pattern
         // This is a simplified implementation
@@ -690,7 +691,7 @@ impl MongoDBOptimizer {
     }
     
     /// Update performance cache with execution data
-    #[instrument(skip(self, query_signature))]
+    #[instrument(skip(self))]
     async fn update_performance_cache(
         &self,
         query_signature: String,
@@ -731,7 +732,7 @@ impl MongoDBOptimizer {
     }
     
     /// Generate performance recommendations
-    #[instrument(skip(self, query_signature, execution_time))]
+    #[instrument(skip(self))]
     async fn generate_performance_recommendations(
         &self,
         _query_signature: &str,
@@ -891,7 +892,7 @@ impl MongoDBOptimizer {
 
 /// Result of query optimization
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryOptimizationResult<T> {
+pub struct QueryOptimizationResult {
     /// Query execution time in milliseconds
     pub execution_time_ms: u64,
     
@@ -968,7 +969,7 @@ pub trait MongoDBOptimizationExt {
     async fn get_optimization_recommendations(&self) -> Result<SystemOptimizationReport>;
     
     /// Optimize a specific query pattern
-    async fn optimize_query_pattern(&self, query: SearchQuery) -> Result<QueryOptimizationResult<()>>;
+    async fn optimize_query_pattern(&self, query: SearchQuery) -> Result<QueryOptimizationResult>;
 }
 
 #[async_trait]
@@ -1011,8 +1012,8 @@ impl MongoDBOptimizationExt for VectorStorage {
         optimizer.get_system_optimization_recommendations().await
     }
     
-    #[instrument(skip(self, query))]
-    async fn optimize_query_pattern(&self, _query: SearchQuery) -> Result<QueryOptimizationResult<()>> {
+    #[instrument(skip(self))]
+    async fn optimize_query_pattern(&self, _query: SearchQuery) -> Result<QueryOptimizationResult> {
         // Convert SearchQuery to MongoDB Document for optimization
         let mongo_query = doc! {
             // Simplified conversion - in practice would be more comprehensive
@@ -1026,7 +1027,7 @@ impl MongoDBOptimizationExt for VectorStorage {
             self.metrics(),
         ).await?;
         
-        optimizer.optimize_query_execution(mongo_query).await
+        optimizer.optimize_query_execution::<serde_json::Value>(mongo_query).await
     }
 }
 

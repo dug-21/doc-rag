@@ -306,12 +306,12 @@ impl std::fmt::Debug for QueryProcessorProxy {
 impl consensus::QueryProcessorInterface for QueryProcessorProxy {
     async fn process_query(&self, query: &types::ProcessedQuery) -> Result<types::QueryResult> {
         // Convert consensus ProcessedQuery to our Query type for processing
-        let internal_query = Query::new(query.original_query.clone());
+        let internal_query = Query::new(query.original_query.clone())?;
         
         // Use existing components to process the query
         let analysis = self.analyzer.analyze(&internal_query).await?;
         let entities = self.entity_extractor.extract(&internal_query, &analysis).await?;
-        let key_terms = self.term_extractor.extract(&internal_query, &analysis).await?;
+        let _key_terms = self.term_extractor.extract(&internal_query, &analysis).await?;
         let intent_classification = self.intent_classifier.classify(&internal_query, &analysis).await?;
         let strategy = self.strategy_selector
             .select(&internal_query, &analysis, &intent_classification.primary_intent, &entities)
@@ -327,13 +327,13 @@ impl consensus::QueryProcessorInterface for QueryProcessorProxy {
     }
 
     async fn extract_entities(&self, query_text: &str) -> Result<Vec<ExtractedEntity>> {
-        let query = Query::new(query_text);
+        let query = Query::new(query_text)?;
         let analysis = self.analyzer.analyze(&query).await?;
         self.entity_extractor.extract(&query, &analysis).await
     }
 
     async fn classify_query(&self, query_text: &str) -> Result<types::ClassificationResult> {
-        let query = Query::new(query_text);
+        let query = Query::new(query_text)?;
         let analysis = self.analyzer.analyze(&query).await?;
         let intent_classification = self.intent_classifier.classify(&query, &analysis).await?;
         
@@ -348,7 +348,7 @@ impl consensus::QueryProcessorInterface for QueryProcessorProxy {
     }
 
     async fn recommend_strategy(&self, query: &types::ProcessedQuery) -> Result<types::StrategyRecommendation> {
-        let internal_query = Query::new(query.original_query.clone());
+        let internal_query = Query::new(query.original_query.clone())?;
         let analysis = self.analyzer.analyze(&internal_query).await?;
         
         // Create a mock intent classification from the consensus query

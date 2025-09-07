@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::types::{
     ConsensusResult, ExtractedEntity, IntentClassification, KeyTerm, SemanticAnalysis,
-    StrategySelection, ClassificationMethod, PerformanceMetrics, StrategyPredictions,
+    StrategySelection, PerformanceMetrics,
 };
 use crate::error::{ProcessorError, Result};
 
@@ -203,12 +203,12 @@ pub struct LatencyPercentiles {
 
 impl Query {
     /// Create a new query with default metadata
-    pub fn new(text: impl Into<String>) -> Result<Self, QueryError> {
+    pub fn new(text: impl Into<String>) -> Result<Self> {
         let text = text.into();
         
         // Basic validation
         if text.trim().is_empty() {
-            return Err(QueryError::InvalidInput("Query text cannot be empty".to_string()));
+            return Err(ProcessorError::InvalidQuery { reason: "Query text cannot be empty".to_string() });
         }
         
         Ok(Self {
@@ -221,11 +221,11 @@ impl Query {
     }
 
     /// Create a new query with custom metadata
-    pub fn with_metadata(text: impl Into<String>, metadata: QueryMetadata) -> Result<Self, QueryError> {
+    pub fn with_metadata(text: impl Into<String>, metadata: QueryMetadata) -> Result<Self> {
         let text = text.into();
         
         if text.trim().is_empty() {
-            return Err(QueryError::InvalidInput("Query text cannot be empty".to_string()));
+            return Err(ProcessorError::InvalidQuery { reason: "Query text cannot be empty".to_string() });
         }
         
         Ok(Self {

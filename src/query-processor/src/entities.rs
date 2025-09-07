@@ -402,7 +402,7 @@ impl ComplianceEntityExtractor {
     pub async fn extract(
         &self,
         query: &Query,
-        _analysis: &SemanticAnalysis,
+        analysis: &SemanticAnalysis,
     ) -> Result<Vec<ExtractedEntity>> {
         let mut entities = Vec::new();
         let text = query.text().to_lowercase();
@@ -481,7 +481,7 @@ impl TechnicalTermExtractor {
     pub async fn extract(
         &self,
         query: &Query,
-        _analysis: &SemanticAnalysis,
+        analysis: &SemanticAnalysis,
     ) -> Result<Vec<ExtractedEntity>> {
         let mut entities = Vec::new();
         let text = query.text().to_lowercase();

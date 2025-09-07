@@ -525,7 +525,11 @@ impl MongoDBIntegratedGenerator {
         let key_data = format!(
             "{}:{}:{}:{}",
             request.query,
-            request.format as u8,
+            match request.format {
+                crate::formatter::OutputFormat::Json => 0u8,
+                crate::formatter::OutputFormat::Markdown => 1u8,
+                crate::formatter::OutputFormat::Plain => 2u8,
+            },
             request.max_length.unwrap_or(0),
             request.min_confidence.unwrap_or(0.0)
         );

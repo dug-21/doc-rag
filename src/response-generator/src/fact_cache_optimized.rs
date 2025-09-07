@@ -465,7 +465,7 @@ impl OptimizedFACTCache {
 
     /// Fast confidence calculation
     fn calculate_fact_confidence_fast(sentence: &str) -> f32 {
-        let mut confidence = 0.5;
+        let mut confidence: f32 = 0.5;
         
         // Quick patterns
         if sentence.contains(" is ") || sentence.contains(" are ") { confidence += 0.2; }

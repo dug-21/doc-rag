@@ -18,7 +18,9 @@ pub mod chunk;
 pub mod metadata;
 pub mod neural_chunker;
 pub mod neural_chunker_working; // Working implementation that compiles
+pub mod neural_chunker_simple; // Simplified working implementation
 pub mod neural_trainer;   // High-performance training system
+pub mod neural_trainer_stub; // Working stub implementation
 pub mod references_simple;
 pub use references_simple as references;
 
@@ -27,6 +29,7 @@ pub use boundary::{BoundaryDetector, BoundaryInfo, BoundaryType}; // Legacy fall
 pub use chunk::{Chunk, ChunkMetadata, ChunkReference, ChunkValidationError};
 pub use metadata::{MetadataExtractor, ExtendedMetadata, ContentAnalysis, StructureInfo, QualityMetrics};
 pub use neural_chunker::{NeuralChunker, NeuralChunkerConfig, SemanticAnalysisResult};
+pub use neural_chunker_simple::{SimpleNeuralChunker, SimpleNeuralChunkerConfig, SimpleSemanticAnalysisResult};
 pub use references::{ReferenceTracker, ExtendedReference, ReferenceGraph, ReferenceValidationResult};
 
 /// Main error types for the chunker

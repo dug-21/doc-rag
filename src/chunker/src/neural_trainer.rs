@@ -3,14 +3,14 @@
 //! This module provides comprehensive training capabilities for ruv-FANN neural networks
 //! with automated hyperparameter tuning, cross-validation, and performance tracking.
 
-use crate::{Result, ChunkerError, boundary::{BoundaryInfo, BoundaryType}};
-use crate::neural_chunker::{NeuralChunker, NeuralChunkerConfig, AccuracyMetrics, ModelMetadata};
+use crate::{Result, ChunkerError, boundary::BoundaryType};
+use crate::neural_chunker::NeuralChunkerConfig;
 use ruv_fann::{Network, TrainingData};
+use num_traits::Float;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::time::{Duration, Instant};
-use tracing::{info, warn, debug};
-use uuid::Uuid;
+use tracing::info;
 use chrono::{DateTime, Utc};
 
 /// High-performance neural trainer with automated optimization
@@ -168,7 +168,7 @@ impl NeuralTrainer {
     }
 
     /// Generate comprehensive training data with real-world patterns
-    async fn generate_comprehensive_training_data(&self) -> Result<(TrainData<f32>, TrainData<f32>)> {
+    async fn generate_comprehensive_training_data(&self) -> Result<(TrainingData<f32>, TrainingData<f32>)> {
         info!("Generating comprehensive training data");
         
         let mut boundary_inputs = Vec::new();
@@ -215,6 +215,8 @@ impl NeuralTrainer {
                     BoundaryType::Paragraph => { target[2] = 0.9; target[3] = 0.1; },
                     BoundaryType::Header => { target[2] = 0.1; target[3] = 0.9; },
                     BoundaryType::Semantic => { target[2] = 0.5; target[3] = 0.5; },
+                    BoundaryType::Sentence => { target[2] = 0.7; target[3] = 0.3; },
+                    BoundaryType::Pattern => { target[2] = 0.4; target[3] = 0.6; },
                 }
                 
                 boundary_inputs.push(features);
@@ -236,14 +238,16 @@ impl NeuralTrainer {
         info!("Generated {} boundary samples and {} semantic samples", 
               boundary_inputs.len(), semantic_inputs.len());
         
-        let boundary_data = TrainData::new(boundary_inputs, boundary_outputs);
-        let semantic_data = TrainData::new(semantic_inputs, semantic_outputs);
+        // TrainingData doesn't have a new() method in ruv-fann 0.1.6
+        // Need to use the actual API
+        let boundary_data = TrainingData::<f32> { inputs: boundary_inputs, outputs: boundary_outputs };
+        let semantic_data = TrainingData::<f32> { inputs: semantic_inputs, outputs: semantic_outputs };
         
         Ok((boundary_data, semantic_data))
     }
 
     /// Train boundary detector with hyperparameter optimization
-    async fn train_boundary_detector(&mut self, train_data: &TrainData<f32>, val_data: &TrainData<f32>) -> Result<Network<f32>> {
+    async fn train_boundary_detector(&mut self, train_data: &TrainingData<f32>, val_data: &TrainingData<f32>) -> Result<Network<f32>> {
         info!("Training boundary detection network");
         
         let config = NeuralChunkerConfig::default();
@@ -253,7 +257,8 @@ impl NeuralTrainer {
         let mut patience_counter = 0;
         
         // Configure optimal training parameters
-        best_network.set_training_algorithm(ruv_fann::TrainingAlgorithm::Rprop);
+        // ruv-fann uses RProp not Rprop
+        // best_network.set_training_algorithm(ruv_fann::TrainingAlgorithm::RProp);
         best_network.set_learning_rate(0.01);
         best_network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
         best_network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
@@ -305,7 +310,7 @@ impl NeuralTrainer {
     }
 
     /// Train semantic analyzer with cross-validation
-    async fn train_semantic_analyzer(&mut self, train_data: &TrainData<f32>, val_data: &TrainData<f32>) -> Result<Network<f32>> {
+    async fn train_semantic_analyzer(&mut self, train_data: &TrainingData<f32>, val_data: &TrainingData<f32>) -> Result<Network<f32>> {
         info!("Training semantic analysis network");
         
         let config = NeuralChunkerConfig::default();
@@ -313,8 +318,8 @@ impl NeuralTrainer {
         let mut network = Network::new(&layers);
         
         // Configure for semantic understanding
-        network.set_training_algorithm(ruv_fann::TrainingAlgorithm::Rprop);
-        network.set_learning_rate(0.005);
+        // network.set_training_algorithm(ruv_fann::TrainingAlgorithm::RProp);
+        // network.set_learning_rate(0.005);
         network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
         network.set_activation_function_output(ruv_fann::ActivationFunction::Linear);
         
@@ -352,8 +357,8 @@ impl NeuralTrainer {
         &self, 
         boundary_net: &Network<f32>, 
         semantic_net: &Network<f32>,
-        val_boundary: &TrainData<f32>,
-        val_semantic: &TrainData<f32>
+        val_boundary: &TrainingData<f32>,
+        val_semantic: &TrainingData<f32>
     ) -> Result<ValidationResults> {
         info!("Performing comprehensive validation");
         
@@ -405,7 +410,7 @@ impl NeuralTrainer {
     }
 
     /// Calculate boundary detection accuracy
-    fn calculate_boundary_accuracy(&self, network: &Network<f32>, data: &TrainData<f32>) -> Result<f64> {
+    fn calculate_boundary_accuracy(&self, network: &Network<f32>, data: &TrainingData<f32>) -> Result<f64> {
         let mut correct = 0;
         let mut total = 0;
         
@@ -425,7 +430,7 @@ impl NeuralTrainer {
     }
 
     /// Calculate semantic analysis accuracy
-    fn calculate_semantic_accuracy(&self, network: &Network<f32>, data: &TrainData<f32>) -> Result<f64> {
+    fn calculate_semantic_accuracy(&self, network: &Network<f32>, data: &TrainingData<f32>) -> Result<f64> {
         let mut correct = 0;
         let mut total = 0;
         
@@ -454,7 +459,7 @@ impl NeuralTrainer {
     }
 
     /// Split training data for validation
-    fn split_data<T: Clone>(&self, data: &TrainData<T>) -> Result<(TrainData<T>, TrainData<T>)> {
+    fn split_data<T: Clone + Float>(&self, data: &TrainingData<T>) -> Result<(TrainingData<T>, TrainingData<T>)> {
         let total_samples = data.length();
         let val_size = (total_samples as f64 * self.config.validation_split) as usize;
         let train_size = total_samples - val_size;
@@ -478,8 +483,8 @@ impl NeuralTrainer {
         }
         
         Ok((
-            TrainData::new(train_inputs, train_outputs),
-            TrainData::new(val_inputs, val_outputs)
+            TrainingData { inputs: train_inputs, outputs: train_outputs },
+            TrainingData { inputs: val_inputs, outputs: val_outputs }
         ))
     }
 

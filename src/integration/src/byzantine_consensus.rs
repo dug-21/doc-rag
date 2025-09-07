@@ -11,17 +11,22 @@ use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn, error, debug};
 
-use daa_orchestrator::{
-    consensus::{ConsensusEngine, ByzantineConsensus as DAAByzantine, ConsensusConfig},
-    NodeConfig,
-};
+// DAA consensus module not available yet - using local implementation
+// TODO: Replace with DAA consensus when available
 
 use crate::Result;
 
+/// Consensus configuration
+#[derive(Debug, Clone)]
+pub struct ConsensusConfig {
+    pub threshold: f64,
+    pub timeout_ms: u64,
+    pub max_rounds: u32,
+    pub min_nodes: usize,
+}
+
 /// Byzantine consensus validator with 66% threshold requirement
 pub struct ByzantineConsensusValidator {
-    /// DAA's Byzantine consensus engine
-    consensus_engine: Arc<DAAByzantine>,
     /// Participating nodes
     nodes: Arc<RwLock<HashMap<Uuid, ConsensusNode>>>,
     /// Consensus configuration
@@ -93,14 +98,7 @@ impl ByzantineConsensusValidator {
             min_nodes,
         };
 
-        // Initialize DAA's Byzantine consensus engine
-        let consensus_engine = Arc::new(
-            DAAByzantine::new(config.clone())
-                .map_err(|e| crate::IntegrationError::Consensus(format!("Failed to create Byzantine consensus: {}", e)))?
-        );
-
         Ok(Self {
-            consensus_engine,
             nodes: Arc::new(RwLock::new(HashMap::new())),
             config,
             metrics: Arc::new(RwLock::new(ConsensusMetrics::default())),

@@ -14,7 +14,6 @@
 
 use crate::error::{Result, ProcessorError};
 use crate::types::{
-    SemanticAnalysis, IntentClassification, KeyTerm, StrategySelection,
     ConsensusResult, ValidationResult, QueryIntent, SearchStrategy, ExtractedEntity,
     ProcessedQuery, QueryResult, ClassificationResult, StrategyRecommendation,
     ValidationViolation, ViolationSeverity, ValidationRule
@@ -240,18 +239,17 @@ use std::collections::{HashMap, BTreeMap};
 use std::fmt::Debug;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::sync::{RwLock, Mutex, mpsc, oneshot};
+use tokio::sync::{RwLock, Mutex, oneshot};
 use tokio::time::timeout;
 use tracing::{debug, info, warn, error, instrument};
-use uuid::Uuid;
+// use uuid::Uuid; // Currently unused
 
 // Use statements for DAA types when consensus feature is enabled
 #[cfg(feature = "consensus")]
 use crate::consensus::daa::{
     DAAManager, DAAConfig, FaultTolerance,
-    agent::{Agent, AgentType, AgentStatus},
-    consensus::{ByzantineConsensus, Proposal, ValidatedProposal, ProposalType, ConsensusEvidence},
-    error::DAAError,
+    agent::{Agent, AgentType},
+    consensus::ByzantineConsensus,
 };
 
 /// Node identifier type
@@ -1894,7 +1892,7 @@ impl ConsensusManager {
         // Coordinate validation through DAA manager
         {
             let mut daa_manager = self.daa_manager.lock().await;
-            for agent in validator_agents {
+            for agent in &validator_agents {
                 let validation_task = format!("validate_result:{}", validated_proposal.id);
                 daa_manager.assign_task(&agent.id, &validation_task).await
                     .map_err(|e| ProcessorError::ConsensusFailed {
@@ -2016,8 +2014,8 @@ impl ConsensusManager {
             best_intent, best_confidence, consensus_nodes, total_nodes);
         
         let mut features = HashMap::new();
-        features.insert("consensus_nodes".to_string(), consensus_nodes.to_string());
-        features.insert("consensus_threshold".to_string(), format!("{:.2}", self.config.fault_tolerance_threshold));
+        features.insert("consensus_nodes".to_string(), consensus_nodes as f64);
+        features.insert("consensus_threshold".to_string(), self.config.fault_tolerance_threshold);
         
         Ok(ClassificationResult {
             intent: best_intent,
@@ -2074,8 +2072,8 @@ impl ConsensusManager {
             best_strategy, best_confidence, consensus_nodes, total_nodes);
         
         let mut parameters = HashMap::new();
-        parameters.insert("consensus_nodes".to_string(), consensus_nodes.to_string());
-        parameters.insert("consensus_threshold".to_string(), format!("{:.2}", self.config.fault_tolerance_threshold));
+        parameters.insert("consensus_nodes".to_string(), consensus_nodes as f64);
+        parameters.insert("consensus_threshold".to_string(), self.config.fault_tolerance_threshold);
         
         Ok(StrategyRecommendation {
             strategy: best_strategy,
