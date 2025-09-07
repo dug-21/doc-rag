@@ -8,7 +8,7 @@ use ruv_fann::Network;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::fs;
-use tracing::{info, warn};
+use tracing::info;
 use chrono::{DateTime, Utc};
 
 /// Neural chunker using ruv-FANN for boundary detection (working version)
@@ -189,12 +189,10 @@ impl WorkingNeuralChunker {
         let semantic_path = model_dir.join(format!("semantic_analyzer_v{}.net", version));
         
         // Save networks using ruv-FANN serialization
-        let boundary_bytes = self.boundary_detector.to_bytes()
-            .map_err(|e| ChunkerError::NeuralError(format!("Failed to serialize boundary detector: {:?}", e)))?;
+        let boundary_bytes = self.boundary_detector.to_bytes();
         fs::write(&boundary_path, boundary_bytes)?;
         
-        let semantic_bytes = self.semantic_analyzer.to_bytes()
-            .map_err(|e| ChunkerError::NeuralError(format!("Failed to serialize semantic analyzer: {:?}", e)))?;
+        let semantic_bytes = self.semantic_analyzer.to_bytes();
         fs::write(&semantic_path, semantic_bytes)?;
         
         // Save metadata

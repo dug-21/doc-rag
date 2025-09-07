@@ -2,13 +2,10 @@
 //! 
 //! This provides a working interface while the full ruv_fann integration is developed.
 
-use crate::{Result, ChunkerError, boundary::BoundaryType};
-use crate::neural_chunker::NeuralChunkerConfig;
+use crate::{Result, boundary::BoundaryType};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use std::time::{Duration, Instant};
 use tracing::info;
-use chrono::{DateTime, Utc};
 
 /// Training configuration (stub)
 #[derive(Debug, Clone, Serialize, Deserialize)]
