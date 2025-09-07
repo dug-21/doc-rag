@@ -460,16 +460,7 @@ impl ProcessedQuery {
         intent: IntentClassification,
         strategy: StrategySelection,
     ) -> Self {
-        let processing_metadata = ProcessingMetadata {
-            total_duration: std::time::Duration::ZERO,
-            stage_durations: HashMap::new(),
-            statistics: ProcessingStatistics::default(),
-            validation_results: Vec::new(),
-            warnings: Vec::new(),
-            performance_metrics: PerformanceMetrics::default(),
-        };
-
-        Self {
+        let mut processed_query = Self {
             query,
             analysis,
             entities,
@@ -477,9 +468,29 @@ impl ProcessedQuery {
             intent,
             strategy,
             consensus: None,
-            processing_metadata,
+            processing_metadata: ProcessingMetadata {
+                total_duration: std::time::Duration::ZERO,
+                stage_durations: HashMap::new(),
+                statistics: ProcessingStatistics::default(),
+                validation_results: Vec::new(),
+                warnings: Vec::new(),
+                performance_metrics: PerformanceMetrics::default(),
+            },
             processed_at: Utc::now(),
-        }
+        };
+
+        // MRAP Control Loop: Monitor → Reason → Act → Reflect → Adapt
+        // Update statistics with calculated confidence (Act phase)
+        let calculated_confidence = processed_query.overall_confidence();
+        let calculated_quality = processed_query.calculate_quality_score();
+        
+        processed_query.processing_metadata.statistics.overall_confidence = calculated_confidence;
+        processed_query.processing_metadata.statistics.quality_score = calculated_quality;
+        processed_query.processing_metadata.statistics.entity_count = processed_query.entities.len();
+        processed_query.processing_metadata.statistics.key_term_count = processed_query.key_terms.len();
+        processed_query.processing_metadata.statistics.complexity_score = processed_query.calculate_complexity_score();
+        
+        processed_query
     }
 
     /// Get the query ID
@@ -515,6 +526,11 @@ impl ProcessedQuery {
     /// Add warning message
     pub fn add_warning(&mut self, warning: String) {
         self.processing_metadata.warnings.push(warning);
+    }
+
+    /// Set the total processing duration
+    pub fn set_total_duration(&mut self, duration: std::time::Duration) {
+        self.processing_metadata.total_duration = duration;
     }
 
     /// Set consensus result
@@ -576,6 +592,63 @@ impl ProcessedQuery {
     /// Get processing quality score
     pub fn quality_score(&self) -> f64 {
         self.processing_metadata.statistics.quality_score
+    }
+
+    /// Calculate quality score based on various factors
+    fn calculate_quality_score(&self) -> f64 {
+        let mut score = 0.0;
+        let mut factors = 0;
+
+        // Intent confidence weight (40%)
+        score += self.intent.confidence * 0.4;
+        factors += 1;
+
+        // Strategy confidence weight (30%)
+        score += self.strategy.confidence * 0.3;
+        factors += 1;
+
+        // Entity extraction quality weight (20%)
+        if !self.entities.is_empty() {
+            let entity_quality: f64 = self
+                .entities
+                .iter()
+                .map(|e| e.entity.confidence)
+                .sum::<f64>()
+                / self.entities.len() as f64;
+            score += entity_quality * 0.2;
+            factors += 1;
+        }
+
+        // Semantic analysis confidence weight (10%)
+        score += self.analysis.confidence * 0.1;
+        factors += 1;
+
+        if factors > 0 {
+            score / factors as f64
+        } else {
+            0.5 // Default moderate quality
+        }
+    }
+
+    /// Calculate complexity score based on query characteristics
+    fn calculate_complexity_score(&self) -> f64 {
+        let mut complexity = 0.0;
+
+        // Text length factor
+        let text_len = self.query.text().len() as f64;
+        complexity += (text_len / 1000.0).min(1.0) * 0.2;
+
+        // Entity count factor
+        complexity += (self.entities.len() as f64 / 10.0).min(1.0) * 0.3;
+
+        // Key term count factor  
+        complexity += (self.key_terms.len() as f64 / 5.0).min(1.0) * 0.2;
+
+        // Syntactic complexity (noun phrases, dependencies)
+        let syntactic_complexity = (self.analysis.syntactic_features.noun_phrases.len() as f64 / 5.0).min(1.0);
+        complexity += syntactic_complexity * 0.3;
+
+        complexity.clamp(0.0, 1.0)
     }
 
     /// Check if processing meets quality thresholds
@@ -768,6 +841,10 @@ mod tests {
                 expected_recall: 0.85,
                 expected_precision: 0.90,
                 resource_usage: ResourceUsage {
+                    cpu_usage: 0.5,
+                    memory_usage: 1000,
+                    network_io: 0,
+                    disk_io: 0,
                     memory: 1000,
                     cpu: 0.5,
                     api_calls: 1,
@@ -796,3 +873,52 @@ mod tests {
         assert!(confidence > 0.0 && confidence <= 1.0);
     }
 }
+
+/// Processing request for backward compatibility with integration tests
+pub type ProcessingRequest = Query;
+
+/// Builder for ProcessingRequest/Query
+#[derive(Debug, Default)]
+pub struct ProcessingRequestBuilder {
+    query: Option<String>,
+    query_id: Option<Uuid>,
+    metadata: QueryMetadata,
+}
+
+impl ProcessingRequestBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+    
+    pub fn query(mut self, query: impl Into<String>) -> Self {
+        self.query = Some(query.into());
+        self
+    }
+    
+    pub fn query_id(mut self, id: Uuid) -> Self {
+        self.query_id = Some(id);
+        self
+    }
+    
+    pub fn build(self) -> Result<Query> {
+        let text = self.query.ok_or_else(|| ProcessorError::InvalidQuery {
+            reason: "Query text is required".to_string(),
+        })?;
+        
+        let mut query = Query::with_metadata(text, self.metadata)?;
+        
+        if let Some(id) = self.query_id {
+            query.id = id;
+        }
+        
+        Ok(query)
+    }
+}
+
+impl Query {
+    /// Create a builder for ProcessingRequest
+    pub fn builder() -> ProcessingRequestBuilder {
+        ProcessingRequestBuilder::new()
+    }
+}
+

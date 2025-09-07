@@ -2787,20 +2787,20 @@ mod tests {
     #[derive(Debug)]
     struct TestQueryProcessor {
         /// Real entity extractor
-        entity_extractor: crate::extractor::EntityExtractor,
+        entity_extractor: crate::entities::EntityExtractor,
         /// Real classifier
-        classifier: crate::classifier::QueryClassifier,
+        classifier: crate::classifier::IntentClassifier,
         /// Real analyzer
         analyzer: crate::analyzer::QueryAnalyzer,
     }
 
     impl TestQueryProcessor {
-        async fn new() -> Result<Self> {
-            let entity_config = crate::extractor::EntityExtractorConfig::default();
-            let entity_extractor = crate::extractor::EntityExtractor::new(entity_config).await?;
+        async fn new(config: Arc<crate::config::ProcessorConfig>) -> Result<Self> {
+            let entity_config = Arc::new(crate::config::EntityExtractorConfig::default());
+            let entity_extractor = crate::entities::EntityExtractor::new(entity_config).await?;
             
-            let classifier_config = crate::classifier::ClassifierConfig::default();
-            let classifier = crate::classifier::QueryClassifier::new(classifier_config).await?;
+            // Use IntentClassifier instead of QueryClassifier
+            let classifier = crate::classifier::IntentClassifier::new(config).await?;
             
             let analyzer_config = crate::analyzer::AnalyzerConfig::default();
             let analyzer = crate::analyzer::QueryAnalyzer::new(analyzer_config)?;
@@ -2810,6 +2810,12 @@ mod tests {
                 classifier,
                 analyzer,
             })
+        }
+
+        // Helper function to create test processor with default config
+        async fn new_with_defaults() -> Result<Self> {
+            let config = Arc::new(crate::config::ProcessorConfig::default());
+            Self::new(config).await
         }
     }
     
@@ -2900,7 +2906,7 @@ mod tests {
     #[tokio::test]
     async fn test_consensus_manager_creation() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let manager = ConsensusManager::new(
             "node1".to_string(),
@@ -2916,7 +2922,7 @@ mod tests {
     #[tokio::test]
     async fn test_byzantine_consensus_66_percent_threshold() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let manager = ConsensusManager::new(
             "test-node".to_string(),
@@ -2933,7 +2939,7 @@ mod tests {
     #[cfg(feature = "consensus")]
     async fn test_real_byzantine_consensus_decision() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let mut manager = ConsensusManager::new(
             "consensus-test-node".to_string(),
@@ -2960,7 +2966,7 @@ mod tests {
     #[cfg(feature = "consensus")]
     async fn test_byzantine_entity_extraction_consensus() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let manager = ConsensusManager::new(
             "entity-test-node".to_string(),
@@ -3023,7 +3029,7 @@ mod tests {
     #[cfg(feature = "consensus")]
     async fn test_byzantine_consensus_failure_insufficient_nodes() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let manager = ConsensusManager::new(
             "insufficient-nodes-test".to_string(),
@@ -3067,7 +3073,7 @@ mod tests {
     #[cfg(feature = "consensus")]
     async fn test_byzantine_consensus_classification_66_percent() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let manager = ConsensusManager::new(
             "classification-test-node".to_string(),
@@ -3127,7 +3133,7 @@ mod tests {
     #[cfg(feature = "consensus")]
     async fn test_byzantine_fault_tolerance_handling() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let manager = ConsensusManager::new(
             "fault-tolerance-test".to_string(),
@@ -3148,7 +3154,7 @@ mod tests {
     #[cfg(feature = "consensus")]
     async fn test_consensus_agent_spawning() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let manager = ConsensusManager::new(
             "agent-spawn-test".to_string(),
@@ -3175,7 +3181,7 @@ mod tests {
     #[cfg(feature = "consensus")]
     async fn test_multi_node_validation_pipeline() {
         let config = DAAConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         
         let manager = ConsensusManager::new(
             "multi-node-test".to_string(),
@@ -3305,7 +3311,7 @@ mod tests {
     #[tokio::test]
     async fn test_consensus_entity_extraction() {
         let config = ConsensusConfig::default();
-        let query_processor = Arc::new(TestQueryProcessor::new().await.unwrap());
+        let query_processor = Arc::new(TestQueryProcessor::new_with_defaults().await.unwrap());
         let manager = ConsensusManager::new("node1".to_string(), config, query_processor);
         
         let results = vec![

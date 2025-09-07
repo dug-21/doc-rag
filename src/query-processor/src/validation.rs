@@ -744,6 +744,10 @@ mod tests {
                 expected_recall: 0.85,
                 expected_precision: 0.90,
                 resource_usage: ResourceUsage {
+                    cpu_usage: 0.5,
+                    memory_usage: 1000,
+                    network_io: 0,
+                    disk_io: 0,
                     memory: 1000,
                     cpu: 0.5,
                     api_calls: 1,

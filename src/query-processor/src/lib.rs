@@ -68,13 +68,13 @@ pub mod validation;
 
 pub use analyzer::QueryAnalyzer;
 pub use classifier::IntentClassifier;
-pub use config::ProcessorConfig;
+pub use config::{ProcessorConfig, ProcessorConfig as Config};
 pub use consensus::{ConsensusManager, ConsensusMessage};
 pub use entities::EntityExtractor;
 pub use error::{ProcessorError, Result};
 pub use extractor::KeyTermExtractor;
 pub use metrics::ProcessorMetrics;
-pub use query::{ProcessedQuery, Query, QueryMetadata};
+pub use query::{ProcessedQuery, Query, QueryMetadata, ProcessingRequest, ProcessingRequestBuilder, ValidationStatus};
 pub use strategy::StrategySelector;
 pub use types::*;
 pub use validation::ValidationEngine;
@@ -198,12 +198,15 @@ impl QueryProcessor {
         // Stage 8: Final Validation
         processed = self.validation_engine.validate(processed).await?;
         
-        // Update metrics
+        // Update metrics and total duration
         let duration = start.elapsed();
         {
             let mut metrics = self.metrics.write().await;
             metrics.record_processing(duration, &processed);
         }
+        
+        // Update the ProcessedQuery with the actual total duration (MRAP Reflect phase)
+        processed.set_total_duration(duration);
         
         info!(
             "Query processing completed in {:?}ms: {}",

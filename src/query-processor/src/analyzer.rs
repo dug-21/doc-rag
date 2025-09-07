@@ -471,9 +471,10 @@ impl SyntacticAnalyzer {
 
     async fn extract_named_entities(&self, text: &str, _pos_tags: &[PosTag]) -> Result<Vec<NamedEntity>> {
         let mut entities = Vec::new();
+        let text_lower = text.to_lowercase();
         
-        // Simple pattern-based NER for compliance documents
-        let patterns = [
+        // Compliance-specific patterns
+        let compliance_patterns = [
             (r"PCI\s+DSS", "STANDARD"),
             (r"HIPAA", "STANDARD"),  
             (r"SOX", "STANDARD"),
@@ -482,7 +483,7 @@ impl SyntacticAnalyzer {
             (r"section\s+\d+", "SECTION"),
         ];
         
-        for (pattern, entity_type) in &patterns {
+        for (pattern, entity_type) in &compliance_patterns {
             if let Ok(regex) = regex::Regex::new(pattern) {
                 for mat in regex.find_iter(text) {
                     entities.push(NamedEntity::new(
@@ -493,6 +494,29 @@ impl SyntacticAnalyzer {
                         0.9, // High confidence for pattern matches
                     ));
                 }
+            }
+        }
+        
+        // Technical terms and concepts for general queries
+        let tech_terms = [
+            "cloud computing", "microservices", "architecture", "blockchain", 
+            "design patterns", "REST API", "API", "database", "security",
+            "software", "application", "system", "network", "data",
+            "algorithm", "programming", "development", "framework",
+            "service", "platform", "infrastructure", "computing"
+        ];
+        
+        for term in &tech_terms {
+            if let Some(start) = text_lower.find(term) {
+                // Make sure we get the original case from the source text
+                let original_term = &text[start..start + term.len()];
+                entities.push(NamedEntity::new(
+                    original_term.to_string(),
+                    "TECHNOLOGY".to_string(),
+                    start,
+                    start + term.len(),
+                    0.8, // Good confidence for technical terms
+                ));
             }
         }
         

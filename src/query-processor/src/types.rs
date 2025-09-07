@@ -662,6 +662,18 @@ pub struct ResourceUsage {
     pub network_io: u64,
     /// Disk I/O in bytes
     pub disk_io: u64,
+    /// Total memory in bytes
+    pub memory: u64,
+    /// CPU utilization percentage
+    pub cpu: f64,
+    /// Number of API calls made
+    pub api_calls: u64,
+    /// Number of cache hits
+    pub cache_hits: u64,
+    /// Number of cache misses
+    pub cache_misses: u64,
+    /// Peak memory usage in bytes
+    pub peak_memory: u64,
 }
 
 /// Consensus validation types
@@ -1090,6 +1102,15 @@ pub enum RelationshipType {
     SimilarTo,
 }
 
+/// Backward compatibility alias for EntityCategory
+pub type EntityType = EntityCategory;
+
+/// Backward compatibility aliases for common entity types
+impl EntityType {
+    pub const ComplianceTerm: EntityType = EntityType::Standard;
+    pub const Location: EntityType = EntityType::Location;
+}
+
 impl Default for ResourceUsage {
     fn default() -> Self {
         Self {
@@ -1097,6 +1118,12 @@ impl Default for ResourceUsage {
             memory_usage: 0,
             network_io: 0,
             disk_io: 0,
+            memory: 0,
+            cpu: 0.0,
+            api_calls: 0,
+            cache_hits: 0,
+            cache_misses: 0,
+            peak_memory: 0,
         }
     }
 }

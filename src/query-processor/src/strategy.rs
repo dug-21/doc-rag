@@ -398,6 +398,12 @@ impl StrategySelector {
                 memory_usage: (characteristics.word_count * 1024) as u64,
                 network_io: 0,
                 disk_io: 0,
+                memory: (characteristics.word_count * 1024) as u64,
+                cpu: characteristics.complexity_score * 0.3,
+                api_calls: 1,
+                cache_hits: 0,
+                cache_misses: 1,
+                peak_memory: (characteristics.word_count * 1024) as u64,
             },
         }
     }
