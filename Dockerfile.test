@@ -1,0 +1,100 @@
+# Multi-stage Dockerfile optimized for testing
+# Fast builds with layer caching and minimal final image
+
+# Build stage with caching
+FROM rust:1.75 AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setup cargo-chef for dependency caching
+RUN cargo install cargo-chef --locked
+
+WORKDIR /app
+
+# Plan dependencies (cache layer)
+FROM builder AS planner
+COPY Cargo.toml Cargo.lock ./
+COPY src/*/Cargo.toml ./src/
+RUN cargo chef prepare --recipe-path recipe.json
+
+# Build dependencies (cache layer)
+FROM builder AS cacher
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+
+# Build application
+FROM builder AS build
+COPY --from=cacher /app/target target
+COPY --from=cacher /usr/local/cargo /usr/local/cargo
+
+# Copy source code
+COPY . .
+
+# Build with test features
+RUN cargo build --release --features test-utils
+
+# Test stage - includes test utilities
+FROM rust:1.75-slim AS test
+
+# Install runtime dependencies and test tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    libssl3 \
+    cargo-watch \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy built artifacts
+COPY --from=build /app/target ./target
+COPY --from=build /usr/local/cargo /usr/local/cargo
+
+# Copy source for test execution
+COPY . .
+
+# Install test dependencies
+RUN cargo install cargo-nextest --locked && \
+    cargo install cargo-llvm-cov --locked
+
+# Create non-root user
+RUN useradd -m -u 1001 testuser && \
+    chown -R testuser:testuser /app
+
+USER testuser
+
+# Health check endpoint
+HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Default test command
+CMD ["cargo", "nextest", "run", "--workspace"]
+
+# CI stage - minimal for automated testing
+FROM debian:bookworm-slim AS ci
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy only necessary binaries
+COPY --from=build /app/target/release/api ./api
+COPY --from=build /app/target/release/integration ./integration
+
+# Create non-root user
+RUN useradd -m -u 1001 ciuser && \
+    chown -R ciuser:ciuser /app
+
+USER ciuser
+
+EXPOSE 8080 9090
+
+CMD ["./api"]

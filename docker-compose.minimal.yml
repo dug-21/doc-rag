@@ -1,0 +1,65 @@
+# Minimal Docker Compose for PDF Testing
+# Only essential services for PDF Q&A functionality
+version: '3.8'
+
+services:
+  # MongoDB - Essential for document storage
+  mongodb:
+    image: mongo:7.0
+    container_name: doc-rag-mongodb-minimal
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=doc_rag
+    volumes:
+      - ./data/mongo:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # API Service - Core functionality
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      args:
+        - FEATURES=minimal
+    container_name: doc-rag-api-minimal
+    ports:
+      - "8080:8080"
+    environment:
+      # Core configuration
+      - RUST_LOG=info,api=debug
+      - MONGODB_URL=mongodb://mongodb:27017/doc_rag
+      
+      # Disable complex features for testing
+      - ENABLE_DAA=false
+      - ENABLE_RUV_FANN=false
+      - ENABLE_FACT_CACHE=false
+      - ENABLE_BYZANTINE=false
+      
+      # Use simple in-memory processing
+      - CACHE_BACKEND=memory
+      - MAX_WORKERS=2
+      
+      # Mock LLM responses for testing
+      - USE_MOCK_LLM=true
+      - MOCK_RESPONSE_DELAY_MS=100
+      
+    volumes:
+      - ./uploads:/uploads
+      - ./config:/config:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+# No Redis, no Prometheus, no Grafana, no Jaeger
+# Just MongoDB + API for testing PDF functionality

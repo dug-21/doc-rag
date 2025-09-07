@@ -1,0 +1,104 @@
+# Multi-stage Dockerfile for CI/CD - Optimized for Speed and Caching
+# Minimal images for automated testing pipelines
+
+# Base builder stage
+FROM rust:1.75-slim-bullseye AS builder
+
+# Install minimal build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy manifests
+COPY Cargo.toml Cargo.lock ./
+COPY src/ ./src/
+
+# Build with optimizations for CI
+RUN cargo build --workspace --release --tests --benches
+
+# Test runner stage
+FROM debian:bullseye-slim AS test-runner
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl1.1 \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy built artifacts
+COPY --from=builder /app/target/release/ ./target/release/
+COPY --from=builder /app/target/release/deps/ ./target/release/deps/
+COPY --from=builder /usr/local/cargo/bin/cargo /usr/local/bin/
+
+# Copy source for test execution
+COPY . .
+
+# Set environment for CI
+ENV RUST_BACKTRACE=1
+ENV CI=true
+ENV RUST_TEST_THREADS=4
+
+# API test stage
+FROM test-runner AS api-test
+
+# Install additional tools for API testing
+RUN apt-get update && apt-get install -y \
+    httpie \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8080
+
+# Performance test stage  
+FROM test-runner AS perf-test
+
+# Install benchmarking tools
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    gnuplot \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install matplotlib pandas
+
+# Copy benchmark analysis scripts
+COPY scripts/analyze_benchmarks.py /app/
+
+# Security test stage
+FROM rust:1.75-slim-bullseye AS security-test
+
+# Install security audit tools
+RUN cargo install cargo-audit
+RUN rustup component add clippy
+
+WORKDIR /app
+COPY . .
+
+# Reporter stage for test result aggregation
+FROM python:3.11-slim AS reporter
+
+# Install reporting dependencies
+RUN pip install \
+    jinja2 \
+    pytest-html \
+    coverage \
+    json2html
+
+WORKDIR /app
+
+# Copy reporting scripts
+COPY scripts/generate_test_report.py /app/
+COPY scripts/templates/ /app/templates/
+
+# Create output directory
+RUN mkdir -p /test-results
+
+CMD ["python3", "/app/generate_test_report.py"]

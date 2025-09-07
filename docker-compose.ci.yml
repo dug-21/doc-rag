@@ -1,0 +1,95 @@
+# CI/CD Optimized Docker Compose - Minimal services for automated testing
+# Designed for GitHub Actions and parallel execution
+version: '3.8'
+
+services:
+  # MongoDB with tmpfs for CI speed
+  mongodb-ci:
+    image: mongo:7.0
+    container_name: doc-rag-mongodb-ci
+    environment:
+      - MONGO_INITDB_DATABASE=doc_rag_ci
+    tmpfs:
+      - /data/db:size=500M
+      - /data/configdb:size=50M
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+          cpus: '1'
+
+  # All-in-one test service for CI
+  ci-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+      cache_from:
+        - ${CI_REGISTRY}/doc-rag:ci-cache
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    container_name: doc-rag-ci-runner
+    environment:
+      # CI optimizations
+      - CI=true
+      - RUST_LOG=warn
+      - RUST_BACKTRACE=0
+      - MONGODB_URL=mongodb://mongodb-ci:27017/doc_rag_ci
+      
+      # Disable all non-essential features
+      - REDIS_ENABLED=false
+      - METRICS_ENABLED=false
+      - TRACING_ENABLED=false
+      
+      # Fast test settings
+      - PARALLEL_TESTS=true
+      - TEST_THREADS=4
+      - SKIP_SLOW_TESTS=${SKIP_SLOW_TESTS:-false}
+      
+      # Coverage settings
+      - CARGO_INCREMENTAL=0
+      - RUSTFLAGS=-Cinstrument-coverage
+      - LLVM_PROFILE_FILE=/coverage/cargo-test-%p-%m.profraw
+      
+    volumes:
+      - ./coverage:/coverage
+      - ./test-results:/test-results
+    depends_on:
+      mongodb-ci:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Running CI test suite...' &&
+        cargo test --workspace --release --all-features -- --test-threads=4 &&
+        echo 'Generating coverage report...' &&
+        grcov /coverage --binary-path ./target/release/deps -s . -t lcov --branch --ignore-not-existing -o /coverage/lcov.info &&
+        echo 'Tests completed successfully'
+      "
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: '4'
+
+  # Security scanner for CI
+  security-scanner:
+    image: aquasec/trivy:latest
+    container_name: doc-rag-security-ci
+    volumes:
+      - ./:/workspace:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: >
+      sh -c "
+        trivy fs --severity HIGH,CRITICAL --format json --output /workspace/security-report.json /workspace &&
+        trivy image --severity HIGH,CRITICAL doc-rag:ci-cache
+      "
+
+networks:
+  default:
+    name: doc-rag-ci-network
+    driver: bridge

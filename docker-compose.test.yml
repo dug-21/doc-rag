@@ -1,0 +1,119 @@
+# Test Environment Docker Compose - Optimized for Development & CI/CD
+# Fast feedback loops with minimal overhead
+version: '3.8'
+
+services:
+  # MongoDB - Essential for vector storage
+  mongodb:
+    image: mongo:7.0
+    container_name: doc-rag-mongodb-test
+    ports:
+      - "27018:27017"  # Non-conflicting port for parallel testing
+    environment:
+      - MONGO_INITDB_DATABASE=doc_rag_test
+    volumes:
+      - ./data/test/mongo:/data/db
+    tmpfs:
+      - /data/configdb:size=100M  # In-memory for speed
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Core API with all services consolidated
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      target: test
+      cache_from:
+        - doc-rag:test-cache
+    container_name: doc-rag-api-test
+    ports:
+      - "8081:8080"
+      - "9091:9090"  # Metrics endpoint
+    environment:
+      # Core configuration
+      - RUST_LOG=debug,hyper=info
+      - RUST_BACKTRACE=1
+      - MONGODB_URL=mongodb://mongodb:27017/doc_rag_test
+      
+      # Test mode optimizations
+      - TEST_MODE=true
+      - MOCK_EXTERNAL_SERVICES=true
+      - FAST_NEURAL_INIT=true
+      
+      # Disable unnecessary features for testing
+      - REDIS_ENABLED=false
+      - PROMETHEUS_ENABLED=false
+      - JAEGER_ENABLED=false
+      
+      # Performance settings for fast tests
+      - CACHE_BACKEND=memory
+      - MAX_WORKERS=2
+      - BATCH_SIZE=10
+      
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./target/test-cache:/app/target
+      - ./test-data:/app/test-data
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+
+  # Test runner with hot-reload
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test-runner
+    container_name: doc-rag-test-runner
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./test-results:/app/test-results
+    environment:
+      - WATCH_MODE=${WATCH_MODE:-false}
+      - TEST_FILTER=${TEST_FILTER:-}
+      - PARALLEL_TESTS=${PARALLEL_TESTS:-true}
+      - COVERAGE_ENABLED=${COVERAGE_ENABLED:-false}
+    depends_on:
+      api:
+        condition: service_healthy
+    command: >
+      sh -c "
+        if [ \"$$WATCH_MODE\" = 'true' ]; then
+          cargo watch -x 'test --workspace' -w src -w tests
+        else
+          cargo test --workspace --release
+        fi
+      "
+
+networks:
+  default:
+    name: doc-rag-test-network
+    driver: bridge
+
+volumes:
+  test-cache:
+    driver: local
+  test-results:
+    driver: local
