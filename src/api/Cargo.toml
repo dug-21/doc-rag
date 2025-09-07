@@ -68,7 +68,7 @@ chrono = { workspace = true }
 url = { workspace = true }
 mime = { workspace = true }
 bytes = { workspace = true }
-dashmap = { workspace = true }
+# dashmap = { workspace = true } # Disabled - using FACT for caching
 arc-swap = { workspace = true }
 once_cell = { workspace = true }
 parking_lot = { workspace = true }
@@ -99,7 +99,7 @@ rand = { workspace = true }
 ruv-fann = { workspace = true }
 daa-orchestrator = { workspace = true }
 sha2.workspace = true
-# fact = { workspace = true } # Replaced with DashMap for in-memory caching
+fact = { workspace = true } # Intelligent caching system enabled per Phase 2 requirements
 
 [dev-dependencies]
 tempfile = "3.8"

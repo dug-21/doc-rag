@@ -75,7 +75,7 @@ ruv-fann = { version = "0.1.6", optional = true }
 daa = { version = "0.5.0", optional = true }
 
 # FACT integration for citation tracking - Ready to enable when library is available  
-# fact-system = { version = "0.1", optional = true }
+fact = { workspace = true, optional = true } # Mandatory per Phase 2 requirements
 
 # Local embedder crate
 embedder = { path = "../embedder" }
@@ -88,11 +88,11 @@ mockall = "0.12"
 wiremock = "0.5"
 
 [features]
-default = ["neural", "consensus"]
+default = ["neural", "consensus", "citations"]
 # DAA feature enabled for distributed consensus:
 neural = ["ruv-fann"]  # Neural network features
 consensus = ["daa"]
-# citations = ["fact-system"]
+citations = ["fact"]
 benchmarks = []
 
 # Benchmarks disabled - not implemented yet

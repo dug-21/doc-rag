@@ -52,8 +52,8 @@ reqwest = { version = "0.11", features = ["json", "stream"] }
 dashmap = "5.5"
 
 # FACT caching integration
-fact-tools = { version = "1.0.0", features = ["default", "network"], optional = true }
-# fact = { workspace = true }
+# fact-tools = { version = "1.0.0", features = ["default", "network"], optional = true } # Using main FACT
+fact = { workspace = true, optional = true } # Mandatory per Phase 2 requirements
 
 # CLI support
 clap = { version = "4.4", features = ["derive"] }
@@ -79,7 +79,7 @@ default = ["validation", "streaming", "metrics", "fact-integration"]
 validation = []
 streaming = []
 metrics = ["metrics-exporter-prometheus"]
-fact-integration = ["fact-tools"]
+fact-integration = ["fact"]
 
 [[bin]]
 name = "response-generator"
