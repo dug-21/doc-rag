@@ -1,7 +1,7 @@
 // SPARC Phase 5: Actual Implementation with REAL Dependencies
 // This implementation uses ruv-FANN, DAA-Orchestrator, and FACT - NO SUBSTITUTES!
 
-use anyhow::{Result, Context};
+use anyhow::Result;
 use axum::{
     extract::{Multipart, State},
     http::StatusCode,
@@ -645,11 +645,10 @@ fn detect_content_type(filename: &str) -> String {
 }
 
 // Initialize ruv-FANN at startup
-pub async fn initialize_ruv_fann(model_path: &str) -> anyhow::Result<()> {
+pub async fn initialize_ruv_fann(_model_path: &str) -> anyhow::Result<()> {
     info!("Initializing ruv-FANN neural network");
     
-    let mut network = ruv_fann::Network::new(&[12, 8, 4, 1])
-        .context("Failed to create ruv-FANN model")?;
+    let mut network = ruv_fann::Network::new(&[12, 8, 4, 1]);
     
     // Test network with dummy input to warm up
     let dummy_input = vec![0.0f32; 12]; // Assuming 12 inputs based on extract_text_features
@@ -802,7 +801,7 @@ fn extract_boundary_features(current_chunk: &str, next_sentence: &str) -> anyhow
 }
 
 /// Rerank results using neural network
-async fn rerank_results_with_neural(network: &mut ruv_fann::Network<f32>, agent_results: serde_json::Value, _question: &str) -> anyhow::Result<serde_json::Value> {
+async fn rerank_results_with_neural(_network: &mut ruv_fann::Network<f32>, agent_results: serde_json::Value, _question: &str) -> anyhow::Result<serde_json::Value> {
     // Simple reranking - in a real implementation this would use the neural network
     // For now, return the results as-is with neural processing flag
     let mut reranked = agent_results;

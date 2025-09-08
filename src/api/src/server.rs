@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 use axum::serve;
 use std::{net::SocketAddr, sync::Arc, future::Future};
 use tokio::net::TcpListener;
-use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
     cors::{CorsLayer, Any},
@@ -132,32 +131,6 @@ impl ApiServer {
     fn create_app(&self) -> axum::Router {
         let routes = create_routes(self.config.clone());
 
-        // Build middleware stack
-        let middleware = ServiceBuilder::new()
-            // Request ID generation and propagation
-            .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
-            .layer(PropagateRequestIdLayer::x_request_id())
-            
-            // Request timeout
-            .layer(TimeoutLayer::new(std::time::Duration::from_secs(
-                self.config.server.request_timeout_secs
-            )))
-            
-            // Compression
-            .layer(CompressionLayer::new())
-            
-            // CORS
-            .layer(self.create_cors_layer())
-            
-            // Request tracing
-            .layer(TraceLayer::new_for_http())
-            
-            // Request logging
-            .layer(RequestLoggingLayer::new())
-            
-            // Error handling (should be last)
-            .layer(ErrorHandlingLayer::new());
-
         routes
             .with_state(Arc::new(AppState {
                 config: self.config.clone(),
@@ -166,7 +139,17 @@ impl ApiServer {
                 mongodb: self.mongodb.clone(),
                 cache: self.cache.clone(),
             }))
-            .layer(middleware)
+            // Apply middleware layers individually to avoid trait bound issues
+            .layer(ErrorHandlingLayer::new())
+            .layer(RequestLoggingLayer::new())
+            .layer(TraceLayer::new_for_http())
+            .layer(self.create_cors_layer())
+            .layer(CompressionLayer::new())
+            .layer(TimeoutLayer::new(std::time::Duration::from_secs(
+                self.config.server.request_timeout_secs
+            )))
+            .layer(PropagateRequestIdLayer::x_request_id())
+            .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
     }
 
     fn create_cors_layer(&self) -> CorsLayer {
@@ -227,6 +210,9 @@ pub struct AppState {
     pub mongodb: mongodb::Client,
     pub cache: Arc<DashMap<String, Value>>,
 }
+
+// Note: FromRef implementations removed due to orphan rules
+// Handlers should extract AppState and access .clients, .metrics, .config as needed
 
 // Note: Removed orphan trait implementations due to orphan rules
 // These types are not defined in this crate, so we cannot implement foreign traits for them

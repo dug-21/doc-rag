@@ -7,7 +7,7 @@ use thiserror::Error;
 use tracing::error;
 use uuid::Uuid;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum ApiError {
     #[error("Bad request: {0}")]
     BadRequest(String),

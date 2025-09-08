@@ -12,15 +12,17 @@ use crate::{
         IngestRequest, IngestResponse, BatchIngestRequest, BatchIngestResponse,
         DocumentStatus, TaskStatus
     },
+    server::AppState,
     validation::{validate_ingest_request, validate_batch_ingest_request, validate_chunking_strategy},
     Result, ApiError,
 };
 
 /// Process a single document ingestion
 pub async fn ingest_document(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     Json(request): Json<IngestRequest>,
 ) -> Result<Json<IngestResponse>> {
+    let clients = &state.clients;
     info!("Processing document ingestion");
     
     // Validate the ingestion request
@@ -68,9 +70,10 @@ pub async fn ingest_document(
 
 /// Process batch document ingestion
 pub async fn batch_ingest(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     Json(request): Json<BatchIngestRequest>,
 ) -> Result<Json<BatchIngestResponse>> {
+    let clients = &state.clients;
     info!("Processing batch document ingestion: {} documents", request.documents.len());
     
     // Validate the batch request
@@ -146,8 +149,9 @@ pub async fn batch_ingest(
 /// Get document processing status
 pub async fn get_document_status(
     Path(document_id): Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<DocumentStatus>> {
+    let clients = &state.clients;
     info!("Retrieving document status: document_id={}", document_id);
     
     match clients.get_document_status(document_id).await {
@@ -163,8 +167,9 @@ pub async fn get_document_status(
 
 /// Get document processing history
 pub async fn get_processing_history(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<serde_json::Value>> {
+    let clients = &state.clients;
     info!("Retrieving document processing history");
     
     // Query the database for real processing history
@@ -189,8 +194,9 @@ pub async fn get_processing_history(
 /// Cancel document processing
 pub async fn cancel_document_processing(
     Path(task_id): Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<serde_json::Value>> {
+    let clients = &state.clients;
     info!("Cancelling document processing: task_id={}", task_id);
     
     // Real cancellation implementation
@@ -214,8 +220,9 @@ pub async fn cancel_document_processing(
 /// Retry failed document processing
 pub async fn retry_document_processing(
     Path(task_id): Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<IngestResponse>> {
+    let clients = &state.clients;
     info!("Retrying document processing: task_id={}", task_id);
     
     // Real retry implementation
@@ -246,8 +253,9 @@ pub async fn retry_document_processing(
 
 /// Get processing statistics
 pub async fn get_processing_stats(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<serde_json::Value>> {
+    let clients = &state.clients;
     info!("Retrieving processing statistics");
     
     // Aggregate real statistics from the database

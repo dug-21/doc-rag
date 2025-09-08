@@ -8,14 +8,15 @@ use std::sync::Arc;
 use tracing::{info, error};
 
 use crate::{
-    middleware::metrics::MetricsRegistry,
+    server::AppState,
     Result, ApiError,
 };
 
 /// Export Prometheus metrics
 pub async fn export_metrics(
-    State(metrics): State<Arc<MetricsRegistry>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Response> {
+    let metrics = &state.metrics;
     info!("Metrics export requested");
     
     let encoder = TextEncoder::new();
@@ -42,8 +43,9 @@ pub async fn export_metrics(
 
 /// Get metrics in JSON format
 pub async fn get_metrics_json(
-    State(metrics): State<Arc<MetricsRegistry>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<axum::Json<serde_json::Value>> {
+    let metrics = &state.metrics;
     info!("JSON metrics requested");
     
     let metric_families = metrics.registry.gather();
@@ -137,8 +139,9 @@ pub async fn get_metrics_json(
 
 /// Get system health metrics
 pub async fn get_health_metrics(
-    State(metrics): State<Arc<MetricsRegistry>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<axum::Json<serde_json::Value>> {
+    let metrics = &state.metrics;
     info!("Health metrics requested");
     
     // Get key health metrics
@@ -161,9 +164,10 @@ pub async fn get_health_metrics(
 
 /// Record a custom metric (admin endpoint)
 pub async fn record_custom_metric(
-    State(metrics): State<Arc<MetricsRegistry>>,
+    State(state): State<Arc<AppState>>,
     axum::Json(request): axum::Json<CustomMetricRequest>,
 ) -> Result<StatusCode> {
+    let metrics = &state.metrics;
     info!("Custom metric recording requested: {}", request.name);
     
     match request.metric_type.as_str() {

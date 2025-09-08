@@ -8,19 +8,20 @@ use tracing::{info, warn, error};
 use uuid::Uuid;
 
 use crate::{
-    clients::ComponentClients,
     models::{FileUploadResponse, TaskStatus},
     middleware::auth::AuthExtension,
+    server::AppState,
     validation::validate_file_upload,
     Result, ApiError,
 };
 
 /// Upload a file for processing  
 pub async fn upload_file(
-    State(clients): State<Arc<ComponentClients>>,
-    State(config): State<Arc<crate::config::ApiConfig>>,
+    State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
 ) -> Result<Json<FileUploadResponse>> {
+    let clients = &state.clients;
+    let config = &state.config;
     // Auth context would be available through middleware
     // let auth_context = request.require_auth_context()?;
     info!("File upload requested");
@@ -113,9 +114,10 @@ pub async fn upload_file(
 /// Get file information
 pub async fn get_file_info(
     Path(file_id): Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     request: Request,
 ) -> Result<Json<FileUploadResponse>> {
+    let clients = &state.clients;
     let auth_context = request.require_auth_context()?;
     info!("File info requested: file_id={}, user={}", file_id, auth_context.email);
     
@@ -133,9 +135,10 @@ pub async fn get_file_info(
 /// Delete a file
 pub async fn delete_file(
     Path(file_id): Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     request: Request,
 ) -> Result<StatusCode> {
+    let clients = &state.clients;
     let auth_context = request.require_auth_context()?;
     info!("File deletion requested: file_id={}, user={}", file_id, auth_context.email);
     
@@ -159,9 +162,10 @@ pub async fn delete_file(
 /// Process uploaded file (extract text and ingest)
 pub async fn process_file(
     Path(file_id): Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     request: Request,
 ) -> Result<Json<serde_json::Value>> {
+    let clients = &state.clients;
     let auth_context = request.require_auth_context()?;
     info!("File processing requested: file_id={}, user={}", file_id, auth_context.email);
     
@@ -191,9 +195,10 @@ pub async fn process_file(
 /// Get file processing status
 pub async fn get_file_processing_status(
     Path(file_id): Path<Uuid>,
-    State(_clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     request: Request,
 ) -> Result<Json<serde_json::Value>> {
+    let _clients = &state.clients;
     let auth_context = request.require_auth_context()?;
     info!("File processing status requested: file_id={}, user={}", file_id, auth_context.email);
     
@@ -213,9 +218,10 @@ pub async fn get_file_processing_status(
 
 /// List user's uploaded files
 pub async fn list_user_files(
-    State(_clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     request: Request,
 ) -> Result<Json<serde_json::Value>> {
+    let _clients = &state.clients;
     let auth_context = request.require_auth_context()?;
     info!("File list requested by user: {}", auth_context.email);
     
@@ -233,9 +239,10 @@ pub async fn list_user_files(
 /// Extract text from file without processing
 pub async fn extract_text_from_file(
     Path(file_id): Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     request: Request,
 ) -> Result<Json<serde_json::Value>> {
+    let clients = &state.clients;
     let auth_context = request.require_auth_context()?;
     info!("Text extraction requested: file_id={}, user={}", file_id, auth_context.email);
     

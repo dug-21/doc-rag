@@ -275,7 +275,7 @@ impl ComponentClients {
         });
 
         let response = self.storage_client.post("/documents", &request).await?;
-        let result: Value = response.json().await
+        let _result: Value = response.json().await
             .context("Failed to parse storage response")?;
 
         Ok(document_id)
@@ -482,7 +482,9 @@ impl ComponentClients {
         chunking_strategy: Option<ChunkingStrategy>,
     ) -> Result<Uuid> {
         // This would be similar to process_document_ingestion but with task_id reuse
-        self.process_document_ingestion(task_id, content, metadata, chunking_strategy).await
+        // Convert HashMap metadata to serde_json::Value if provided
+        let metadata_value = metadata.map(|map| serde_json::Value::Object(map.into_iter().collect()));
+        self.process_document_ingestion(task_id, content, metadata_value, chunking_strategy).await
     }
     
     /// Clean up partial processing for a document
@@ -570,7 +572,7 @@ impl<'a> StorageServiceClient<'a> {
     }
 
     /// Get processing statistics
-    pub async fn get_processing_statistics(&self) -> Result<crate::models::ProcessingStatistics> {
+    pub async fn get_processing_statistics(&self) -> Result<crate::models::StorageProcessingStatistics> {
         let url = format!("{}/processing/statistics", self.client.base_url);
         let response = self.client.client
             .get(&url)
@@ -579,7 +581,7 @@ impl<'a> StorageServiceClient<'a> {
             .context("Failed to send processing statistics request")?;
             
         if response.status().is_success() {
-            let stats: crate::models::ProcessingStatistics = response.json().await
+            let stats: crate::models::StorageProcessingStatistics = response.json().await
                 .context("Failed to parse processing statistics response")?;
             Ok(stats)
         } else {
@@ -601,10 +603,10 @@ impl<'a> StorageServiceClient<'a> {
     }
 
     /// Get content type statistics
-    pub async fn get_content_type_statistics(&self) -> Result<crate::models::ContentTypeStatistics> {
+    pub async fn get_content_type_statistics(&self) -> Result<crate::models::storage::ContentTypeStatistics> {
         // Mock implementation - in reality this would query storage service
         warn!("Mock implementation: get_content_type_statistics");
-        Ok(crate::models::ContentTypeStatistics {
+        Ok(crate::models::storage::ContentTypeStatistics {
             statistics: vec![],
             total_types: 0,
             most_common_type: None,
@@ -642,6 +644,7 @@ impl<'a> StorageServiceClient<'a> {
             document_id: Some(Uuid::new_v4()),
             content: Some("mock content".to_string()),
             metadata: None,
+            chunking_strategy: None,
             status: TaskStatus::Processing,
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),

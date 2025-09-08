@@ -11,6 +11,7 @@ use crate::{
     config::ApiConfig,
     models::{LoginRequest, AuthResponse, UserInfo, UserRole},
     middleware::auth::{generate_jwt_token, generate_refresh_token, AuthExtension},
+    server::AppState,
     validation::{validate_login_request, validate_email},
     Result, ApiError,
 };
@@ -27,9 +28,10 @@ pub struct LogoutRequest {
 
 /// User login endpoint
 pub async fn login(
-    State(config): State<Arc<ApiConfig>>,
+    State(state): State<Arc<AppState>>,
     Json(request): Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>> {
+    let config = &state.config;
     info!("Login attempt for email: {}", request.email);
     
     // Validate the login request
@@ -77,9 +79,10 @@ pub async fn login(
 
 /// Refresh access token using refresh token
 pub async fn refresh_token(
-    State(config): State<Arc<ApiConfig>>,
+    State(state): State<Arc<AppState>>,
     Json(request): Json<RefreshTokenRequest>,
 ) -> Result<Json<AuthResponse>> {
+    let config = &state.config;
     info!("Token refresh requested");
     
     // In a real implementation, this would:

@@ -61,11 +61,11 @@ use uuid::Uuid;
 // This module maintains backward compatibility with existing API
 
 use crate::{
-    clients::ComponentClients,
     models::{
         QueryRequest, QueryResponse, QueryHistoryRequest,
         QueryHistoryResponse
     },
+    server::AppState,
     validation::validate_query_request,
     Result, ApiError,
 };
@@ -85,11 +85,12 @@ pub struct DaaQueryMetadata {
 }
 
 /// DAA-enhanced query processing with MRAP Loop and Byzantine consensus
-#[instrument(skip(clients, request))]
+#[instrument(skip(state, request))]
 pub async fn process_query(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     Json(request): Json<QueryRequest>,
 ) -> Result<Json<QueryResponse>> {
+    let clients = &state.clients;
     let _query_start = Instant::now();
     let mrap_loop_id = Uuid::new_v4();
     let coordination_id = Uuid::new_v4();
@@ -154,9 +155,10 @@ pub async fn process_query(
 
 /// Stream query response for real-time processing  
 pub async fn stream_query_response(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     Json(request): Json<QueryRequest>,
-) -> std::result::Result<Sse<ReceiverStream<tokio::sync::mpsc::Receiver<std::result::Result<axum::response::sse::Event, std::convert::Infallible>>>>, ApiError> {
+) -> std::result::Result<Sse<impl futures::Stream<Item = std::result::Result<axum::response::sse::Event, std::convert::Infallible>>>, ApiError> {
+    let clients = state.clients.clone();
     info!("Starting streaming query: query_id={}", request.query_id);
 
     // Validate the query request
@@ -235,7 +237,7 @@ pub async fn stream_query_response(
         }
     });
 
-    let stream = ReceiverStream::new(rx).map(|event| Ok(event));
+    let stream = ReceiverStream::new(rx).map(|event| Ok::<_, std::convert::Infallible>(event));
     
     Ok(Sse::new(stream)
         .keep_alive(axum::response::sse::KeepAlive::default()))
@@ -253,9 +255,10 @@ pub struct QueryHistoryParams {
 }
 
 pub async fn get_query_history(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     AxumQuery(params): AxumQuery<QueryHistoryParams>,
 ) -> Result<Json<QueryHistoryResponse>> {
+    let clients = &state.clients;
     info!("Retrieving query history with filters");
 
     let request = QueryHistoryRequest {
@@ -333,10 +336,11 @@ pub struct DaaQueryMetrics {
 }
 
 /// Get enhanced DAA query metrics with MRAP and Byzantine consensus analytics
-#[instrument(skip(clients))]
+#[instrument(skip(state))]
 pub async fn get_query_metrics(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<DaaQueryMetrics>> {
+    let clients = &state.clients;
     info!("Retrieving enhanced DAA query metrics with MRAP and Byzantine analytics");
 
     match clients.get_query_metrics().await {
@@ -411,8 +415,9 @@ pub async fn get_query_metrics(
 /// Cancel a running query
 pub async fn cancel_query(
     Path(query_id): axum::extract::Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<StatusCode> {
+    let clients = &state.clients;
     info!("Cancelling query: query_id={}", query_id);
 
     match clients.cancel_query(query_id).await {
@@ -434,8 +439,9 @@ pub async fn cancel_query(
 /// Get query result by ID
 pub async fn get_query_result(
     Path(query_id): axum::extract::Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<QueryResponse>> {
+    let clients = &state.clients;
     info!("Retrieving query result: query_id={}", query_id);
 
     match clients.get_query_result(query_id).await {
@@ -455,8 +461,9 @@ pub async fn get_query_result(
 /// Get similar queries for recommendations
 pub async fn get_similar_queries(
     Path(query_id): axum::extract::Path<Uuid>,
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<serde_json::Value>> {
+    let clients = &state.clients;
     info!("Finding similar queries: query_id={}", query_id);
 
     match clients.find_similar_queries(query_id, 10).await {

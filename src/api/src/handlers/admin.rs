@@ -11,6 +11,7 @@ use crate::{
     clients::ComponentClients,
     models::{SystemInfo, ComponentStatusResponse, BuildInfo, RuntimeInfo, ComponentStatus, HealthStatus},
     middleware::auth::{AuthExtension},
+    server::AppState,
     Result, ApiError, VERSION,
 };
 
@@ -43,9 +44,10 @@ pub async fn system_info(
 
 /// Get component status information
 pub async fn component_status(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     request: axum::extract::Request,
 ) -> Result<Json<ComponentStatusResponse>> {
+    let clients = &state.clients;
     let auth_context = request.require_auth_context()?;
     info!("Component status requested by: {}", auth_context.email);
 
@@ -98,9 +100,10 @@ pub async fn component_status(
 
 /// Reset component connections/state
 pub async fn reset_components(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
     request: axum::extract::Request,
 ) -> Result<StatusCode> {
+    let clients = &state.clients;
     let auth_context = request.require_auth_context()?;
     info!("Component reset requested by: {}", auth_context.email);
 

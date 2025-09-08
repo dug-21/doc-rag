@@ -10,13 +10,15 @@ use tracing::{info, warn};
 use crate::{
     clients::ComponentClients,
     models::{HealthResponse, HealthStatus, ComponentHealth, ComponentStatusResponse},
+    server::AppState,
     Result, VERSION,
 };
 
 /// Basic health check endpoint
 pub async fn health_check(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<HealthResponse>> {
+    let clients = &state.clients;
     info!("Health check requested");
     
     let start_time = SystemTime::now();
@@ -91,11 +93,12 @@ pub async fn health_check(
 
 /// Kubernetes readiness probe endpoint
 pub async fn readiness_check(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<StatusCode> {
     info!("Readiness check requested");
     
     // Check if we can connect to essential services
+    let clients = &state.clients;
     match clients.check_database_health().await {
         Ok(_) => {
             info!("Readiness check passed");
@@ -116,8 +119,9 @@ pub async fn liveness_check() -> Result<StatusCode> {
 
 /// Detailed component health check
 pub async fn component_health(
-    State(clients): State<Arc<ComponentClients>>,
+    State(state): State<Arc<AppState>>,
 ) -> Result<Json<ComponentStatusResponse>> {
+    let clients = &state.clients;
     info!("Component health check requested");
     
     let health_results = clients.detailed_health_check().await;

@@ -105,7 +105,7 @@ pub async fn handle_query(
     
     // For now, we'll use a simple processing simulation
     // In production, this would call ruv_fann::Network methods
-    let processed_query = format!("Processed: {}", request.question);
+    let _processed_query = format!("Processed: {}", request.question);
     
     let neural_time = neural_start.elapsed();
     if neural_time.as_millis() > 200 {
