@@ -17,8 +17,21 @@ pub use api::{
     ChunkingStrategy, ChunkingType, QueryPreferences, ResponseFormat, Source, PageInfo, IngestTask
 };
 
-// Re-export storage-specific types
-pub use storage::*;
+// Re-export storage-specific types - avoid conflicts by specifying individual types
+pub use storage::{
+    ProcessingHistory, ProcessingEntry, StorageUsage, ContentTypeUsage, RecentDocument, 
+    TaskDetails, TaskStatusResponse, ContentTypeStats
+};
 
-// Re-export domain-specific types
-pub use domain::*;
+// Use storage ProcessingStatistics specifically
+pub use storage::ProcessingStatistics as StorageProcessingStatistics;
+pub use storage::StageStatistics;
+
+// Re-export domain-specific types - avoid conflicts 
+pub use domain::{
+    ProcessingStatus, DocumentInfo, ProcessingTask, DomainTaskStatus, 
+    ContentTypeStatistics, ContentTypeStat
+};
+
+// Use domain ProcessingStatistics specifically
+pub use domain::ProcessingStatistics as DomainProcessingStatistics;
