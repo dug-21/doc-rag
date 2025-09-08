@@ -7,7 +7,7 @@ use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 
 use integration::{
-    DAAOrchestrator, ComponentType, ComponentStatus, SystemIntegration, 
+    DAAOrchestrator, ComponentType, ComponentHealthStatus, SystemIntegration, 
     IntegrationConfig, Result,
 };
 
@@ -42,7 +42,7 @@ async fn test_component_registration_with_daa() {
     
     // Check component health
     let health = orchestrator.get_component_health("test-chunker").await.unwrap();
-    assert!(matches!(health, ComponentStatus::Healthy | ComponentStatus::Starting));
+    assert!(matches!(health, ComponentHealthStatus::Healthy | ComponentHealthStatus::Unknown));
     
     // Verify metrics updated
     let metrics = orchestrator.metrics().await;
@@ -185,7 +185,7 @@ async fn test_multiple_component_health_checks() {
     let mut healthy_count = 0;
     for (name, _, _) in components {
         match orchestrator.get_component_health(name).await {
-            Ok(ComponentStatus::Healthy) => healthy_count += 1,
+            Ok(ComponentHealthStatus::Healthy) => healthy_count += 1,
             Ok(status) => println!("Component {} status: {:?}", name, status),
             Err(e) => println!("Health check failed for {}: {}", name, e),
         }

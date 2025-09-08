@@ -140,6 +140,11 @@ pub use message_bus::*;
 pub use temp_types::*;
 pub use mrap::*;
 
+// Additional type definitions for compatibility
+use daa_orchestrator::OrchestrationMetrics;
+
+// SystemStatus type alias moved to avoid duplication - using the one defined below
+
 /// Integration system version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -423,6 +428,16 @@ pub struct SystemHealth {
     pub uptime: std::time::Duration,
     /// Last health check timestamp
     pub timestamp: chrono::DateTime<chrono::Utc>,
+}
+
+/// System status information
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct SystemStatus {
+    pub total_components: usize,
+    pub total_agents: usize,
+    pub claude_flow_swarm_id: Option<Uuid>,
+    pub ruv_swarm_id: Option<Uuid>,
+    pub metrics: crate::daa_orchestrator::OrchestrationMetrics,
 }
 
 /// Component health information
