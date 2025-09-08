@@ -42,7 +42,7 @@ pub mod cache;
 pub mod citation;
 pub mod config;
 pub mod error;
-pub mod fact_accelerated;
+// pub mod fact_accelerated; // FACT REMOVED
 pub mod fact_cache_impl;
 pub mod fact_cache_optimized; // High-performance sub-50ms FACT cache
 pub mod formatter;
@@ -68,7 +68,7 @@ pub use citation::{
 };
 pub use config::Config;
 pub use error::{ResponseError, Result};
-pub use fact_accelerated::{FACTAcceleratedGenerator, FACTConfig, FACTGeneratedResponse};
+// pub use fact_accelerated::{FACTAcceleratedGenerator, FACTConfig, FACTGeneratedResponse}; // FACT REMOVED
 pub use formatter::{FormatterConfig, OutputFormat, ResponseFormatter};
 pub use mongodb_integration::{
     MongoDBIntegratedGenerator, MongoDBIntegrationConfig, IntegrationResult, 

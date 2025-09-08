@@ -407,6 +407,16 @@ impl Default for ErrorMetrics {
     }
 }
 
+impl ProcessorError {
+    /// Helper method for cache-related errors
+    pub fn cache(message: String) -> Self {
+        ProcessorError::CacheError {
+            operation: "cache_operation".to_string(),
+            reason: message,
+        }
+    }
+}
+
 impl ErrorMetrics {
     /// Record an error occurrence
     pub fn record_error(&mut self, error: &ProcessorError) {

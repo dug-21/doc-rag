@@ -880,6 +880,17 @@ pub struct StageMetrics {
     pub cpu_usage: f64,
 }
 
+/// Execution plan for MRAP processing
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum ExecutionPlan {
+    /// Fast-track processing for simple queries
+    FastTrack,
+    /// Standard processing with basic consensus
+    Standard,
+    /// Full processing with MCP tools and comprehensive validation
+    FullProcessing,
+}
+
 /// Query complexity score
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplexityScore {

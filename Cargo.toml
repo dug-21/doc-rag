@@ -6,7 +6,7 @@ members = [
     "src/storage",
     "src/query-processor",
     "src/response-generator",
-    "src/integration", "src/fact",
+    "src/integration",
 ]
 exclude = [
     "src/mcp-adapter",
@@ -81,7 +81,7 @@ ndarray = { version = "0.15", features = ["serde"] }
 # Phase 1 Rework: Library Integration (Design Principle #2)
 ruv-fann = "0.1.6"  # Neural networks for boundary detection and classification
 daa-orchestrator = { git = "https://github.com/ruvnet/daa.git", branch = "main" }  # Decentralized Autonomous Agents Orchestrator
-fact = { path = "src/fact" }  # Intelligent caching system - local implementation per Phase 2 requirements
+# fact = { git = "https://github.com/ruvnet/fact.git", branch = "main" }  # Intelligent caching system - REMOVED
 
 # Vector databases
 qdrant-client = "1.7"
@@ -200,7 +200,6 @@ criterion = { workspace = true }
 proptest = { workspace = true }
 mockall = { workspace = true }
 rand = { workspace = true }
-fact = { path = "src/fact" }  # Add FACT dependency for test files
 
 [[bench]]
 name = "week3_pipeline_benchmarks"

@@ -22,7 +22,7 @@ async-trait = { workspace = true }
 # Phase 1 Rework: Library Integration
 daa-orchestrator = { workspace = true }
 ruv-fann = { workspace = true }
-fact = { workspace = true } # Re-enabled per Phase 2 requirements
+# fact = { workspace = true } # Re-enabled per Phase 2 requirements - REMOVED
 
 # HTTP and networking
 axum = { workspace = true }

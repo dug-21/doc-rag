@@ -595,7 +595,6 @@ impl Default for ProcessorMetrics {
 mod tests {
     use super::*;
     use crate::query::{Query, ProcessedQuery};
-    use crate::types::*;
     use std::collections::HashMap;
     use chrono::Utc;
 

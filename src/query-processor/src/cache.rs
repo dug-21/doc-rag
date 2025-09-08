@@ -12,7 +12,72 @@ use crate::error::{Result, QueryProcessorError};
 use crate::types::{
     ExtractedEntity, ProcessedQuery, ClassificationResult, StrategyRecommendation
 };
-use fact::{FactSystem, CachedResponse, Citation, FactError};
+// use fact::{FactSystem, CachedResponse, Citation, FactError}; // FACT REMOVED
+
+// FACT Replacement Stubs
+use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+pub struct CachedResponse {
+    pub content: String,
+    pub citations: Vec<Citation>,
+    pub confidence: f32,
+    pub cached_at: u64,
+    pub ttl: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct Citation {
+    pub source: String,
+    pub page: Option<u32>,
+    pub section: Option<String>,
+    pub relevance_score: f32,
+    pub timestamp: u64,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum FactError {
+    #[error("Cache miss")]
+    CacheMiss,
+    #[error("Invalid citation")]
+    InvalidCitation,
+    #[error("Serialization error: {0}")]
+    SerializationError(String),
+    #[error("Storage error: {0}")]
+    StorageError(String),
+}
+
+// Stub FACT System replacement
+#[derive(Debug)]
+pub struct FactSystemStub {
+    cache: HashMap<String, CachedResponse>,
+}
+
+impl FactSystemStub {
+    pub fn new(_size: usize) -> Self {
+        Self {
+            cache: HashMap::new(),
+        }
+    }
+    
+    pub fn process_query(&self, query: &str) -> Result<CachedResponse, FactError> {
+        self.cache.get(query).cloned().ok_or(FactError::CacheMiss)
+    }
+    
+    pub fn store_response(&mut self, query: String, content: String, citations: Vec<Citation>) {
+        let response = CachedResponse {
+            content,
+            citations,
+            confidence: 0.95,
+            cached_at: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            ttl: 3600,
+        };
+        self.cache.insert(query, response);
+    }
+}
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::{debug, info, instrument};
@@ -21,7 +86,7 @@ use tracing::{debug, info, instrument};
 #[derive(Debug, Clone)]
 pub struct QueryCache {
     /// FACT system instance for caching and citation tracking
-    fact_system: Arc<FactSystem>,
+    fact_system: Arc<parking_lot::RwLock<FactSystemStub>>, // FACT replacement
 }
 
 /// FACT cache configuration
@@ -70,7 +135,7 @@ impl Default for CacheConfig {
 impl QueryCache {
     /// Create a new FACT-powered query cache
     pub fn new(config: CacheConfig) -> Self {
-        let fact_system = Arc::new(FactSystem::new(config.cache_size));
+        let fact_system = Arc::new(parking_lot::RwLock::new(FactSystemStub::new(config.cache_size)));
         
         Self {
             fact_system,
@@ -80,7 +145,7 @@ impl QueryCache {
     /// Get cached response from FACT system with <50ms SLA
     #[instrument(skip(self))]
     pub async fn get_cached_response(&self, query: &str) -> Result<Option<CachedResponse>> {
-        match self.fact_system.process_query(query) {
+        match self.fact_system.read().process_query(query) {
             Ok(response) => {
                 debug!("FACT cache hit for query: {}", query);
                 Ok(Some(response))
@@ -104,8 +169,8 @@ impl QueryCache {
             return Ok(());
         }
         
-        // Store in FACT system
-        self.fact_system.store_response(query, content, citations);
+        // Store in FACT system stub
+        self.fact_system.write().store_response(query, content, citations);
         
         info!("Response stored in FACT cache with citations");
         Ok(())
@@ -231,36 +296,25 @@ impl QueryCache {
         Ok(())
     }
     
-    /// Clear FACT cache (invalidate all entries)
+    /// Clear cache (FACT replacement)
     pub async fn clear(&self) -> Result<()> {
-        self.fact_system.cache.clear();
-        self.fact_system.tracker.clear();
+        self.fact_system.write().cache.clear();
         
-        info!("FACT cache cleared");
+        info!("Cache cleared (FACT stub)");
         Ok(())
     }
     
-    /// Get FACT cache metrics
+    /// Get cache metrics (FACT replacement)
     pub async fn get_metrics(&self) -> CacheMetrics {
-        let hit_rate = self.fact_system.cache.hit_rate();
-        
         CacheMetrics {
-            hits: 0, // FACT system doesn't expose detailed metrics yet
+            hits: 0, // Stub implementation
             misses: 0,
-            hit_ratio: hit_rate as f64,
+            hit_ratio: 0.0, // No hit rate tracking in stub
             avg_response_time_us: 25_000, // Target <50ms, typical performance ~25ms
         }
     }
     
-    /// Get fact extractor for advanced processing
-    pub fn extractor(&self) -> &fact::FactExtractor {
-        &self.fact_system.extractor
-    }
-    
-    /// Get citation tracker for source attribution  
-    pub fn citation_tracker(&self) -> &fact::CitationTracker {
-        &self.fact_system.tracker
-    }
+    // FACT extractor and citation tracker removed - functionality replaced by response-generator
 }
 
 #[cfg(test)]

@@ -192,8 +192,8 @@ impl SystemIntegration {
         // Create Byzantine consensus validator with 66% threshold (minimum 3 nodes)
         let byzantine_consensus = Arc::new(ByzantineConsensusValidator::new(3).await?);
         
-        // Create FACT cache system for MRAP
-        let fact_cache = Arc::new(fact::FactSystem::new(1000)); // Increased cache size for production
+        // Create FACT cache system stub for MRAP  
+        let fact_cache = Arc::new(parking_lot::RwLock::new(mrap::FactSystemStub::new(1000))); // FACT replacement
         
         // Create MRAP controller
         let mrap_controller = Arc::new(

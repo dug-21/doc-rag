@@ -1,0 +1,2945 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /Users/dmf/repos/doc-rag/src/response-generator/Cargo.toml
+workspace: /Users/dmf/repos/doc-rag/Cargo.toml
+warning: field `session` is never read
+  --> src/embedder/src/models.rs:40:5
+   |
+36 | pub struct OnnxEmbeddingModel {
+   |            ------------------ field in this struct
+...
+40 |     session: (),
+   |     ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `embedder` (lib) generated 1 warning
+warning: unused variable: `analysis`
+   --> src/query-processor/src/entities.rs:413:9
+    |
+413 |         analysis: &SemanticAnalysis,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_analysis`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `analysis`
+   --> src/query-processor/src/entities.rs:492:9
+    |
+492 |         analysis: &SemanticAnalysis,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_analysis`
+
+warning: unused variable: `analysis`
+   --> src/query-processor/src/entities.rs:102:9
+    |
+102 |         analysis: &SemanticAnalysis,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_analysis`
+
+warning: unused variable: `input`
+   --> src/query-processor/src/classifier.rs:752:35
+    |
+752 |     async fn run_inference(&self, input: &[f32]) -> Result<Vec<f32>> {
+    |                                   ^^^^^ help: if this is intentional, prefix it with an underscore: `_input`
+
+warning: unused variable: `neural_net`
+   --> src/query-processor/src/classifier.rs:584:25
+    |
+584 |         if let Some(ref neural_net) = self.neural_net {
+    |                         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_net`
+
+warning: unused variable: `inputs`
+   --> src/query-processor/src/classifier.rs:588:17
+    |
+588 |             let inputs: Vec<Vec<f32>> = training_data.iter().map(|(input, _)| input.clone()).collect();
+    |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_inputs`
+
+warning: unused variable: `outputs`
+   --> src/query-processor/src/classifier.rs:589:17
+    |
+589 |             let outputs: Vec<Vec<f32>> = training_data.iter().map(|(_, output)| output.clone()).collect();
+    |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_outputs`
+
+warning: unused variable: `neural_net`
+   --> src/query-processor/src/classifier.rs:617:25
+    |
+617 |         if let Some(ref neural_net) = self.neural_net {
+    |                         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_neural_net`
+
+warning: unused variable: `config`
+   --> src/query-processor/src/classifier.rs:686:22
+    |
+686 |     pub async fn new(config: &crate::config::IntentClassifierConfig) -> Result<Self> {
+    |                      ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `client_id`
+    --> src/query-processor/src/consensus.rs:1275:9
+     |
+1275 |         client_id: String,
+     |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_client_id`
+
+warning: unused variable: `timestamp`
+    --> src/query-processor/src/consensus.rs:1276:9
+     |
+1276 |         timestamp: u64,
+     |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_timestamp`
+
+warning: unused variable: `reply`
+    --> src/query-processor/src/consensus.rs:1447:21
+     |
+1447 |                 let reply = ConsensusMessage::Reply {
+     |                     ^^^^^ help: if this is intentional, prefix it with an underscore: `_reply`
+
+warning: unused variable: `client_id`
+    --> src/query-processor/src/consensus.rs:1477:9
+     |
+1477 |         client_id: String,
+     |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_client_id`
+
+warning: unused variable: `query_text`
+    --> src/query-processor/src/consensus.rs:1829:9
+     |
+1829 |         query_text: String,
+     |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_query_text`
+
+warning: unused variable: `query_text`
+    --> src/query-processor/src/consensus.rs:1847:9
+     |
+1847 |         query_text: String,
+     |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_query_text`
+
+warning: unused variable: `query`
+    --> src/query-processor/src/consensus.rs:1865:9
+     |
+1865 |         query: ProcessedQuery,
+     |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+
+warning: unused variable: `result`
+    --> src/query-processor/src/consensus.rs:1883:9
+     |
+1883 |         result: QueryResult,
+     |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
+
+warning: unused variable: `result`
+    --> src/query-processor/src/consensus.rs:1901:9
+     |
+1901 |         result: &QueryResult,
+     |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
+
+warning: unused variable: `config`
+    --> src/query-processor/src/consensus.rs:2167:56
+     |
+2167 |             ConsensusPayload::QueryProcessing { query, config } => {
+     |                                                        ^^^^^^ help: try ignoring the field: `config: _`
+
+warning: unused variable: `query_text`
+    --> src/query-processor/src/consensus.rs:2171:50
+     |
+2171 |             ConsensusPayload::EntityExtraction { query_text, entity_results } => {
+     |                                                  ^^^^^^^^^^ help: try ignoring the field: `query_text: _`
+
+warning: unused variable: `query_text`
+    --> src/query-processor/src/consensus.rs:2176:48
+     |
+2176 |             ConsensusPayload::Classification { query_text, classification_results } => {
+     |                                                ^^^^^^^^^^ help: try ignoring the field: `query_text: _`
+
+warning: unused variable: `query`
+    --> src/query-processor/src/consensus.rs:2180:56
+     |
+2180 |             ConsensusPayload::StrategyRecommendation { query, strategy_results } => {
+     |                                                        ^^^^^ help: try ignoring the field: `query: _`
+
+warning: unused variable: `result`
+    --> src/query-processor/src/consensus.rs:2184:50
+     |
+2184 |             ConsensusPayload::ResultValidation { result, validation_results } => {
+     |                                                  ^^^^^^ help: try ignoring the field: `result: _`
+
+warning: unused variable: `evidence`
+    --> src/query-processor/src/consensus.rs:2365:9
+     |
+2365 |         evidence: ViewChangeEvidence,
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_evidence`
+
+warning: unused variable: `view_change_messages`
+    --> src/query-processor/src/consensus.rs:2376:9
+     |
+2376 |         view_change_messages: Vec<ConsensusMessage>,
+     |         ^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_view_change_messages`
+
+warning: unused variable: `pre_prepare_messages`
+    --> src/query-processor/src/consensus.rs:2377:9
+     |
+2377 |         pre_prepare_messages: Vec<ConsensusMessage>,
+     |         ^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pre_prepare_messages`
+
+warning: unused variable: `view`
+    --> src/query-processor/src/consensus.rs:2389:9
+     |
+2389 |         view: ViewNumber,
+     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_view`
+
+warning: value assigned to `cpu_usage` is never read
+    --> src/query-processor/src/consensus.rs:2712:13
+     |
+2712 |     let mut cpu_usage: f64 = 0.0;
+     |             ^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+     = note: `#[warn(unused_assignments)]` on by default
+
+warning: value assigned to `memory_usage` is never read
+    --> src/query-processor/src/consensus.rs:2713:13
+     |
+2713 |     let mut memory_usage: f64 = 0.0;
+     |             ^^^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+
+warning: value assigned to `disk_usage` is never read
+    --> src/query-processor/src/consensus.rs:2714:13
+     |
+2714 |     let mut disk_usage: f64 = 0.0;
+     |             ^^^^^^^^^^
+     |
+     = help: maybe it is overwritten before being read?
+
+warning: unused variable: `view_change_timeout`
+    --> src/query-processor/src/consensus.rs:2511:13
+     |
+2511 |         let view_change_timeout = self.config.view_change_timeout;
+     |             ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_view_change_timeout`
+
+warning: unused variable: `config`
+   --> src/query-processor/src/analyzer.rs:393:16
+    |
+393 |     pub fn new(config: &crate::config::AnalyzerConfig) -> Result<Self> {
+    |                ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `config`
+   --> src/query-processor/src/classifier.rs:165:16
+    |
+165 |     pub fn new(config: &crate::config::IntentClassifierConfig) -> Result<Self> {
+    |                ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `config`
+   --> src/query-processor/src/classifier.rs:928:16
+    |
+928 |     pub fn new(config: &crate::config::IntentClassifierConfig) -> Result<Self> {
+    |                ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `err`
+   --> src/query-processor/src/error.rs:490:13
+    |
+490 |     fn from(err: tokio::time::error::Elapsed) -> Self {
+    |             ^^^ help: if this is intentional, prefix it with an underscore: `_err`
+
+warning: unused variable: `characteristics`
+   --> src/query-processor/src/strategy.rs:285:36
+    |
+285 |     fn get_default_strategy(&self, characteristics: &QueryCharacteristics) -> SearchStrategy {
+    |                                    ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_characteristics`
+
+warning: unused variable: `config`
+   --> src/query-processor/src/strategy.rs:468:28
+    |
+468 |     fn load_strategy_rules(config: &crate::config::StrategyConfig) -> Result<Vec<StrategyRule>> {
+    |                            ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `feature`
+   --> src/query-processor/src/lib.rs:364:27
+    |
+364 |                 .map(|(i, feature)| (format!("feature_{}", i), 1.0))
+    |                           ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_feature`
+
+warning: struct `QueryProcessorProxy` is never constructed
+   --> src/query-processor/src/lib.rs:304:8
+    |
+304 | struct QueryProcessorProxy {
+    |        ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: field `topic_neural_net` is never read
+   --> src/query-processor/src/analyzer.rs:623:5
+    |
+618 | pub struct SemanticAnalyzer {
+    |            ---------------- field in this struct
+...
+623 |     topic_neural_net: Option<NeuralNet>,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: field `model_config` is never read
+   --> src/query-processor/src/classifier.rs:500:5
+    |
+499 | pub struct NeuralClassifier {
+    |            ---------------- field in this struct
+500 |     model_config: NeuralModelConfig,
+    |     ^^^^^^^^^^^^
+    |
+    = note: `NeuralClassifier` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: associated function `parse_activation_function` is never used
+   --> src/query-processor/src/classifier.rs:668:8
+    |
+508 | impl NeuralClassifier {
+    | --------------------- associated function in this implementation
+...
+668 |     fn parse_activation_function(activation: &str) -> ruv_fann::ActivationFunction {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: fields `rule_weight`, `neural_weight`, and `combination_method` are never read
+   --> src/query-processor/src/classifier.rs:876:5
+    |
+875 | pub struct EnsembleClassifier {
+    |            ------------------ fields in this struct
+876 |     rule_weight: f64,
+    |     ^^^^^^^^^^^
+877 |     neural_weight: f64,
+    |     ^^^^^^^^^^^^^
+878 |     combination_method: EnsembleCombination,
+    |     ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `EnsembleClassifier` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: field `stop_words` is never read
+   --> src/query-processor/src/classifier.rs:924:5
+    |
+923 | pub struct FeatureExtractor {
+    |            ---------------- field in this struct
+924 |     stop_words: std::collections::HashSet<String>,
+    |     ^^^^^^^^^^
+    |
+    = note: `FeatureExtractor` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: multiple methods are never used
+    --> src/query-processor/src/consensus.rs:1180:14
+     |
+1002 | impl ConsensusManager {
+     | --------------------- methods in this implementation
+...
+1180 |     async fn initiate_consensus_round(
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1231 |     async fn process_message(&self, message: ConsensusMessage) -> Result<()> {
+     |              ^^^^^^^^^^^^^^^
+...
+1271 |     async fn handle_request(
+     |              ^^^^^^^^^^^^^^
+...
+1294 |     async fn handle_pre_prepare(
+     |              ^^^^^^^^^^^^^^^^^^
+...
+1353 |     async fn handle_prepare(
+     |              ^^^^^^^^^^^^^^
+...
+1404 |     async fn handle_commit(
+     |              ^^^^^^^^^^^^^
+...
+2165 |     async fn fallback_consensus(&self, payload: ConsensusPayload) -> Result<ConsensusResult> {
+     |              ^^^^^^^^^^^^^^^^^^
+...
+2192 |     async fn consensus_entity_extraction(&self, results: Vec<NodeEntityResult>) -> Result<Vec<ExtractedEntity>> {
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2228 |     async fn consensus_classification(&self, results: Vec<NodeClassificationResult>) -> Result<ClassificationResult> {
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2268 |     async fn consensus_strategy(&self, results: Vec<NodeStrategyResult>) -> Result<StrategyRecommendation> {
+     |              ^^^^^^^^^^^^^^^^^^
+...
+2309 |     async fn consensus_validation(&self, results: Vec<NodeValidationResult>) -> Result<ValidationResult> {
+     |              ^^^^^^^^^^^^^^^^^^^^
+...
+2348 |     async fn complete_pending_request(&self, request_id: String, result: ConsensusResult) -> Result<()> {
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2361 |     async fn handle_view_change(
+     |              ^^^^^^^^^^^^^^^^^^
+...
+2373 |     async fn handle_new_view(
+     |              ^^^^^^^^^^^^^^^
+...
+2386 |     async fn handle_heartbeat(
+     |              ^^^^^^^^^^^^^^^^
+...
+2425 |     async fn broadcast_message(&self, message: ConsensusMessage) -> Result<()> {
+     |              ^^^^^^^^^^^^^^^^^
+...
+2439 |     async fn start_message_processor(&self) -> Result<()> {
+     |              ^^^^^^^^^^^^^^^^^^^^^^^
+...
+2463 |     async fn start_heartbeat_task(&self) -> Result<()> {
+     |              ^^^^^^^^^^^^^^^^^^^^
+...
+2509 |     async fn start_view_change_monitor(&self) -> Result<()> {
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2538 |     async fn execute_consensus_operation(&self, payload: ConsensusPayload) -> Result<ConsensusResult> {
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `generate_round_id` is never used
+    --> src/query-processor/src/consensus.rs:2648:4
+     |
+2648 | fn generate_round_id() -> RoundId {
+     |    ^^^^^^^^^^^^^^^^^
+
+warning: function `compute_digest` is never used
+    --> src/query-processor/src/consensus.rs:2656:4
+     |
+2656 | fn compute_digest(payload: &ConsensusPayload) -> String {
+     |    ^^^^^^^^^^^^^^
+
+warning: function `get_system_load` is never used
+    --> src/query-processor/src/consensus.rs:2667:10
+     |
+2667 | async fn get_system_load() -> f64 {
+     |          ^^^^^^^^^^^^^^^
+
+warning: function `get_system_resources` is never used
+    --> src/query-processor/src/consensus.rs:2711:10
+     |
+2711 | async fn get_system_resources() -> ResourceStatus {
+     |          ^^^^^^^^^^^^^^^^^^^^
+
+warning: field `threshold` is never read
+   --> src/query-processor/src/consensus.rs:124:13
+    |
+123 |     pub struct FaultTolerance {
+    |                -------------- field in this struct
+124 |         pub threshold: f64,
+    |             ^^^^^^^^^
+
+warning: field `config` is never read
+   --> src/query-processor/src/consensus.rs:150:13
+    |
+149 |     pub struct DAAManager {
+    |                ---------- field in this struct
+150 |         pub config: DAAConfig,
+    |             ^^^^^^
+
+warning: multiple fields are never read
+   --> src/query-processor/src/consensus.rs:177:13
+    |
+176 |     pub struct DAAConfig {
+    |                --------- fields in this struct
+177 |         pub consensus_timeout: Duration,
+    |             ^^^^^^^^^^^^^^^^^
+178 |         pub fault_tolerance_threshold: f64,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^
+179 |         pub enable_learning: bool,
+    |             ^^^^^^^^^^^^^^^
+180 |         pub learning_rate: f64,
+    |             ^^^^^^^^^^^^^
+181 |         pub min_nodes: usize,
+    |             ^^^^^^^^^
+182 |         pub heartbeat_interval: Duration,
+    |             ^^^^^^^^^^^^^^^^^^
+183 |         pub view_change_timeout: Duration,
+    |             ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `DAAConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `min_nodes` is never read
+  --> src/query-processor/src/consensus.rs:35:17
+   |
+33 |         pub struct ByzantineConsensus {
+   |                    ------------------ field in this struct
+34 |             pub threshold: f64,
+35 |             pub min_nodes: usize,
+   |                 ^^^^^^^^^
+   |
+   = note: `ByzantineConsensus` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `description` is never read
+   --> src/query-processor/src/entities.rs:567:5
+    |
+565 | pub struct EntityPattern {
+    |            ------------- field in this struct
+566 |     regex: Regex,
+567 |     description: String,
+    |     ^^^^^^^^^^^
+    |
+    = note: `EntityPattern` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `entries` and `access_times` are never read
+   --> src/query-processor/src/performance_optimizer.rs:100:5
+    |
+99  | pub struct ValidationCache {
+    |            --------------- fields in this struct
+100 |     entries: HashMap<String, CachedValidationResult>,
+    |     ^^^^^^^
+101 |     access_times: HashMap<String, Instant>,
+    |     ^^^^^^^^^^^^
+    |
+    = note: `ValidationCache` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: fields `query_hash`, `access_count`, and `processing_time` are never read
+   --> src/query-processor/src/performance_optimizer.rs:107:5
+    |
+106 | pub struct CachedQueryResult {
+    |            ----------------- fields in this struct
+107 |     query_hash: String,
+    |     ^^^^^^^^^^
+...
+110 |     access_count: u64,
+    |     ^^^^^^^^^^^^
+111 |     processing_time: Duration,
+    |     ^^^^^^^^^^^^^^^
+    |
+    = note: `CachedQueryResult` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `validation_hash`, `is_valid`, `confidence_score`, `created_at`, and `access_count` are never read
+   --> src/query-processor/src/performance_optimizer.rs:117:5
+    |
+116 | pub struct CachedValidationResult {
+    |            ---------------------- fields in this struct
+117 |     validation_hash: String,
+    |     ^^^^^^^^^^^^^^^
+118 |     is_valid: bool,
+    |     ^^^^^^^^
+119 |     confidence_score: f64,
+    |     ^^^^^^^^^^^^^^^^
+120 |     created_at: Instant,
+    |     ^^^^^^^^^^
+121 |     access_count: u64,
+    |     ^^^^^^^^^^^^
+    |
+    = note: `CachedValidationResult` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `task_id`, `query`, `validation_type`, and `priority` are never read
+   --> src/query-processor/src/performance_optimizer.rs:127:5
+    |
+126 | pub struct ValidationTask {
+    |            -------------- fields in this struct
+127 |     task_id: Uuid,
+    |     ^^^^^^^
+128 |     query: Query,
+    |     ^^^^^
+129 |     validation_type: ValidationType,
+    |     ^^^^^^^^^^^^^^^
+130 |     priority: ValidationPriority,
+    |     ^^^^^^^^
+    |
+    = note: `ValidationTask` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: field `strategy_templates` is never read
+   --> src/query-processor/src/strategy.rs:431:5
+    |
+429 | pub struct StrategyEngine {
+    |            -------------- field in this struct
+430 |     strategy_rules: Vec<StrategyRule>,
+431 |     strategy_templates: HashMap<String, SearchStrategy>,
+    |     ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `StrategyEngine` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/analyzer.rs:228:5
+    |
+228 |     pub fn new(config: &crate::config::AnalyzerConfig) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+note: the lint level is defined here
+   --> src/query-processor/src/lib.rs:45:9
+    |
+45  | #![warn(missing_docs)]
+    |         ^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/analyzer.rs:234:5
+    |
+234 |     pub fn detect(&self, text: &str) -> Result<Option<Language>> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/analyzer.rs:271:5
+    |
+271 |     pub fn new(config: &crate::config::PreprocessingConfig) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/analyzer.rs:277:5
+    |
+277 |     pub fn preprocess(&self, text: &str, language: &Option<Language>) -> Result<PreprocessedText> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/analyzer.rs:393:5
+    |
+393 |     pub fn new(config: &crate::config::AnalyzerConfig) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/analyzer.rs:399:5
+    |
+399 |     pub async fn analyze(&self, text: &PreprocessedText) -> Result<SyntacticFeatures> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/analyzer.rs:666:5
+    |
+666 |     pub async fn new(config: &crate::config::SemanticAnalysisConfig) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/analyzer.rs:688:5
+    |
+688 | /     pub async fn analyze(
+689 | |         &self,
+690 | |         text: &PreprocessedText,
+691 | |         syntactic: &SyntacticFeatures,
+692 | |     ) -> Result<SemanticFeatures> {
+    | |_________________________________^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/classifier.rs:165:5
+    |
+165 |     pub fn new(config: &crate::config::IntentClassifierConfig) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/classifier.rs:175:5
+    |
+175 | /     pub async fn classify(
+176 | |         &self,
+177 | |         query: &Query,
+178 | |         analysis: &SemanticAnalysis,
+179 | |         features: &ClassificationFeatures,
+180 | |     ) -> Result<IntentClassification> {
+    | |_____________________________________^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:372:5
+    |
+372 |     pub name: String,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:373:5
+    |
+373 |     pub intent: QueryIntent,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:374:5
+    |
+374 |     pub conditions: Vec<RuleCondition>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:375:5
+    |
+375 |     pub confidence: f64,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/classifier.rs:379:5
+    |
+379 | /     pub fn evaluate(
+380 | |         &self,
+381 | |         text: &str,
+382 | |         analysis: &SemanticAnalysis,
+383 | |         _features: &ClassificationFeatures,
+384 | |     ) -> Result<Option<f64>> {
+    | |____________________________^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/classifier.rs:408:5
+    |
+408 |     ContainsPattern(String),
+    |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/classifier.rs:409:5
+    |
+409 |     ContainsEntity(String),
+    |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/classifier.rs:410:5
+    |
+410 |     HasSentiment(String),
+    |     ^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/classifier.rs:411:5
+    |
+411 |     QuestionWordCount(usize),
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/classifier.rs:412:5
+    |
+412 |     TextLength(usize, usize), // min, max
+    |     ^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/classifier.rs:416:5
+    |
+416 |     pub fn matches(&self, text: &str, analysis: &SemanticAnalysis) -> Result<bool> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:451:5
+    |
+451 |     pub name: String,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:452:5
+    |
+452 |     pub keywords: Vec<String>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:453:5
+    |
+453 |     pub structures: Vec<String>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:454:5
+    |
+454 |     pub confidence: f64,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:455:5
+    |
+455 |     pub boost_factors: HashMap<String, f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/classifier.rs:459:5
+    |
+459 | /     pub fn calculate_score(
+460 | |         &self,
+461 | |         text: &str,
+462 | |         _analysis: &SemanticAnalysis,
+463 | |         _features: &ClassificationFeatures,
+464 | |     ) -> Result<f64> {
+    | |____________________^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/classifier.rs:686:5
+    |
+686 |     pub async fn new(config: &crate::config::IntentClassifierConfig) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/classifier.rs:705:5
+    |
+705 | /     pub async fn classify(
+706 | |         &self,
+707 | |         query: &Query,
+708 | |         _analysis: &SemanticAnalysis,
+709 | |         features: &ClassificationFeatures,
+710 | |     ) -> Result<IntentClassification> {
+    | |_____________________________________^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:846:5
+    |
+846 |     pub model_path: Option<String>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:847:5
+    |
+847 |     pub input_size: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:848:5
+    |
+848 |     pub hidden_layers: Vec<usize>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:849:5
+    |
+849 |     pub output_size: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:850:5
+    |
+850 |     pub activation_function: String,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:851:5
+    |
+851 |     pub learning_rate: f32,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:852:5
+    |
+852 |     pub training_algorithm: String,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:853:5
+    |
+853 |     pub max_epochs: u32,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/classifier.rs:854:5
+    |
+854 |     pub desired_error: f32,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/classifier.rs:882:5
+    |
+882 | /     pub async fn new(
+883 | |         _config: &crate::config::IntentClassifierConfig,
+884 | |         _rule_classifier: &RuleBasedClassifier,
+885 | |         _neural_classifier: Option<&NeuralClassifier>,
+886 | |     ) -> Result<Self> {
+    | |_____________________^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/classifier.rs:894:5
+    |
+894 | /     pub async fn classify(
+895 | |         &self,
+896 | |         _query: &Query,
+897 | |         _analysis: &SemanticAnalysis,
+898 | |         features: &ClassificationFeatures,
+899 | |     ) -> Result<IntentClassification> {
+    | |_____________________________________^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/classifier.rs:916:5
+    |
+916 |     WeightedAverage,
+    |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/classifier.rs:917:5
+    |
+917 |     Voting,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/classifier.rs:918:5
+    |
+918 |     Stacking,
+    |     ^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/classifier.rs:928:5
+    |
+928 |     pub fn new(config: &crate::config::IntentClassifierConfig) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/classifier.rs:939:5
+    |
+939 | /     pub async fn extract_features(
+940 | |         &self,
+941 | |         query: &Query,
+942 | |         analysis: &SemanticAnalysis,
+943 | |     ) -> Result<ClassificationFeatures> {
+    | |_______________________________________^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1024:5
+     |
+1024 |     pub text_length: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1025:5
+     |
+1025 |     pub word_count: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1026:5
+     |
+1026 |     pub sentence_count: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1027:5
+     |
+1027 |     pub question_word_count: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1028:5
+     |
+1028 |     pub entity_count: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1029:5
+     |
+1029 |     pub has_question_mark: bool,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1030:5
+     |
+1030 |     pub has_comparison_words: bool,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1031:5
+     |
+1031 |     pub has_compliance_terms: bool,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1032:5
+     |
+1032 |     pub sentiment_score: f32,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1033:5
+     |
+1033 |     pub complexity_score: f32,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1034:5
+     |
+1034 |     pub pos_tag_distribution: HashMap<String, f32>,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1035:5
+     |
+1035 |     pub dependency_features: DependencyFeatures,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1036:5
+     |
+1036 |     pub semantic_features: ExtractedSemanticFeatures,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1037:5
+     |
+1037 |     pub feature_names: Vec<String>,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1043:5
+     |
+1043 |     pub dependency_count: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1044:5
+     |
+1044 |     pub has_subject_verb: bool,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1045:5
+     |
+1045 |     pub has_direct_object: bool,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1046:5
+     |
+1046 |     pub has_question_structure: bool,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1052:5
+     |
+1052 |     pub semantic_role_count: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1053:5
+     |
+1053 |     pub coreference_chain_count: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1054:5
+     |
+1054 |     pub has_sentiment: bool,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1055:5
+     |
+1055 |     pub embedding_dimension: usize,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+    --> src/query-processor/src/classifier.rs:1066:5
+     |
+1066 |     pub fn new(max_size: usize) -> Result<Self> {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+    --> src/query-processor/src/classifier.rs:1073:5
+     |
+1073 |     pub fn get(&self, key: &str) -> Option<IntentClassification> {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+    --> src/query-processor/src/classifier.rs:1077:5
+     |
+1077 |     pub fn put(&self, key: String, value: IntentClassification) {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1092:5
+     |
+1092 |     pub pattern_type: String,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1093:5
+     |
+1093 |     pub confidence: f64,
+     |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+    --> src/query-processor/src/classifier.rs:1094:5
+     |
+1094 |     pub semantic_weight: f64,
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/entities.rs:343:5
+    |
+343 |     pub async fn new(config: Arc<EntityExtractorConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/entities.rs:349:5
+    |
+349 | /     pub async fn extract(
+350 | |         &self,
+351 | |         _query: &Query,
+352 | |         analysis: &SemanticAnalysis,
+353 | |     ) -> Result<Vec<ExtractedEntity>> {
+    | |_____________________________________^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/entities.rs:401:5
+    |
+401 |     pub async fn new(config: Arc<EntityExtractorConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/entities.rs:410:5
+    |
+410 | /     pub async fn extract(
+411 | |         &self,
+412 | |         query: &Query,
+413 | |         analysis: &SemanticAnalysis,
+414 | |     ) -> Result<Vec<ExtractedEntity>> {
+    | |_____________________________________^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/entities.rs:480:5
+    |
+480 |     pub async fn new(config: Arc<EntityExtractorConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/entities.rs:489:5
+    |
+489 | /     pub async fn extract(
+490 | |         &self,
+491 | |         query: &Query,
+492 | |         analysis: &SemanticAnalysis,
+493 | |     ) -> Result<Vec<ExtractedEntity>> {
+    | |_____________________________________^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/entities.rs:572:5
+    |
+572 |     pub fn new(pattern: &str, description: &str, confidence: f64) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/entities.rs:582:5
+    |
+582 |     pub fn find_matches(&self, text: &str) -> Result<Vec<EntityMatch>> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/entities.rs:603:5
+    |
+603 |     pub fn normalize(&self, text: &str) -> String {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/entities.rs:612:5
+    |
+612 |     pub text: String,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/entities.rs:613:5
+    |
+613 |     pub start: usize,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/entities.rs:614:5
+    |
+614 |     pub end: usize,
+    |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/entities.rs:615:5
+    |
+615 |     pub confidence: f64,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/entities.rs:616:5
+    |
+616 |     pub groups: Vec<Option<String>>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:17:21
+   |
+17 |     Configuration { message: String },
+   |                     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:21:20
+   |
+21 |     InvalidQuery { reason: String },
+   |                    ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:25:22
+   |
+25 |     AnalysisFailed { stage: String, reason: String },
+   |                      ^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:25:37
+   |
+25 |     AnalysisFailed { stage: String, reason: String },
+   |                                     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:29:30
+   |
+29 |     EntityExtractionFailed { reason: String },
+   |                              ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:33:28
+   |
+33 |     TermExtractionFailed { reason: String },
+   |                            ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:37:34
+   |
+37 |     IntentClassificationFailed { reason: String },
+   |                                  ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:41:31
+   |
+41 |     StrategySelectionFailed { reason: String },
+   |                               ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:49:23
+   |
+49 |     ConsensusFailed { reason: String },
+   |                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:53:24
+   |
+53 |     ValidationFailed { field: String, reason: String },
+   |                        ^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:53:39
+   |
+53 |     ValidationFailed { field: String, reason: String },
+   |                                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:57:28
+   |
+57 |     PerformanceViolation { constraint: String, details: String },
+   |                            ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:57:48
+   |
+57 |     PerformanceViolation { constraint: String, details: String },
+   |                                                ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:61:21
+   |
+61 |     ResourceError { resource: String, reason: String },
+   |                     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:61:39
+   |
+61 |     ResourceError { resource: String, reason: String },
+   |                                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:65:20
+   |
+65 |     NetworkError { operation: String, reason: String },
+   |                    ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:65:39
+   |
+65 |     NetworkError { operation: String, reason: String },
+   |                                       ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:70:9
+   |
+70 |         operation: String,
+   |         ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:71:9
+   |
+71 |         duration: std::time::Duration,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:76:24
+   |
+76 |     ConcurrencyError { reason: String },
+   |                        ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:80:28
+   |
+80 |     ExternalServiceError { service: String, reason: String },
+   |                            ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:80:45
+   |
+80 |     ExternalServiceError { service: String, reason: String },
+   |                                             ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:84:27
+   |
+84 |     DataProcessingError { stage: String, reason: String },
+   |                           ^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:84:42
+   |
+84 |     DataProcessingError { stage: String, reason: String },
+   |                                          ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:88:26
+   |
+88 |     SerializationError { format: String, reason: String },
+   |                          ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:88:42
+   |
+88 |     SerializationError { format: String, reason: String },
+   |                                          ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:92:27
+   |
+92 |     AuthenticationError { reason: String },
+   |                           ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:97:9
+   |
+97 |         limit: u32,
+   |         ^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> src/query-processor/src/error.rs:98:9
+   |
+98 |         window: std::time::Duration,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:103:19
+    |
+103 |     MemoryError { reason: String },
+    |                   ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:107:26
+    |
+107 |     NeuralNetworkError { model: String, reason: String },
+    |                          ^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:107:41
+    |
+107 |     NeuralNetworkError { model: String, reason: String },
+    |                                         ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:111:31
+    |
+111 |     ConsensusAlgorithmError { algorithm: String, reason: String },
+    |                               ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:111:50
+    |
+111 |     ConsensusAlgorithmError { algorithm: String, reason: String },
+    |                                                  ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:115:22
+    |
+115 |     ByzantineFault { details: String },
+    |                      ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:119:21
+    |
+119 |     CitationError { reason: String },
+    |                     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:123:21
+    |
+123 |     DatabaseError { operation: String, reason: String },
+    |                     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:123:40
+    |
+123 |     DatabaseError { operation: String, reason: String },
+    |                                        ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:127:18
+    |
+127 |     CacheError { operation: String, reason: String },
+    |                  ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:127:37
+    |
+127 |     CacheError { operation: String, reason: String },
+    |                                     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:131:20
+    |
+131 |     MetricsError { metric: String, reason: String },
+    |                    ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:131:36
+    |
+131 |     MetricsError { metric: String, reason: String },
+    |                                    ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/error.rs:139:16
+    |
+139 |     Internal { reason: String },
+    |                ^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/extractor.rs:307:5
+    |
+307 |     pub async fn new(config: Arc<TermExtractorConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/extractor.rs:311:5
+    |
+311 | /     pub async fn extract_ngrams(
+312 | |         &self,
+313 | |         query: &Query,
+314 | |         analysis: &SemanticAnalysis,
+315 | |         n: usize,
+316 | |     ) -> Result<Vec<KeyTerm>> {
+    | |_____________________________^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/extractor.rs:433:5
+    |
+433 |     pub async fn new() -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/extractor.rs:437:5
+    |
+437 |     pub async fn calculate_tfidf(&self, term: &str, document: &str) -> Result<f64> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/metrics.rs:322:5
+    |
+322 |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:332:5
+    |
+332 |     pub fn record_latency(&mut self, duration: Duration) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:346:5
+    |
+346 |     pub fn average(&self) -> Duration {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:354:5
+    |
+354 |     pub fn percentile(&self, p: u8) -> Duration {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/metrics.rs:376:5
+    |
+376 |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:383:5
+    |
+383 |     pub fn record_processing(&mut self, timestamp: Instant) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:397:5
+    |
+397 |     pub fn current_qps(&self) -> f64 {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/metrics.rs:419:5
+    |
+419 |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:428:5
+    |
+428 |     pub fn record_confidence(&mut self, confidence: f64) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:436:5
+    |
+436 |     pub fn average_confidence(&self) -> f64 {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/metrics.rs:456:5
+    |
+456 |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:466:5
+    |
+466 |     pub fn record_usage(&mut self, usage: &crate::query::ResourceUsage) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:474:5
+    |
+474 |     pub fn cache_hit_rate(&self) -> f64 {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/metrics.rs:493:5
+    |
+493 |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:501:5
+    |
+501 |     pub fn record_duration(&mut self, duration: Duration) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/metrics.rs:517:5
+    |
+517 |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:525:5
+    |
+525 |     pub fn record_processing(&mut self, confidence: f64) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/metrics.rs:541:5
+    |
+541 |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:549:5
+    |
+549 |     pub fn record_usage(&mut self, confidence: f64) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:557:5
+    |
+557 |     pub fn average_confidence(&self) -> f64 {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/metrics.rs:565:5
+    |
+565 |     pub fn success_rate(&self) -> f64 {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:577:5
+    |
+577 |     pub total_processed: u64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:578:5
+    |
+578 |     pub success_rate: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:579:5
+    |
+579 |     pub average_latency: Duration,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:580:5
+    |
+580 |     pub current_throughput: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:581:5
+    |
+581 |     pub average_confidence: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:582:5
+    |
+582 |     pub top_intent: Option<QueryIntent>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:583:5
+    |
+583 |     pub top_strategy: Option<String>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:584:5
+    |
+584 |     pub uptime: Duration,
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/metrics.rs:585:5
+    |
+585 |     pub last_updated: DateTime<Utc>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:136:5
+    |
+136 |     Semantic,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:137:5
+    |
+137 |     Entity,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:138:5
+    |
+138 |     Intent,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:139:5
+    |
+139 |     Strategy,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:140:5
+    |
+140 |     Consensus,
+    |     ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:146:5
+    |
+146 |     Low = 1,
+    |     ^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:147:5
+    |
+147 |     Medium = 2,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:148:5
+    |
+148 |     High = 3,
+    |     ^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:149:5
+    |
+149 |     Critical = 4,
+    |     ^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:155:5
+    |
+155 |     pub query_id: Uuid,
+    |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:156:5
+    |
+156 |     pub result: ProcessedQuery,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:157:5
+    |
+157 |     pub processing_time: Duration,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:158:5
+    |
+158 |     pub cache_hit: bool,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:159:5
+    |
+159 |     pub parallel_tasks_used: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:160:5
+    |
+160 |     pub performance_score: f64, // 0.0 to 1.0 based on target achievement
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:551:5
+    |
+551 |     pub target_response_time_ms: u64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:552:5
+    |
+552 |     pub average_response_time_ms: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:553:5
+    |
+553 |     pub target_achievement_rate: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:554:5
+    |
+554 |     pub cache_hit_rate: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:555:5
+    |
+555 |     pub total_queries_processed: u64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:556:5
+    |
+556 |     pub queries_under_target: u64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:557:5
+    |
+557 |     pub cache_size: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/performance_optimizer.rs:558:5
+    |
+558 |     pub performance_grade: PerformanceGrade,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:564:5
+    |
+564 |     Excellent, // >95% target achievement
+    |     ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:565:5
+    |
+565 |     Good,      // 85-95% target achievement  
+    |     ^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:566:5
+    |
+566 |     Fair,      // 70-85% target achievement
+    |     ^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/performance_optimizer.rs:567:5
+    |
+567 |     Poor,      // <70% target achievement
+    |     ^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/query.rs:895:5
+    |
+895 |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/query.rs:899:5
+    |
+899 |     pub fn query(mut self, query: impl Into<String>) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/query.rs:904:5
+    |
+904 |     pub fn query_id(mut self, id: Uuid) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/query.rs:909:5
+    |
+909 |     pub fn build(self) -> Result<Query> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/strategy.rs:435:5
+    |
+435 |     pub fn new(config: &crate::config::StrategyConfig) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:445:5
+    |
+445 | /     pub async fn recommend_strategies(
+446 | |         &self,
+447 | |         characteristics: &QueryCharacteristics,
+448 | |     ) -> Result<Vec<StrategyRecommendation>> {
+    | |____________________________________________^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:646:5
+    |
+646 |     pub name: String,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:647:5
+    |
+647 |     pub conditions: Vec<RuleCondition>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:648:5
+    |
+648 |     pub strategy_template: String,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:649:5
+    |
+649 |     pub confidence: f64,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:650:5
+    |
+650 |     pub parameters: HashMap<String, f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:654:5
+    |
+654 |     pub fn evaluate(&self, characteristics: &QueryCharacteristics) -> Result<Option<StrategyRecommendation>> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:742:5
+    |
+742 |     IntentEquals(QueryIntent),
+    |     ^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:743:5
+    |
+743 |     ComplexityAbove(f64),
+    |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:744:5
+    |
+744 |     ComplexityBelow(f64),
+    |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:745:5
+    |
+745 |     EntityCountAbove(usize),
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:746:5
+    |
+746 |     EntityCountBelow(usize),
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:747:5
+    |
+747 |     HasTechnicalTerms,
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:748:5
+    |
+748 |     HasComplianceTerms,
+    |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:749:5
+    |
+749 |     RequiresHighAccuracy,
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/strategy.rs:750:5
+    |
+750 |     MaxLatencyBelow(Duration),
+    |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:754:5
+    |
+754 |     pub fn matches(&self, characteristics: &QueryCharacteristics) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:772:5
+    |
+772 |     pub strategy: SearchStrategy,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:773:5
+    |
+773 |     pub confidence: f64,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:774:5
+    |
+774 |     pub reasoning: String,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:775:5
+    |
+775 |     pub performance_estimate: Option<PerformanceMetrics>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:781:5
+    |
+781 |     pub query_length: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:782:5
+    |
+782 |     pub word_count: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:783:5
+    |
+783 |     pub entity_count: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:784:5
+    |
+784 |     pub entity_density: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:785:5
+    |
+785 |     pub intent: QueryIntent,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:786:5
+    |
+786 |     pub intent_confidence: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:787:5
+    |
+787 |     pub complexity_score: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:788:5
+    |
+788 |     pub has_technical_terms: bool,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:789:5
+    |
+789 |     pub has_compliance_terms: bool,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:790:5
+    |
+790 |     pub has_comparison_indicators: bool,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:791:5
+    |
+791 |     pub semantic_complexity: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:792:5
+    |
+792 |     pub syntactic_complexity: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:793:5
+    |
+793 |     pub requires_high_accuracy: bool,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:794:5
+    |
+794 |     pub performance_requirements: PerformanceRequirements,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:800:5
+    |
+800 |     pub max_latency: Duration,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:801:5
+    |
+801 |     pub min_accuracy: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:802:5
+    |
+802 |     pub min_recall: f64,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:803:5
+    |
+803 |     pub min_precision: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/strategy.rs:814:5
+    |
+814 |     pub fn new(_config: &crate::config::StrategyConfig) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:821:5
+    |
+821 | /     pub async fn record_performance(
+822 | |         &mut self,
+823 | |         selection: &StrategySelection,
+824 | |         actual: ActualPerformance,
+825 | |     ) -> Result<()> {
+    | |___________________^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:871:5
+    |
+871 |     pub fn get_strategy_performance(&self, strategy: &SearchStrategy) -> Option<&StrategyMetrics> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:880:5
+    |
+880 |     pub timestamp: chrono::DateTime<chrono::Utc>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:881:5
+    |
+881 |     pub expected_metrics: PerformanceMetrics,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:882:5
+    |
+882 |     pub actual_performance: ActualPerformance,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:883:5
+    |
+883 |     pub accuracy_delta: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:884:5
+    |
+884 |     pub latency_delta: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:890:5
+    |
+890 |     pub accuracy: f64,
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:891:5
+    |
+891 |     pub recall: f64,
+    |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:892:5
+    |
+892 |     pub precision: f64,
+    |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:893:5
+    |
+893 |     pub latency: Duration,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:894:5
+    |
+894 |     pub resource_usage: ResourceUsage,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:895:5
+    |
+895 |     pub result_count: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:896:5
+    |
+896 |     pub user_satisfaction: Option<f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:902:5
+    |
+902 |     pub total_queries: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:903:5
+    |
+903 |     pub high_accuracy_count: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:904:5
+    |
+904 |     pub total_accuracy: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:905:5
+    |
+905 |     pub average_accuracy: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:906:5
+    |
+906 |     pub total_latency: Duration,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:907:5
+    |
+907 |     pub average_latency: Duration,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:908:5
+    |
+908 |     pub accuracy_variance: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:909:5
+    |
+909 |     pub latency_variance: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/strategy.rs:910:5
+    |
+910 |     pub last_updated: Option<chrono::DateTime<chrono::Utc>>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/strategy.rs:922:5
+    |
+922 |     pub async fn new(config: &crate::config::StrategyConfig) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:930:5
+    |
+930 | /     pub async fn refine_recommendations(
+931 | |         &self,
+932 | |         mut recommendations: Vec<StrategyRecommendation>,
+933 | |         _characteristics: &QueryCharacteristics,
+934 | |     ) -> Result<Vec<StrategyRecommendation>> {
+    | |____________________________________________^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:949:5
+    |
+949 | /     pub async fn update_from_performance(
+950 | |         &mut self,
+951 | |         selection: &StrategySelection,
+952 | |         actual: &ActualPerformance,
+953 | |     ) -> Result<()> {
+    | |___________________^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/strategy.rs:982:5
+    |
+982 |     pub fn new(max_size: usize) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:989:5
+    |
+989 |     pub fn get(&self, key: &str) -> Option<StrategySelection> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/strategy.rs:993:5
+    |
+993 |     pub fn put(&self, key: String, value: StrategySelection) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> src/query-processor/src/types.rs:38:5
+   |
+38 |     pub fn new(code: String, name: String, confidence: f64) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/types.rs:97:5
+    |
+97  | /     pub fn new(
+98  | |         syntactic_features: SyntacticFeatures,
+99  | |         semantic_features: SemanticFeatures,
+100 | |         dependencies: Vec<Dependency>,
+...   |
+103 | |         processing_time: Duration,
+104 | |     ) -> Self {
+    | |_____________^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/types.rs:171:5
+    |
+171 | /     pub fn new(
+172 | |         text: String,
+173 | |         entity_type: String,
+174 | |         start: usize,
+175 | |         end: usize,
+176 | |         confidence: f64,
+177 | |     ) -> Self {
+    | |_____________^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:195:5
+    |
+195 |     RuleBased,
+    |     ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:196:5
+    |
+196 |     Neural,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:197:5
+    |
+197 |     Hybrid,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:198:5
+    |
+198 |     External,
+    |     ^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/types.rs:249:5
+    |
+249 |     pub fn new(predicate: String, arguments: Vec<Argument>, confidence: f64) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/types.rs:392:5
+    |
+392 |     pub fn confidence_weight(&self) -> f64 {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> src/query-processor/src/types.rs:409:5
+    |
+409 |     pub fn is_complex(&self) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:439:5
+    |
+439 |     RuleBased,
+    |     ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:440:5
+    |
+440 |     Neural,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:441:5
+    |
+441 |     Ensemble,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:442:5
+    |
+442 |     Hybrid,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:473:5
+    |
+473 |     TechnicalTerm,
+    |     ^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:474:5
+    |
+474 |     ComplianceKeyword,
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:475:5
+    |
+475 |     BusinessTerm,
+    |     ^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:476:5
+    |
+476 |     GeneralTerm,
+    |     ^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:477:5
+    |
+477 |     StopWord,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:479:5
+    |
+479 |     Domain,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:480:5
+    |
+480 |     Compliance,
+    |     ^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:481:5
+    |
+481 |     Technical,
+    |     ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:482:5
+    |
+482 |     Concept,
+    |     ^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:483:5
+    |
+483 |     Action,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:484:5
+    |
+484 |     General,
+    |     ^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:492:9
+    |
+492 |         model: String,
+    |         ^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:493:9
+    |
+493 |         similarity_threshold: f64,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:494:9
+    |
+494 |         max_results: usize,
+    |         ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:498:9
+    |
+498 |         algorithm: KeywordAlgorithm,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:499:9
+    |
+499 |         boost_factors: HashMap<String, f64>,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:500:9
+    |
+500 |         fuzzy_matching: bool,
+    |         ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:504:9
+    |
+504 |         strategies: Vec<SearchStrategy>,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:505:9
+    |
+505 |         weights: HashMap<String, f64>,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:506:9
+    |
+506 |         combination_method: CombinationMethod,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:510:9
+    |
+510 |         graph_traversal: GraphTraversal,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:511:9
+    |
+511 |         relationship_types: Vec<String>,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:512:9
+    |
+512 |         depth_limit: usize,
+    |         ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:516:9
+    |
+516 |         base_strategy: Box<SearchStrategy>,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:517:9
+    |
+517 |         adaptation_rules: Vec<AdaptationRule>,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:518:9
+    |
+518 |         learning_enabled: bool,
+    |         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:543:5
+    |
+543 |     BM25,
+    |     ^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:544:5
+    |
+544 |     TfIdf,
+    |     ^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:545:5
+    |
+545 |     Boolean,
+    |     ^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:546:5
+    |
+546 |     Fuzzy,
+    |     ^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:552:5
+    |
+552 |     WeightedSum,
+    |     ^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:553:5
+    |
+553 |     RankFusion,
+    |     ^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:554:5
+    |
+554 |     Cascade,
+    |     ^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:555:5
+    |
+555 |     Voting,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:561:5
+    |
+561 |     BreadthFirst,
+    |     ^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:562:5
+    |
+562 |     DepthFirst,
+    |     ^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:563:5
+    |
+563 |     PageRank,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:564:5
+    |
+564 |     RandomWalk,
+    |     ^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:583:5
+    |
+583 |     QueryComplexity(f64),
+    |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:584:5
+    |
+584 |     EntityCount(usize),
+    |     ^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:585:5
+    |
+585 |     IntentConfidence(f64),
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:586:5
+    |
+586 |     HistoricalPerformance(f64),
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:587:5
+    |
+587 |     ResponseTime(Duration),
+    |     ^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:593:5
+    |
+593 |     SwitchStrategy(SearchStrategy),
+    |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:594:5
+    |
+594 |     ModifyParameters(HashMap<String, f64>),
+    |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:595:5
+    |
+595 |     AddFallback(SearchStrategy),
+    |     ^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:596:5
+    |
+596 |     IncreaseTimeout(Duration),
+    |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:682:5
+    |
+682 |     Byzantine,
+    |     ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:683:5
+    |
+683 |     Majority,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:684:5
+    |
+684 |     Weighted,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:685:5
+    |
+685 |     Raft,
+    |     ^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:686:5
+    |
+686 |     Proof,
+    |     ^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:724:5
+    |
+724 |     Approve,
+    |     ^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:725:5
+    |
+725 |     Reject,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:726:5
+    |
+726 |     Abstain,
+    |     ^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:727:5
+    |
+727 |     Conditional(String),
+    |     ^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:751:23
+    |
+751 |     QueryProcessing { result: QueryResult },
+    |                       ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:753:24
+    |
+753 |     EntityExtraction { entities: Vec<ExtractedEntity> },
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:755:22
+    |
+755 |     Classification { classification: ClassificationResult },
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:757:30
+    |
+757 |     StrategyRecommendation { strategy: StrategyRecommendation },
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> src/query-processor/src/types.rs:759:24
+    |
+759 |     ResultValidation { validation: ValidationResult },
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:765:5
+    |
+765 |     Required,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:766:5
+    |
+766 |     MinValue(f64),
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:767:5
+    |
+767 |     MaxValue(f64),
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:768:5
+    |
+768 |     Range(f64, f64),
+    |     ^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:769:5
+    |
+769 |     Pattern(String),
+    |     ^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:770:5
+    |
+770 |     Custom(String),
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:771:5
+    |
+771 |     Dependency(String),
+    |     ^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:820:5
+    |
+820 |     Low,
+    |     ^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:821:5
+    |
+821 |     Medium,
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:822:5
+    |
+822 |     High,
+    |     ^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:823:5
+    |
+823 |     Critical,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:956:5
+    |
+956 |     Classifier,
+    |     ^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:957:5
+    |
+957 |     Embedder,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:958:5
+    |
+958 |     Transformer,
+    |     ^^^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:959:5
+    |
+959 |     Custom(String),
+    |     ^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:984:5
+    |
+984 |     Healthy,
+    |     ^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:985:5
+    |
+985 |     Degraded,
+    |     ^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:986:5
+    |
+986 |     Unhealthy,
+    |     ^^^^^^^^^
+
+warning: missing documentation for a variant
+   --> src/query-processor/src/types.rs:987:5
+    |
+987 |     Offline,
+    |     ^^^^^^^
+
+warning: associated constant `ComplianceTerm` should have an upper case name
+    --> src/query-processor/src/types.rs:1114:15
+     |
+1114 |     pub const ComplianceTerm: EntityType = EntityType::Standard;
+     |               ^^^^^^^^^^^^^^ help: convert the identifier to upper case: `COMPLIANCE_TERM`
+     |
+     = note: `#[warn(non_upper_case_globals)]` on by default
+
+warning: missing documentation for an associated constant
+    --> src/query-processor/src/types.rs:1114:5
+     |
+1114 |     pub const ComplianceTerm: EntityType = EntityType::Standard;
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: associated constant `Location` should have an upper case name
+    --> src/query-processor/src/types.rs:1115:15
+     |
+1115 |     pub const Location: EntityType = EntityType::Location;
+     |               ^^^^^^^^ help: convert the identifier to upper case: `LOCATION`
+
+warning: missing documentation for an associated constant
+    --> src/query-processor/src/types.rs:1115:5
+     |
+1115 |     pub const Location: EntityType = EntityType::Location;
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/validation.rs:270:5
+    |
+270 |     pub async fn new(config: Arc<ValidationConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/validation.rs:343:5
+    |
+343 |     pub async fn new(config: Arc<ValidationConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/validation.rs:423:5
+    |
+423 |     pub async fn new(config: Arc<ValidationConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/validation.rs:521:5
+    |
+521 |     pub async fn new(config: Arc<ValidationConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> src/query-processor/src/validation.rs:593:5
+    |
+593 |     pub async fn new(config: Arc<ValidationConfig>) -> Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `query-processor` (lib) generated 427 warnings
+warning: unused import: `crate::types::*`
+   --> src/query-processor/src/metrics.rs:598:9
+    |
+598 |     use crate::types::*;
+    |         ^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `analysis`
+    --> src/query-processor/src/consensus.rs:2890:17
+     |
+2890 |             let analysis = self.analyzer.analyze(&internal_query).await?;
+     |                 ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_analysis`
+
+warning: unused variable: `intent_classification`
+    --> src/query-processor/src/consensus.rs:2893:17
+     |
+2893 |             let intent_classification = crate::types::IntentClassification {
+     |                 ^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_intent_classification`
+
+warning: variable does not need to be mutable
+    --> src/query-processor/src/consensus.rs:3014:13
+     |
+3014 |         let mut manager = ConsensusManager::new(
+     |             ----^^^^^^^
+     |             |
+     |             help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` on by default
+
+warning: unused variable: `manager`
+    --> src/query-processor/src/consensus.rs:3404:13
+     |
+3404 |         let manager = ConsensusManager::new("node1".to_string(), config, query_processor).await.unwrap();
+     |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_manager`
+
+warning: unused variable: `analysis`
+   --> src/query-processor/src/query.rs:806:13
+    |
+806 |         let analysis = SemanticAnalysis {
+    |             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_analysis`
+
+warning: unused variable: `strategy`
+   --> src/query-processor/src/query.rs:836:13
+    |
+836 |         let strategy = StrategySelection {
+    |             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_strategy`
+
+warning: unused import: `std::collections::HashMap`
+  --> src/query-processor/tests/integration_tests.rs:10:5
+   |
+10 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+   Compiling query-processor v0.1.0 (/Users/dmf/repos/doc-rag/src/query-processor)
+warning: `query-processor` (lib test) generated 433 warnings (426 duplicates) (run `cargo fix --lib -p query-processor --tests` to apply 2 suggestions)
+warning: `query-processor` (test "integration_tests") generated 1 warning (run `cargo fix --test "integration_tests"` to apply 1 suggestion)
+error[E0277]: the trait bound `String: From<&&str>` is not satisfied
+   --> src/query-processor/examples/neural_demo.rs:48:32
+    |
+48  |         let query = Query::new(query_text);
+    |                     ---------- ^^^^^^^^^^ the trait `From<&&str>` is not implemented for `String`
+    |                     |
+    |                     required by a bound introduced by this call
+    |
+    = note: required for `&&str` to implement `Into<String>`
+note: required by a bound in `Query::new`
+   --> /Users/dmf/repos/doc-rag/src/query-processor/src/query.rs:206:27
+    |
+206 |     pub fn new(text: impl Into<String>) -> Result<Self> {
+    |                           ^^^^^^^^^^^^ required by this bound in `Query::new`
+help: consider dereferencing here
+    |
+48  |         let query = Query::new(*query_text);
+    |                                +
+
+error[E0308]: mismatched types
+  --> src/query-processor/examples/neural_demo.rs:51:41
+   |
+51 |         let analysis = analyzer.analyze(&query).await?;
+   |                                 ------- ^^^^^^ expected `&Query`, found `&Result<Query, ProcessorError>`
+   |                                 |
+   |                                 arguments to this method are incorrect
+   |
+   = note: expected reference `&Query`
+              found reference `&Result<Query, ProcessorError>`
+note: method defined here
+  --> /Users/dmf/repos/doc-rag/src/query-processor/src/analyzer.rs:62:18
+   |
+62 |     pub async fn analyze(&self, query: &Query) -> Result<SemanticAnalysis> {
+   |                  ^^^^^^^
+
+error[E0308]: mismatched types
+  --> src/query-processor/examples/neural_demo.rs:55:50
+   |
+55 |         let classification = classifier.classify(&query, &analysis).await?;
+   |                                         -------- ^^^^^^ expected `&Query`, found `&Result<Query, ProcessorError>`
+   |                                         |
+   |                                         arguments to this method are incorrect
+   |
+   = note: expected reference `&Query`
+              found reference `&Result<Query, ProcessorError>`
+note: method defined here
+  --> /Users/dmf/repos/doc-rag/src/query-processor/src/classifier.rs:68:18
+   |
+68 |     pub async fn classify(
+   |                  ^^^^^^^^
+
+Some errors have detailed explanations: E0277, E0308.
+For more information about an error, try `rustc --explain E0277`.
+error: could not compile `query-processor` (example "neural_demo") due to 3 previous errors

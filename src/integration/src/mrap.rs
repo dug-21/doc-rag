@@ -11,7 +11,45 @@ use uuid::Uuid;
 
 use crate::Result;
 use crate::byzantine_consensus::{ByzantineConsensusValidator, ConsensusProposal};
-use fact::FactSystem;
+// use fact::FactSystem; // FACT REMOVED
+
+// Stub FACT system replacement
+#[derive(Debug)]
+pub struct FactSystemStub {
+    cache: std::collections::HashMap<String, CachedResponseStub>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CachedResponseStub {
+    pub content: String,
+    pub citations: Vec<CitationStub>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CitationStub {
+    pub source: String,
+    pub page: Option<u32>,
+    pub section: Option<String>,
+    pub relevance_score: f32,
+    pub timestamp: u64,
+}
+
+impl FactSystemStub {
+    pub fn new(_size: usize) -> Self {
+        Self {
+            cache: std::collections::HashMap::new(),
+        }
+    }
+    
+    pub fn get(&self, key: &str) -> Result<CachedResponseStub, &'static str> {
+        self.cache.get(key).cloned().ok_or("Cache miss")
+    }
+    
+    pub fn store_response(&mut self, key: String, content: String, citations: Vec<CitationStub>) {
+        let response = CachedResponseStub { content, citations };
+        self.cache.insert(key, response);
+    }
+}
 
 /// MRAP Control Loop State
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,8 +105,8 @@ pub struct Adaptation {
 pub struct MRAPController {
     /// Byzantine consensus validator
     consensus: Arc<ByzantineConsensusValidator>,
-    /// FACT cache system
-    fact_cache: Arc<FactSystem>,
+    /// FACT cache system stub
+    fact_cache: Arc<parking_lot::RwLock<FactSystemStub>>, // FACT replacement
     /// Current state
     state: Arc<RwLock<MRAPState>>,
 }
@@ -77,7 +115,7 @@ impl MRAPController {
     /// Create new MRAP controller
     pub async fn new(
         consensus: Arc<ByzantineConsensusValidator>,
-        fact_cache: Arc<FactSystem>,
+        fact_cache: Arc<parking_lot::RwLock<FactSystemStub>>, // FACT replacement
     ) -> Result<Self> {
         let initial_state = MRAPState {
             iteration: 0,
@@ -150,9 +188,9 @@ impl MRAPController {
         state.query_state.query_text = query.to_string();
         state.query_state.query_id = Uuid::new_v4().to_string();
         
-        // Check FACT cache first (<50ms requirement)
+        // Check cache first (<50ms requirement) - FACT stub
         let cache_start = std::time::Instant::now();
-        let cache_result = self.fact_cache.cache.get(query);
+        let cache_result = self.fact_cache.read().get(query);
         let cache_time = cache_start.elapsed();
         
         if cache_time.as_millis() > 50 {
@@ -198,11 +236,11 @@ impl MRAPController {
         let mut state = self.state.write().await;
         state.query_state.processing_stage = ProcessingStage::Acting;
         
-        // If using cache, return cached response
+        // If using cache, return cached response - FACT stub
         if reasoning.use_cache {
             // Note: cached_response would come from monitoring phase
             // For now, re-fetch from cache
-            if let Ok(cached) = self.fact_cache.cache.get(&state.query_state.query_text) {
+            if let Ok(cached) = self.fact_cache.read().get(&state.query_state.query_text) {
                 return Ok(ActionResult {
                     response: cached.content.clone(),
                     citations: cached.citations.clone(),
@@ -213,7 +251,7 @@ impl MRAPController {
         
         // Execute full pipeline (simplified for now)
         let response = format!("Processed query with {} confidence", reasoning.confidence);
-        let citations = vec![fact::Citation {
+        let citations = vec![CitationStub {
             source: "PCI DSS 4.0".to_string(),
             page: Some(47),
             section: Some("3.4".to_string()),
@@ -224,8 +262,8 @@ impl MRAPController {
                 .as_secs(),
         }];
         
-        // Store in FACT cache for future
-        self.fact_cache.store_response(
+        // Store in cache for future - FACT stub
+        self.fact_cache.write().store_response(
             state.query_state.query_text.clone(),
             response.clone(),
             citations.clone()
@@ -317,7 +355,7 @@ impl MRAPController {
 struct MonitoringResult {
     query: String,
     cache_hit: bool,
-    cached_response: Option<fact::CachedResponse>,
+    cached_response: Option<CachedResponseStub>, // FACT replacement
     system_health: SystemHealth,
 }
 
@@ -331,7 +369,7 @@ struct ReasoningResult {
 #[derive(Debug)]
 struct ActionResult {
     response: String,
-    citations: Vec<fact::Citation>,
+    citations: Vec<CitationStub>, // FACT replacement
     processing_time_ms: u64,
 }
 
@@ -356,7 +394,7 @@ mod tests {
     async fn test_mrap_loop_execution() {
         // Create components
         let consensus = Arc::new(ByzantineConsensusValidator::new(3).await.unwrap());
-        let fact_cache = Arc::new(FactSystem::new(100));
+        let fact_cache = Arc::new(parking_lot::RwLock::new(FactSystemStub::new(100)));
         
         // Create MRAP controller
         let controller = MRAPController::new(consensus, fact_cache).await.unwrap();
@@ -376,13 +414,13 @@ mod tests {
     #[tokio::test]
     async fn test_mrap_cache_hit() {
         let consensus = Arc::new(ByzantineConsensusValidator::new(3).await.unwrap());
-        let fact_cache = Arc::new(FactSystem::new(100));
+        let fact_cache = Arc::new(parking_lot::RwLock::new(FactSystemStub::new(100)));
         
-        // Pre-populate cache
-        fact_cache.store_response(
+        // Pre-populate cache - FACT stub
+        fact_cache.write().store_response(
             "cached query".to_string(),
             "cached response".to_string(),
-            vec![fact::Citation {
+            vec![CitationStub {
                 source: "test_source".to_string(),
                 page: Some(1),
                 section: Some("1.1".to_string()),

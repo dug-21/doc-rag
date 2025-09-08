@@ -1,0 +1,54 @@
+[package]
+name = "fact-integration-tests"
+version = "0.1.0"
+edition = "2021"
+authors = ["RAG System Team"]
+description = "Comprehensive FACT integration test suite with London TDD methodology"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.35", features = ["full", "test-util"] }
+tokio-test = "0.4"
+futures = "0.3"
+async-trait = "0.1"
+
+# Testing framework
+mockall = "0.12"
+criterion = { version = "0.5", features = ["html_reports", "async_tokio"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Time and dates
+chrono = { version = "0.4", features = ["serde"] }
+
+# Utilities
+dashmap = "5.5"
+rand = "0.8"
+md5 = "0.7"
+
+# Tracing for debug
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+proptest = "1.4"
+fake = { version = "2.9", features = ["derive", "chrono"] }
+quickcheck = "1.0"
+quickcheck_macros = "1.0"
+
+[[bench]]
+name = "fact_benchmarks"
+harness = false
+
+[features]
+default = []
+integration = []
+performance = []
+stress = []

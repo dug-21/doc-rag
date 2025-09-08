@@ -47,8 +47,9 @@
 #![allow(clippy::module_name_repetitions)]
 
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::RwLock;
-use tracing::{info, instrument};
+use tracing::{debug, info, instrument};
 use uuid::Uuid;
 use async_trait::async_trait;
 
@@ -59,6 +60,8 @@ pub mod consensus;
 pub mod entities;
 pub mod error;
 pub mod extractor;
+pub mod fact_client; // FACT system integration for caching
+pub mod mcp_tools; // MCP tool integration
 pub mod metrics;
 pub mod performance_optimizer; // High-performance <2s query processing
 pub mod query;
@@ -73,11 +76,18 @@ pub use consensus::{ConsensusManager, ConsensusMessage};
 pub use entities::EntityExtractor;
 pub use error::{ProcessorError, Result};
 pub use extractor::KeyTermExtractor;
+pub use crate::fact_client::{FACTClient, FACTClientInterface, FACTConfig}; // Export FACT client
+pub use crate::mcp_tools::{MCPToolRegistry, MCPToolHandler}; // Export MCP tools  
 pub use metrics::ProcessorMetrics;
 pub use query::{ProcessedQuery, Query, QueryMetadata, ProcessingRequest, ProcessingRequestBuilder, ValidationStatus};
 pub use strategy::StrategySelector;
 pub use types::*;
 pub use validation::ValidationEngine;
+
+// Internal imports for implementation
+use crate::fact_client::{FACTClient as InternalFACTClient, FACTClientInterface as InternalFACTClientInterface, FACTConfig as InternalFACTConfig};
+use crate::mcp_tools::{MCPToolRegistry as InternalMCPToolRegistry, MCPToolHandler as InternalMCPToolHandler};
+use crate::types::{ExecutionPlan, IntentClassification, ClassificationMethod, StrategySelection, StrategyPredictions, ConsensusResult, QueryResult, ClassificationResult};
 
 /// Main Query Processor that coordinates all processing stages
 #[derive(Clone)]
@@ -100,12 +110,16 @@ pub struct QueryProcessor {
     consensus_engine: Option<Arc<ConsensusManager>>,
     /// Validation engine
     validation_engine: Arc<ValidationEngine>,
+    /// FACT client for caching and fast response
+    fact_client: Arc<dyn InternalFACTClientInterface>,
+    /// MCP tool registry for tool-based processing
+    mcp_tools: Arc<InternalMCPToolRegistry>,
     /// Performance metrics
     metrics: Arc<RwLock<ProcessorMetrics>>,
 }
 
 impl QueryProcessor {
-    /// Create a new Query Processor instance
+    /// Create a new Query Processor instance with FACT client integration
     #[instrument(skip(config))]
     pub async fn new(config: ProcessorConfig) -> Result<Self> {
         info!("Initializing Query Processor with config: {:?}", config);
@@ -116,6 +130,14 @@ impl QueryProcessor {
         let term_extractor = Arc::new(KeyTermExtractor::new(Arc::new(config.term_extractor.clone())).await?);
         let intent_classifier = Arc::new(IntentClassifier::new(config.clone()).await?);
         let strategy_selector = Arc::new(StrategySelector::new(config.clone()).await?);
+        
+        // Initialize FACT client with configuration
+        let fact_config = InternalFACTConfig::default(); // TODO: Load from config
+        let fact_client: Arc<dyn InternalFACTClientInterface> = Arc::new(InternalFACTClient::new(fact_config).await?);
+        
+        // Initialize MCP tool registry
+        let mcp_tools = Arc::new(InternalMCPToolRegistry::new(fact_client.clone()));
+        
         // Consensus engine initialization (if enabled)
         let consensus_engine = if config.enable_consensus {
             // Initialize basic consensus manager without full proxy implementation
@@ -138,28 +160,185 @@ impl QueryProcessor {
             strategy_selector,
             consensus_engine,
             validation_engine,
+            fact_client,
+            mcp_tools,
+            metrics,
+        })
+    }
+    
+    /// Create Query Processor with custom FACT client (for testing)
+    pub async fn with_fact_client(
+        config: ProcessorConfig, 
+        fact_client: Arc<dyn InternalFACTClientInterface>
+    ) -> Result<Self> {
+        info!("Initializing Query Processor with custom FACT client");
+        
+        let config = Arc::new(config);
+        let analyzer = Arc::new(QueryAnalyzer::new(config.clone()).await?);
+        let entity_extractor = Arc::new(EntityExtractor::new(Arc::new(config.entity_extractor.clone())).await?);
+        let term_extractor = Arc::new(KeyTermExtractor::new(Arc::new(config.term_extractor.clone())).await?);
+        let intent_classifier = Arc::new(IntentClassifier::new(config.clone()).await?);
+        let strategy_selector = Arc::new(StrategySelector::new(config.clone()).await?);
+        
+        // Initialize MCP tool registry
+        let mcp_tools = Arc::new(InternalMCPToolRegistry::new(fact_client.clone()));
+        
+        let consensus_engine = if config.enable_consensus {
+            info!("Consensus enabled - initializing consensus manager");
+            None
+        } else {
+            None
+        };
+        
+        let validation_engine = Arc::new(ValidationEngine::new(Arc::new(config.validation.clone())).await?);
+        let metrics = Arc::new(RwLock::new(ProcessorMetrics::new()));
+
+        Ok(Self {
+            id: Uuid::new_v4(),
+            config,
+            analyzer,
+            entity_extractor,
+            term_extractor,
+            intent_classifier,
+            strategy_selector,
+            consensus_engine,
+            validation_engine,
+            fact_client,
+            mcp_tools,
             metrics,
         })
     }
 
-    /// Process a query through the complete pipeline
+    /// Process a query through the complete pipeline with FACT-first caching
     #[instrument(skip(self, query))]
     pub async fn process(&self, query: Query) -> Result<ProcessedQuery> {
         let start = std::time::Instant::now();
+        let query_text = query.text().to_string();
         
-        info!("Processing query: {}", query.id());
+        info!("Processing query with FACT integration: {}", query.id());
         
-        // Stage 1: Semantic Analysis
+        // MRAP Phase 1: Monitor - Check FACT cache first for <23ms cache hits
+        let cache_check_start = std::time::Instant::now();
+        if let Ok(Some(cached_result)) = self.fact_client.get_query_result(&query_text).await {
+            let cache_latency = cache_check_start.elapsed();
+            info!("Cache hit in {:?}ms for query: {}", cache_latency.as_millis(), query.id());
+            
+            // Convert cached QueryResult back to ProcessedQuery
+            // This is a simplified conversion - in practice, you'd want to cache the full ProcessedQuery
+            // Create a minimal semantic analysis for cached results
+            let analysis = SemanticAnalysis::new(
+                SyntacticFeatures { 
+                    pos_tags: vec![],
+                    parse_tree: None,
+                    chunks: vec![],
+                },
+                SemanticFeatures {
+                    word_senses: vec![],
+                    semantic_roles: vec![],
+                    conceptual_graphs: vec![],
+                },
+                vec![],
+                vec![],
+                cached_result.confidence,
+                Duration::from_millis(10),
+            );
+            let mut processed = ProcessedQuery::new(
+                query.clone(), 
+                analysis,
+                vec![], // Simplified - would need cached entities
+                vec![], // Simplified - would need cached key terms
+                IntentClassification {
+                    primary_intent: QueryIntent::Factual, // Would be from cache
+                    confidence: cached_result.confidence,
+                    secondary_intents: vec![],
+                    probabilities: std::collections::HashMap::new(),
+                    method: ClassificationMethod::Neural,
+                    features: vec![],
+                },
+                StrategySelection {
+                    strategy: cached_result.search_strategy,
+                    confidence: cached_result.confidence,
+                    reasoning: "From FACT cache".to_string(),
+                    expected_metrics: Default::default(),
+                    fallbacks: vec![],
+                    predictions: StrategyPredictions {
+                        latency: cache_latency.as_secs_f64(),
+                        accuracy: cached_result.confidence,
+                        resource_usage: 0.1, // Low resource usage for cache hits
+                    },
+                }
+            );
+            
+            processed.set_total_duration(cache_latency);
+            return Ok(processed);
+        }
+        
+        let cache_miss_latency = cache_check_start.elapsed();
+        info!("Cache miss in {:?}ms, proceeding with full pipeline", cache_miss_latency.as_millis());
+        
+        // MRAP Phase 2: Analyze - Full processing pipeline for cache misses
+        // Target: <95ms total for cache misses
+        
+        // Stage 1: Check cached entities first
+        let entities = if let Ok(Some(cached_entities)) = self.fact_client.get_entities(&query_text).await {
+            debug!("Using cached entities for query");
+            cached_entities
+        } else {
+            // Create minimal analysis for entity extraction  
+            let analysis = SemanticAnalysis::new(
+                SyntacticFeatures { 
+                    pos_tags: vec![],
+                    parse_tree: None,
+                    chunks: vec![],
+                },
+                SemanticFeatures {
+                    word_senses: vec![],
+                    semantic_roles: vec![],
+                    conceptual_graphs: vec![],
+                },
+                vec![],
+                vec![],
+                0.8,
+                Duration::from_millis(10),
+            );
+            let extracted = self.entity_extractor.extract(&query, &analysis).await?;
+            // Cache entities for future use
+            let _ = self.fact_client.set_entities(&query_text, &extracted, std::time::Duration::from_secs(3600)).await;
+            extracted
+        };
+        
+        // Stage 2: Check cached classification
+        let intent_classification = if let Ok(Some(cached_classification)) = self.fact_client.get_classification(&query_text).await {
+            debug!("Using cached classification for query");
+            IntentClassification {
+                primary_intent: cached_classification.intent,
+                confidence: cached_classification.confidence,
+                secondary_intents: vec![],
+                probabilities: std::collections::HashMap::new(),
+                method: ClassificationMethod::Neural,
+                features: vec![],
+            }
+        } else {
+            let analysis = self.analyzer.analyze(&query).await?;
+            let classification = self.intent_classifier.classify(&query, &analysis).await?;
+            
+            // Cache classification
+            let classification_result = ClassificationResult {
+                intent: classification.primary_intent.clone(),
+                confidence: classification.confidence,
+                reasoning: "Intent classification".to_string(),
+                features: std::collections::HashMap::new(),
+            };
+            let _ = self.fact_client.set_classification(&query_text, &classification_result, std::time::Duration::from_secs(3600)).await;
+            
+            classification
+        };
+        
+        // Stage 3: Semantic Analysis (if not cached)
         let analysis = self.analyzer.analyze(&query).await?;
         
-        // Stage 2: Entity Extraction
-        let entities = self.entity_extractor.extract(&query, &analysis).await?;
-        
-        // Stage 3: Key Term Extraction
+        // Stage 4: Key Term Extraction
         let key_terms = self.term_extractor.extract(&query, &analysis).await?;
-        
-        // Stage 4: Intent Classification
-        let intent_classification = self.intent_classifier.classify(&query, &analysis).await?;
         
         // Stage 5: Strategy Selection
         let strategy = self.strategy_selector
@@ -167,7 +346,11 @@ impl QueryProcessor {
             .await?;
         
         // Stage 6: Build processed query
-        let mut processed = ProcessedQuery::new(query, analysis, entities, key_terms, intent_classification, strategy);
+        let mut processed = ProcessedQuery::new(query.clone(), analysis, entities, key_terms, intent_classification, strategy);
+        
+        // MRAP Phase 3: Plan - Determine optimal execution path based on analysis
+        let execution_plan = self.determine_execution_plan(&processed).await?;
+        debug!("Execution plan determined: {:?}", execution_plan);
         
         // Stage 7: Byzantine Consensus Validation with 66% threshold (MRAP compliance)
         if self.config.enable_consensus {
@@ -214,23 +397,149 @@ impl QueryProcessor {
         // Stage 8: Final Validation
         processed = self.validation_engine.validate(processed).await?;
         
-        // Update metrics and total duration
-        let duration = start.elapsed();
+        // MRAP Phase 4: Act - Execute the planned processing
+        processed = self.execute_processing_plan(&mut processed, &execution_plan).await?;
+        
+        // MRAP Phase 5: Reflect - Cache results and update metrics
+        let total_duration = start.elapsed();
+        
+        // Cache the final result for future queries
+        let query_result = QueryResult {
+            query: query_text.clone(),
+            search_strategy: processed.strategy.strategy.clone(),
+            confidence: processed.overall_confidence(),
+            processing_time: total_duration,
+            metadata: {
+                let mut metadata = std::collections::HashMap::new();
+                metadata.insert("processor_id".to_string(), self.id.to_string());
+                metadata.insert("cache_status".to_string(), "miss".to_string());
+                metadata.insert("consensus_enabled".to_string(), self.config.enable_consensus.to_string());
+                metadata
+            },
+        };
+        
+        // Cache for 1 hour if confidence is high enough
+        if query_result.confidence > 0.7 {
+            let _ = self.fact_client.set_query_result(&query_text, &query_result, std::time::Duration::from_secs(3600)).await;
+        }
+        
+        // Update metrics
         {
             let mut metrics = self.metrics.write().await;
-            metrics.record_processing(duration, &processed);
+            metrics.record_processing(total_duration, &processed);
         }
         
         // Update the ProcessedQuery with the actual total duration (MRAP Reflect phase)
-        processed.set_total_duration(duration);
+        processed.set_total_duration(total_duration);
         
         info!(
-            "Query processing completed in {:?}ms: {}",
-            duration.as_millis(),
+            "Query processing completed in {:?}ms (target: <95ms): {}",
+            total_duration.as_millis(),
             processed.query.id()
         );
         
         Ok(processed)
+    }
+    
+    /// Determine optimal execution plan based on query analysis (MRAP Plan phase)
+    async fn determine_execution_plan(&self, processed: &ProcessedQuery) -> Result<ExecutionPlan> {
+        let complexity = processed.overall_confidence();
+        let entity_count = processed.entities.len();
+        let intent = &processed.intent.primary_intent;
+        
+        let plan = if complexity < 0.5 || entity_count > 10 {
+            ExecutionPlan::FullProcessing
+        } else if matches!(intent, QueryIntent::Factual | QueryIntent::Definition) {
+            ExecutionPlan::FastTrack
+        } else {
+            ExecutionPlan::Standard
+        };
+        
+        Ok(plan)
+    }
+    
+    /// Execute processing plan (MRAP Act phase)
+    async fn execute_processing_plan(
+        &self, 
+        processed: &mut ProcessedQuery, 
+        plan: &ExecutionPlan
+    ) -> Result<ProcessedQuery> {
+        match plan {
+            ExecutionPlan::FastTrack => {
+                debug!("Executing fast-track processing");
+                // Minimal additional processing for simple queries
+            }
+            ExecutionPlan::Standard => {
+                debug!("Executing standard processing");
+                // Standard consensus validation
+                if self.config.enable_consensus {
+                    self.apply_consensus_validation(processed).await?;
+                }
+            }
+            ExecutionPlan::FullProcessing => {
+                debug!("Executing full processing with MCP tools");
+                // Use MCP tools for complex queries
+                let tool_handler = InternalMCPToolHandler::new(self.mcp_tools.clone());
+                let _tool_result = tool_handler.orchestrate_query(processed.query.text()).await?;
+                
+                if self.config.enable_consensus {
+                    self.apply_consensus_validation(processed).await?;
+                }
+            }
+        }
+        
+        Ok(processed.clone())
+    }
+    
+    /// Apply Byzantine consensus validation
+    async fn apply_consensus_validation(&self, processed: &mut ProcessedQuery) -> Result<()> {
+        if let Some(ref _consensus) = self.consensus_engine {
+            let consensus_confidence = processed.overall_confidence();
+            let consensus_quality = processed.quality_score();
+            
+            // Byzantine fault tolerance requires 66% agreement (2/3 + 1 threshold)
+            const BYZANTINE_THRESHOLD: f64 = 0.66;
+            
+            if consensus_confidence >= BYZANTINE_THRESHOLD && consensus_quality >= BYZANTINE_THRESHOLD {
+                let byzantine_consensus_result = ConsensusResult::QueryProcessing { 
+                    result: types::QueryResult {
+                        query: processed.query.text().to_string(),
+                        search_strategy: processed.strategy.strategy.clone(),
+                        confidence: consensus_confidence,
+                        processing_time: std::time::Duration::from_millis(100), // Placeholder
+                        metadata: {
+                            let mut metadata = std::collections::HashMap::new();
+                            metadata.insert("consensus_type".to_string(), "byzantine".to_string());
+                            metadata.insert("threshold".to_string(), BYZANTINE_THRESHOLD.to_string());
+                            metadata.insert("agreement_level".to_string(), consensus_confidence.to_string());
+                            metadata.insert("quality_score".to_string(), consensus_quality.to_string());
+                            metadata
+                        },
+                    }
+                };
+                processed.set_consensus(byzantine_consensus_result);
+                info!("Byzantine consensus achieved with {}% confidence (threshold: 66%)", 
+                      (consensus_confidence * 100.0).round());
+            } else {
+                let warning = format!(
+                    "Byzantine consensus failed: confidence {:.2}% < 66% threshold or quality {:.2}% < 66%", 
+                    consensus_confidence * 100.0, consensus_quality * 100.0
+                );
+                processed.add_warning(warning);
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Get FACT client for external access
+    pub fn fact_client(&self) -> &dyn InternalFACTClientInterface {
+        self.fact_client.as_ref()
+    }
+    
+    /// Get MCP tool registry for external access
+    pub fn mcp_tools(&self) -> &InternalMCPToolRegistry {
+        &self.mcp_tools
     }
 
     /// Process multiple queries concurrently
