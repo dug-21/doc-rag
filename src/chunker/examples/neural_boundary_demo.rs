@@ -8,7 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Test boundary detector directly
     println!("\n1. Testing BoundaryDetector...");
-    let detector = BoundaryDetector::new()?;
+    let mut detector = BoundaryDetector::new()?;
     
     let sample_text = "This is the first paragraph with some content. It contains multiple sentences for analysis.\n\nThis is the second paragraph with different content. The neural network should detect this boundary.\n\nFinally, this is the third paragraph which concludes our test.";
     
@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Test complete document chunking
     println!("\n2. Testing DocumentChunker...");
-    let chunker = DocumentChunker::new(150, 20)?;
+    let mut chunker = DocumentChunker::new(150, 20)?;
     
     let document = "Document chunking is the process of breaking down large documents into smaller, manageable pieces. This is essential for efficient document processing and retrieval.
 

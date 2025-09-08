@@ -3,7 +3,7 @@ use std::time::Instant;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a chunker with default settings
-    let chunker = DocumentChunker::new(512, 50)?;
+    let mut chunker = DocumentChunker::new(512, 50)?;
     
     // Create test content
     let small_doc = "This is a small test document. ".repeat(100); // ~3KB
