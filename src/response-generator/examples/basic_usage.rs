@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create a response generator with default configuration
     let config = Config::default();
-    let mut generator = ResponseGenerator::new(config);
+    let generator = ResponseGenerator::new(config.clone()).await;
 
     // Example 1: Simple query without context
     println!("Example 1: Simple Query");
@@ -115,7 +115,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Query: Explain the benefits of cloud computing in detail");
     println!("Streaming response chunks:");
     
-    let mut stream = generator.generate_stream(request).await?;
+    let mut generator_for_stream = ResponseGenerator::new(config.clone()).await;
+    let mut stream = generator_for_stream.generate_stream(request).await?;
     let mut chunk_count = 0;
     
     use tokio_stream::StreamExt;
@@ -149,7 +150,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .default_confidence_threshold(0.8)
         .build();
 
-    let mut custom_generator = ResponseGenerator::new(custom_config);
+    let custom_generator = ResponseGenerator::new(custom_config).await;
     
     let request = GenerationRequest::builder()
         .query("What is the future of artificial intelligence?")

@@ -8,15 +8,20 @@ use response_generator::{
     CitationQualityAssurance, CitationCoverageAnalyzer, FACTCitationManager,
     GenerationRequest, ContextChunk, IntermediateResponse,
     CitationChain, CitationQualityMetrics, ComprehensiveCitationSystem,
-    OutputFormat, Result, FACTCitationProvider, TextRange
+    OutputFormat, Result, FACTCitationProvider, TextRange,
+    CitationQualityCalculator, CitationNecessity
 };
 use std::collections::HashMap;
 use uuid::Uuid;
-use mockall::{predicate::*, mock};
+use mockall::{predicate, mock};
 
 // Mock FACT integration for testing
 mock! {
-    FACTCitationProvider {
+    #[derive(Debug)]
+    pub FACTCitationProvider {}
+    
+    #[async_trait::async_trait]
+    impl FACTCitationProvider for FACTCitationProvider {
         async fn get_cached_citations(&self, key: &str) -> Result<Option<Vec<Citation>>>;
         async fn store_citations(&self, key: &str, citations: &[Citation]) -> Result<()>;
         async fn validate_citation_quality(&self, citation: &Citation) -> Result<CitationQualityMetrics>;
@@ -176,12 +181,12 @@ async fn test_fact_integration_citation_caching() {
     
     // Configure mock expectations
     mock_fact.expect_get_cached_citations()
-        .with(eq("query_hash_123"))
+        .with(predicate::eq("query_hash_123"))
         .times(1)
         .returning(|_| Ok(None)); // Cache miss
         
     mock_fact.expect_store_citations()
-        .with(eq("query_hash_123"), predicate::always())
+        .with(predicate::eq("query_hash_123"), predicate::always())
         .times(1)
         .returning(|_, _| Ok(()));
         
@@ -288,7 +293,7 @@ async fn test_citation_coverage_analyzer() {
     
     for requirement in &analysis.required_citations {
         if requirement.claim_text.contains("95%") || requirement.claim_text.contains("80%") {
-            assert_eq!(requirement.citation_necessity, crate::citation::CitationNecessity::Required);
+            assert_eq!(requirement.citation_necessity, CitationNecessity::Required);
             assert!(requirement.confidence_threshold > 0.8);
         }
     }

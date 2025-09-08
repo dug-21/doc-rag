@@ -59,10 +59,12 @@ pub use cache::{FACTCacheManager, CacheManagerConfig, CacheResult, CacheSource};
 pub use citation::{
     Citation, CitationTracker, Source, SourceRanking, CitationConfig,
     CitationQualityAssurance, CitationCoverageAnalyzer, CitationChain,
-    CitationQualityMetrics, CitationValidationResult, CitationCoverageReport,
-    FACTCitationProvider, FACTCitationManager, ComprehensiveCitationSystem,
-    ComprehensiveCitationResult, CitationType, ValidationSeverity, CitationNecessity,
-    ClaimType, GapType, CitationRequirement, CitationRequirementAnalysis, TextRange
+    CitationQualityMetrics, CitationValidationResult, CitationValidationResults, 
+    CitationCoverageReport, FACTCitationProvider, FACTCitationManager, 
+    ComprehensiveCitationSystem, ComprehensiveCitationResult, CitationType, 
+    CitationNecessity, ClaimType, GapType, CitationRequirement, 
+    CitationRequirementAnalysis, TextRange, CitationQualityCalculator,
+    CoverageGap, GapSeverity
 };
 pub use config::Config;
 pub use error::{ResponseError, Result};
@@ -74,7 +76,7 @@ pub use mongodb_integration::{
 };
 pub use pipeline::{Pipeline, PipelineStage, ProcessingContext};
 pub use query_preprocessing::{FACTQueryPreprocessingStage, QueryPreprocessingConfig};
-pub use validator::{ValidationConfig, ValidationLayer, ValidationResult, Validator};
+pub use validator::{ValidationConfig, ValidationLayer, ValidationResult, Validator, ValidationSeverity};
 
 // use async_trait::async_trait; // Currently unused
 use serde::{Deserialize, Serialize};

@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .default_confidence_threshold(0.85)
         .build();
 
-    let custom_generator = ResponseGenerator::new(custom_config);
+    let custom_generator = ResponseGenerator::new(custom_config).await;
     
     let request = GenerationRequest::builder()
         .query("Explain quantum computing comprehensively")
@@ -111,7 +111,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
     ];
 
-    let generator = ResponseGenerator::default();
+    let generator = ResponseGenerator::new(Config::default()).await;
     let request = GenerationRequest::builder()
         .query("What are the main branches of artificial intelligence and how do they relate?")
         .context(context_chunks)
