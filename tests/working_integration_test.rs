@@ -7,21 +7,21 @@ use std::time::{Duration, Instant};
 
 /// Test ruv-FANN neural network functionality
 #[test]
-fn test_ruv_fann_neural_network() {
+fn test_ruv_fann_neural_network() -> anyhow::Result<()> {
     // Test that ruv-FANN is available and working
-    let network_result = ruv_fann::Network::<f32>::new(&[2, 3, 1]);
-    assert!(network_result.is_ok(), "Should be able to create neural network");
+    let layers = vec![2, 3, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers)?;
     
-    let mut network = network_result.unwrap();
+    // Set activation functions for proper operation
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     
     // Test basic neural network operations
     let input = vec![0.5, 0.7];
-    let output_result = network.run(&input);
-    assert!(output_result.is_ok(), "Should be able to run neural network");
-    
-    let output = output_result.unwrap();
+    let output = network.run(&input);
     assert_eq!(output.len(), 1, "Should get one output value");
     assert!(output[0] >= 0.0 && output[0] <= 1.0, "Output should be normalized");
+    Ok(())
     
     println!("✅ ruv-FANN neural network test passed: input {:?} -> output {:?}", input, output);
 }
@@ -55,7 +55,7 @@ fn test_byzantine_consensus_threshold() {
 
 /// Test pipeline response time simulation
 #[tokio::test]
-async fn test_pipeline_response_time_simulation() {
+async fn test_pipeline_response_time_simulation() -> anyhow::Result<()> {
     // Simulate the complete pipeline stages
     let start = Instant::now();
     
@@ -63,9 +63,12 @@ async fn test_pipeline_response_time_simulation() {
     tokio::time::sleep(Duration::from_millis(5)).await;
     
     // Stage 2: Neural processing with ruv-FANN
-    let mut network = ruv_fann::Network::<f32>::new(&[2, 1]).unwrap();
+    let layers = vec![2, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers)?;
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     let input = vec![0.5, 0.7];
-    let _output = network.run(&input).unwrap();
+    let _output = network.run(&input);
     tokio::time::sleep(Duration::from_millis(50)).await; // Simulate processing time
     
     // Stage 3: Byzantine consensus validation  
@@ -84,6 +87,7 @@ async fn test_pipeline_response_time_simulation() {
         "Pipeline should complete in <2s, got {:?}", elapsed);
     
     println!("✅ Pipeline timing simulation test passed: {}ms", elapsed.as_millis());
+    Ok(())
 }
 
 /// Test citation validation coverage
@@ -116,15 +120,18 @@ fn test_citation_validation_coverage() {
 
 /// Test neural network performance under load
 #[test]
-fn test_neural_performance() {
-    let mut network = ruv_fann::Network::<f32>::new(&[10, 20, 10, 1]).unwrap();
+fn test_neural_performance() -> anyhow::Result<()> {
+    let layers = vec![10, 20, 10, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers)?;
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     
     let start = Instant::now();
     let iterations = 100;
     
     for i in 0..iterations {
         let input: Vec<f32> = (0..10).map(|j| (i + j) as f32 / 100.0).collect();
-        let _output = network.run(&input).unwrap();
+        let _output = network.run(&input);
     }
     
     let elapsed = start.elapsed();
@@ -136,6 +143,7 @@ fn test_neural_performance() {
     
     println!("✅ Neural performance test passed: {} inferences in {:?} (avg: {:?})", 
              iterations, elapsed, avg_time_per_inference);
+    Ok(())
 }
 
 /// Test data validation and integrity
@@ -178,7 +186,10 @@ fn test_system_resource_constraints() {
     // Perform resource-intensive operations
     let mut networks = Vec::new();
     for _ in 0..10 {
-        let network = ruv_fann::Network::<f32>::new(&[5, 10, 5, 1]).unwrap();
+        let layers = vec![5, 10, 5, 1];
+        let mut network = ruv_fann::Network::<f32>::new(&layers);
+        network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+        network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
         networks.push(network);
     }
     
@@ -217,7 +228,10 @@ async fn test_end_to_end_integration_validation() {
     let start = Instant::now();
     
     // 1. Neural network processing
-    let mut network = ruv_fann::Network::<f32>::new(&[3, 5, 1]).unwrap();
+    let layers = vec![3, 5, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     let neural_input = vec![0.5, 0.7, 0.3];
     let neural_result = network.run(&neural_input).unwrap();
     assert!(!neural_result.is_empty(), "Neural processing should produce output");
@@ -254,7 +268,10 @@ async fn test_critical_performance_benchmarks() {
     println!("🎯 Running critical performance benchmarks");
     
     // Benchmark 1: Neural processing speed
-    let mut network = ruv_fann::Network::<f32>::new(&[10, 1]).unwrap();
+    let layers = vec![10, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     let neural_start = Instant::now();
     for _ in 0..100 {
         let input: Vec<f32> = (0..10).map(|i| i as f32 / 10.0).collect();

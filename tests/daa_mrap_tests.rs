@@ -20,7 +20,7 @@ use integration::{
 mock! {
     ExternalDaaOrchestrator {
         async fn new(config: integration::OrchestratorConfig) -> Result<Self>;
-        async fn register_service(&mut self, service: integration::DaaService) -> Result<()>;
+        async fn register_service(&mut self, service: crate::integration::DaaService) -> Result<()>;
         async fn coordinate_components(&self, context: serde_json::Value) -> Result<serde_json::Value>;
         async fn enable_byzantine_consensus(&self) -> Result<()>;
         async fn enable_self_healing(&self) -> Result<()>;
@@ -30,7 +30,7 @@ mock! {
 
 mock! {
     SystemMetricsCollector {
-        async fn collect_metrics(&self) -> integration::SystemMetrics;
+        async fn collect_metrics(&self) -> crate::integration::SystemMetrics;
         async fn get_component_health(&self, component: &str) -> f64;
         async fn get_system_response_time(&self) -> f64;
         async fn get_error_rate(&self) -> f64;

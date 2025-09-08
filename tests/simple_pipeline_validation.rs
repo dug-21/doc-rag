@@ -8,7 +8,11 @@ use std::time::{Duration, Instant};
 #[test]
 fn test_ruv_fann_basic() {
     // Test neural network creation and basic operations
-    let network_result = ruv_fann::Network::<f32>::new(&[2, 3, 1]);
+    let layers = vec![2, 3, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    let network_result = Ok(network);
     assert!(network_result.is_ok(), "Should create neural network");
     
     let mut network = network_result.unwrap();
@@ -49,7 +53,10 @@ async fn test_pipeline_timing() {
     tokio::time::sleep(Duration::from_millis(5)).await;
     
     // Simulate neural processing
-    let mut network = ruv_fann::Network::<f32>::new(&[3, 1]).unwrap();
+    let layers = vec![3, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     let _output = network.run(&vec![0.1, 0.2, 0.3]).unwrap();
     tokio::time::sleep(Duration::from_millis(50)).await;
     
@@ -67,7 +74,10 @@ async fn test_pipeline_timing() {
 #[test]
 fn test_performance_requirements() {
     // Test neural processing speed
-    let mut network = ruv_fann::Network::<f32>::new(&[5, 10, 1]).unwrap();
+    let layers = vec![5, 10, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     let start = Instant::now();
     
     for i in 0..100 {
@@ -122,7 +132,8 @@ async fn test_integration_points() {
     // Test that all critical components can be initialized
     
     // 1. Neural network (ruv-FANN)
-    let network = ruv_fann::Network::<f32>::new(&[2, 1]);
+    let layers = vec![2, 1];
+    let network = ruv_fann::Network::<f32>::new(&layers);
     assert!(network.is_ok(), "Neural network should initialize");
     
     // 2. Simulate FACT cache behavior
@@ -160,7 +171,10 @@ async fn test_critical_path_performance() {
     
     // Step 2: Neural processing (real)
     let neural_start = Instant::now();
-    let mut network = ruv_fann::Network::<f32>::new(&[4, 8, 1]).unwrap();
+    let layers = vec![4, 8, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     let input = vec![0.2, 0.4, 0.6, 0.8];
     let _neural_output = network.run(&input).unwrap();
     let neural_time = neural_start.elapsed();

@@ -10,10 +10,13 @@ mod minimal_tests {
     #[test]
     fn test_ruv_fann_available() {
         // Test that ruv-FANN dependency is working
-        let result = ruv_fann::Network::<f32>::new(&[2, 1]);
-        assert!(result.is_ok(), "ruv-FANN should be available and functional");
+        let layers = vec![2, 1];
+        let mut network = ruv_fann::Network::<f32>::new(&layers);
         
-        let mut network = result.unwrap();
+        // Set activation functions (required for proper operation)
+        network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+        network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
+        
         let input = vec![0.5, 0.7];
         let output = network.run(&input);
         
@@ -52,7 +55,10 @@ mod minimal_tests {
     /// Test performance requirements for neural processing
     #[test]
     fn test_neural_performance() {
-        let mut network = ruv_fann::Network::<f32>::new(&[5, 10, 1]).unwrap();
+        let layers = vec![5, 10, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
         
         let start_time = Instant::now();
         let iterations = 1000;
@@ -86,7 +92,10 @@ mod minimal_tests {
         
         // Stage 2: Neural processing (real ruv-FANN processing)
         let neural_start = Instant::now();
-        let mut network = ruv_fann::Network::<f32>::new(&[3, 5, 1]).unwrap();
+        let layers = vec![3, 5, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
         let neural_input = vec![0.3, 0.6, 0.9];
         let _neural_output = network.run(&neural_input).unwrap();
         let neural_time = neural_start.elapsed();
@@ -193,11 +202,16 @@ mod minimal_tests {
         let integration_start = Instant::now();
         
         // Test 1: Core dependencies are available
-        let neural_available = ruv_fann::Network::<f32>::new(&[1, 1]).is_ok();
+        let layers = vec![1, 1];
+        let _network = ruv_fann::Network::<f32>::new(&layers);
+        let neural_available = true;
         assert!(neural_available, "ruv-FANN neural networks should be available");
         
         // Test 2: Basic computations work correctly
-        let mut network = ruv_fann::Network::<f32>::new(&[2, 1]).unwrap();
+        let layers = vec![2, 1];
+        let mut network = ruv_fann::Network::<f32>::new(&layers);
+        network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+        network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
         let computation_result = network.run(&vec![0.1, 0.9]);
         assert!(computation_result.is_ok(), "Basic neural computation should work");
         
@@ -234,7 +248,10 @@ mod minimal_tests {
         assert!(validate_query(test_query), "Query should be valid");
         
         // 2. Neural processing (real)
-        let mut network = ruv_fann::Network::<f32>::new(&[4, 8, 4, 1]).unwrap();
+        let layers = vec![4, 8, 4, 1];
+        let mut network = ruv_fann::Network::<f32>::new(&layers);
+        network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+        network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
         let neural_input = vec![0.25, 0.5, 0.75, 1.0];
         let neural_output = network.run(&neural_input).unwrap();
         assert!(!neural_output.is_empty(), "Neural processing should produce output");

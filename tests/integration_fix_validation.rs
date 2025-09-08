@@ -42,10 +42,12 @@ async fn test_fact_cache_basic() {
 #[tokio::test]
 async fn test_ruv_fann_basic() {
     // Test that ruv-FANN is available and working
-    let network_result = ruv_fann::Network::<f32>::new(&[2, 3, 1]);
-    assert!(network_result.is_ok(), "Should be able to create neural network");
+    let layers = vec![2, 3, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
     
-    let mut network = network_result.unwrap();
+    // Set activation functions for proper operation
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     
     // Test basic neural network operations
     let input = vec![0.5, 0.7];
@@ -211,7 +213,10 @@ async fn test_end_to_end_validation() {
     
     // Test all components can be initialized
     let fact_system = fact::FactSystem::new(100);
-    let network = ruv_fann::Network::<f32>::new(&[2, 1]).unwrap();
+    let layers = vec![2, 1];
+    let mut network = ruv_fann::Network::<f32>::new(&layers);
+    network.set_activation_function_hidden(ruv_fann::ActivationFunction::SigmoidSymmetric);
+    network.set_activation_function_output(ruv_fann::ActivationFunction::SigmoidSymmetric);
     let config = integration::IntegrationConfig::default();
     
     // Test basic workflow simulation

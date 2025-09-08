@@ -5,17 +5,19 @@
 
 use mockall::*;
 use mockall::predicate::*;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
 // Import the actual components
-use integration::{
-    SystemIntegration, IntegrationConfig,
-    ByzantineConsensusValidator, ConsensusProposal, ConsensusResult,
-    ProcessingPipeline,
-};
-use fact::{FactSystem, Citation, CachedResponse};
-use chunker::NeuralChunker;
+// Note: Integration components not available in test environment
+// use integration::{
+//     SystemIntegration, IntegrationConfig,
+//     ByzantineConsensusValidator, ConsensusProposal, ConsensusResult,
+//     ProcessingPipeline,
+// };
+use fact::{FactSystem, Citation};
+// use chunker::NeuralChunker;  // Not available in test environment
 
 #[cfg(test)]
 mod pipeline_tests {
