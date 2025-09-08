@@ -1037,7 +1037,7 @@ mod tests {
         let config = Arc::new(ProcessorConfig::default());
         let selector = StrategySelector::new(config).await.unwrap();
         
-        let query = crate::query::Query::new("What are the PCI DSS encryption requirements?");
+        let query = crate::query::Query::new("What are the PCI DSS encryption requirements?").unwrap();
         let analysis = create_test_analysis();
         let intent = QueryIntent::Compliance;
         let entities = vec![];

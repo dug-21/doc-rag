@@ -590,7 +590,7 @@ mod tests {
     #[tokio::test]
     async fn test_single_query_optimization() {
         let optimizer = create_test_optimizer().await;
-        let query = Query::new("What is the performance target?");
+        let query = Query::new("What is the performance target?").unwrap();
         
         let result = optimizer.process_optimized(query).await;
         assert!(result.is_ok());
@@ -605,9 +605,9 @@ mod tests {
     async fn test_batch_processing() {
         let optimizer = create_test_optimizer().await;
         let queries = vec![
-            Query::new("Query 1"),
-            Query::new("Query 2"),
-            Query::new("Query 3"),
+            Query::new("Query 1").unwrap(),
+            Query::new("Query 2").unwrap(),
+            Query::new("Query 3").unwrap(),
         ];
         
         let results = optimizer.process_batch_optimized(queries).await;
@@ -631,7 +631,7 @@ mod tests {
         let processor = QueryProcessor::new(processor_config).await.unwrap();
         let optimizer = QueryProcessorOptimizer::new(processor, config).await.unwrap();
         
-        let query = Query::new("Cached query test");
+        let query = Query::new("Cached query test").unwrap();
         
         // First request - should not be cached
         let result1 = optimizer.process_optimized(query.clone()).await.unwrap();
@@ -652,7 +652,7 @@ mod tests {
         
         // Process several queries
         for i in 0..5 {
-            let query = Query::new(&format!("Test query {}", i));
+            let query = Query::new(&format!("Test query {}", i)).unwrap();
             let _ = optimizer.process_optimized(query).await.unwrap();
         }
         
@@ -672,7 +672,7 @@ mod tests {
         let optimizer = create_test_optimizer().await;
         
         // Process a query and check if it meets performance target
-        let query = Query::new("Performance target test query");
+        let query = Query::new("Performance target test query").unwrap();
         let result = optimizer.process_optimized(query).await.unwrap();
         
         // Should complete within 2s target

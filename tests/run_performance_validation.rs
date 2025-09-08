@@ -20,7 +20,7 @@ use rand::Rng;
 use fact::{FactSystem, FactCache, CachedResponse, Citation};
 
 /// Simplified performance test configuration
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ValidationConfig {
     pub cache_test_size: usize,
     pub neural_test_docs: usize,

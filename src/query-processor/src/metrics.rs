@@ -597,10 +597,13 @@ mod tests {
     use crate::query::{Query, ProcessedQuery};
     use crate::types::*;
     use std::collections::HashMap;
+    use chrono::Utc;
 
     fn create_test_processed_query() -> ProcessedQuery {
-        let query = Query::new("Test query");
+        let query = Query::new("Test query").unwrap();
         let analysis = SemanticAnalysis {
+            processing_time: std::time::Duration::from_millis(100),
+            timestamp: Utc::now(),
             syntactic_features: SyntacticFeatures {
                 pos_tags: vec![],
                 named_entities: vec![],
@@ -679,7 +682,7 @@ mod tests {
         assert!(metrics.intent_distribution.contains_key(&QueryIntent::Factual));
         
         // Check strategy effectiveness
-        assert!(metrics.strategy_effectiveness.contains_key(&SearchStrategy::VectorSimilarity));
+        assert!(metrics.strategy_effectiveness.contains_key("VectorSimilarity"));
         
         // Check stage metrics
         assert!(metrics.stage_metrics.contains_key("analysis"));

@@ -10,7 +10,7 @@ use tokio::time::sleep;
 use uuid::Uuid;
 use mockall::{mock, predicate::*};
 
-use integration::{
+use doc_rag_integration::{
     DAAOrchestrator, IntegrationConfig, Result,
     ComponentType, ComponentHealthStatus, ComponentInfo,
     SystemHealthState, IssueSeverity, ActionType, MRAPPhase,
@@ -19,8 +19,8 @@ use integration::{
 // Mock external dependencies using London TDD approach
 mock! {
     ExternalDaaOrchestrator {
-        async fn new(config: integration::OrchestratorConfig) -> Result<Self>;
-        async fn register_service(&mut self, service: crate::integration::DaaService) -> Result<()>;
+        async fn new(config: doc_rag_integration::OrchestratorConfig) -> Result<Self>;
+        async fn register_service(&mut self, service: doc_rag_integration::DaaService) -> Result<()>;
         async fn coordinate_components(&self, context: serde_json::Value) -> Result<serde_json::Value>;
         async fn enable_byzantine_consensus(&self) -> Result<()>;
         async fn enable_self_healing(&self) -> Result<()>;
@@ -30,7 +30,7 @@ mock! {
 
 mock! {
     SystemMetricsCollector {
-        async fn collect_metrics(&self) -> crate::integration::SystemMetrics;
+        async fn collect_metrics(&self) -> doc_rag_integration::SystemMetrics;
         async fn get_component_health(&self, component: &str) -> f64;
         async fn get_system_response_time(&self) -> f64;
         async fn get_error_rate(&self) -> f64;

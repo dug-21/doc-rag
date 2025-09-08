@@ -763,7 +763,7 @@ mod tests {
 
     #[test]
     fn test_query_creation() {
-        let query = Query::new("What is PCI DSS?");
+        let query = Query::new("What is PCI DSS?").unwrap();
         assert_eq!(query.text(), "What is PCI DSS?");
         assert!(query.validate().is_ok());
     }
@@ -776,15 +776,15 @@ mod tests {
 
     #[test]
     fn test_query_complexity() {
-        let simple_query = Query::new("What is PCI DSS?");
-        let complex_query = Query::new("Compare the encryption requirements between PCI DSS 3.2.1 and 4.0, specifically focusing on key management and vulnerability assessment procedures.");
+        let simple_query = Query::new("What is PCI DSS?").unwrap();
+        let complex_query = Query::new("Compare the encryption requirements between PCI DSS 3.2.1 and 4.0, specifically focusing on key management and vulnerability assessment procedures.").unwrap();
         
         assert!(complex_query.complexity_estimate() > simple_query.complexity_estimate());
     }
 
     #[test]
     fn test_suspicious_content_detection() {
-        let malicious_query = Query::new("What is PCI DSS? <script>alert('xss')</script>");
+        let malicious_query = Query::new("What is PCI DSS? <script>alert('xss')</script>").unwrap();
         assert!(malicious_query.validate().is_err());
     }
 
@@ -793,16 +793,19 @@ mod tests {
         let mut metadata = QueryMetadata::default();
         metadata.required_accuracy = Some(1.5); // Invalid accuracy
         
-        let query = Query::with_metadata("Test query", metadata);
+        let query = Query::with_metadata("Test query", metadata).unwrap();
         assert!(query.validate().is_err());
     }
 
     #[test]
     fn test_processed_query_confidence() {
         use crate::types::*;
+        use chrono::Utc;
         
-        let query = Query::new("Test query");
+        let query = Query::new("Test query").unwrap();
         let analysis = SemanticAnalysis {
+            processing_time: std::time::Duration::from_millis(100),
+            timestamp: Utc::now(),
             syntactic_features: SyntacticFeatures {
                 pos_tags: vec![],
                 named_entities: vec![],
@@ -827,7 +830,7 @@ mod tests {
             secondary_intents: vec![],
             probabilities: HashMap::new(),
             method: ClassificationMethod::RuleBased,
-            features: HashMap::new(),
+            features: vec![],
         };
         
         let strategy = StrategySelection {
@@ -860,16 +863,19 @@ mod tests {
             },
         };
         
-        let processed = ProcessedQuery::new(
-            query,
-            analysis,
-            vec![],
-            vec![],
-            intent,
-            strategy,
-        );
+        let processed = ProcessedQuery {
+            id: uuid::Uuid::new_v4().to_string(),
+            original_query: query.text().to_string(),
+            processed_query: query.text().to_string(),
+            intent: intent.primary_intent,
+            entities: vec![],
+            query_type: "test".to_string(),
+            confidence: intent.confidence,
+            processing_time: std::time::Duration::from_millis(100),
+            metadata: HashMap::new(),
+        };
         
-        let confidence = processed.overall_confidence();
+        let confidence = processed.confidence;
         assert!(confidence > 0.0 && confidence <= 1.0);
     }
 }

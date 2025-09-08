@@ -645,6 +645,8 @@ mod tests {
 
     fn create_test_analysis() -> SemanticAnalysis {
         SemanticAnalysis {
+            processing_time: std::time::Duration::from_millis(100),
+            timestamp: Utc::now(),
             syntactic_features: SyntacticFeatures {
                 pos_tags: vec![],
                 named_entities: vec![
@@ -684,7 +686,7 @@ mod tests {
         let config = Arc::new(EntityExtractorConfig::default());
         let extractor = EntityExtractor::new(config).await.unwrap();
         
-        let query = Query::new("What are the encryption requirements in PCI DSS 4.0?");
+        let query = Query::new("What are the encryption requirements in PCI DSS 4.0?").unwrap();
         let analysis = create_test_analysis();
         
         let result = extractor.extract(&query, &analysis).await;
@@ -753,7 +755,7 @@ mod tests {
         let config = Arc::new(EntityExtractorConfig::default());
         let extractor = ComplianceEntityExtractor::new(config).await.unwrap();
         
-        let query = Query::new("What are the HIPAA requirements for encryption?");
+        let query = Query::new("What are the HIPAA requirements for encryption?").unwrap();
         let analysis = create_test_analysis();
         
         let entities = extractor.extract(&query, &analysis).await.unwrap();

@@ -462,9 +462,12 @@ impl TfIdfCalculator {
 mod tests {
     use super::*;
     use crate::config::TermExtractorConfig;
+    use chrono::Utc;
 
     fn create_test_analysis() -> SemanticAnalysis {
         SemanticAnalysis {
+            processing_time: std::time::Duration::from_millis(100),
+            timestamp: Utc::now(),
             syntactic_features: SyntacticFeatures {
                 pos_tags: vec![],
                 named_entities: vec![
@@ -513,7 +516,7 @@ mod tests {
         let config = Arc::new(TermExtractorConfig::default());
         let extractor = KeyTermExtractor::new(config).await.unwrap();
         
-        let query = Query::new("What are the encryption requirements in PCI DSS 4.0?");
+        let query = Query::new("What are the encryption requirements in PCI DSS 4.0?").unwrap();
         let analysis = create_test_analysis();
         
         let result = extractor.extract(&query, &analysis).await;
@@ -536,7 +539,7 @@ mod tests {
         
         let extractor = KeyTermExtractor::new(config).await.unwrap();
         
-        let query = Query::new("What are PCI DSS compliance requirements for data encryption?");
+        let query = Query::new("What are PCI DSS compliance requirements for data encryption?").unwrap();
         let analysis = create_test_analysis();
         
         let result = extractor.extract(&query, &analysis).await;

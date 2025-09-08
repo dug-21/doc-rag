@@ -725,7 +725,8 @@ mod tests {
                 category: TermCategory::Technical,
                 positions: vec![(28, 38)],
                 importance: 0.9,
-                // related_terms and metadata fields don't exist in KeyTerm
+                contexts: vec![],
+                ngram_size: 1,
             },
         ];
         let intent = IntentClassification {

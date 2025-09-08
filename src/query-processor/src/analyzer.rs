@@ -1058,7 +1058,7 @@ mod tests {
         let config = Arc::new(ProcessorConfig::default());
         let analyzer = QueryAnalyzer::new(config).await?;
         
-        let query = Query::new("What are the encryption requirements in PCI DSS 4.0?");
+        let query = Query::new("What are the encryption requirements in PCI DSS 4.0?")?;
         let result = analyzer.analyze(&query).await;
         
         assert!(result.is_ok());

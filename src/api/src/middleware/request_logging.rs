@@ -329,6 +329,7 @@ fn log_security_response(metadata: &RequestMetadata, response: &Response) {
 mod tests {
     use super::*;
     use axum::body::Body;
+    use axum::response::IntoResponse;
     use std::net::{IpAddr, Ipv4Addr};
 
     #[test]

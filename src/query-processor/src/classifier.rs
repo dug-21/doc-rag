@@ -1111,7 +1111,7 @@ mod tests {
         let config = Arc::new(ProcessorConfig::default());
         let classifier = IntentClassifier::new(config).await.unwrap();
         
-        let query = crate::query::Query::new("What is PCI DSS?");
+        let query = crate::query::Query::new("What is PCI DSS?").unwrap();
         let analysis = create_test_analysis();
         
         let classification = classifier.classify(&query, &analysis).await.unwrap();
@@ -1124,7 +1124,7 @@ mod tests {
         let config = Arc::new(ProcessorConfig::default());
         let classifier = IntentClassifier::new(config).await.unwrap();
         
-        let query = crate::query::Query::new("How do I implement PCI DSS requirements?");
+        let query = crate::query::Query::new("How do I implement PCI DSS requirements?").unwrap();
         let analysis = create_test_analysis();
         
         let classification = classifier.classify(&query, &analysis).await.unwrap();
@@ -1136,7 +1136,7 @@ mod tests {
         let config = Arc::new(ProcessorConfig::default());
         let classifier = IntentClassifier::new(config).await.unwrap();
         
-        let query = crate::query::Query::new("Compare PCI DSS 3.2.1 versus 4.0");
+        let query = crate::query::Query::new("Compare PCI DSS 3.2.1 versus 4.0").unwrap();
         let analysis = create_test_analysis();
         
         let classification = classifier.classify(&query, &analysis).await.unwrap();
@@ -1148,7 +1148,7 @@ mod tests {
         let config = crate::config::IntentClassifierConfig::default();
         let extractor = FeatureExtractor::new(&config).unwrap();
         
-        let query = crate::query::Query::new("What are the PCI DSS encryption requirements?");
+        let query = crate::query::Query::new("What are the PCI DSS encryption requirements?").unwrap();
         let analysis = create_test_analysis();
         
         let features = extractor.extract_features(&query, &analysis).await.unwrap();
