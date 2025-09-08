@@ -179,6 +179,9 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tracing = { workspace = true }
 
+# Neural networks - ruv-FANN v0.1.6 for tests
+ruv-fann = { workspace = true }
+
 # Development dependencies
 criterion = { workspace = true }
 tokio-test = { workspace = true }
@@ -197,6 +200,7 @@ criterion = { workspace = true }
 proptest = { workspace = true }
 mockall = { workspace = true }
 rand = { workspace = true }
+fact = { path = "src/fact" }  # Add FACT dependency for test files
 
 [[bench]]
 name = "week3_pipeline_benchmarks"
