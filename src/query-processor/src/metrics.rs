@@ -13,6 +13,47 @@ use tracing::{info, instrument};
 use crate::query::{ProcessedQuery, ProcessingSummary};
 use crate::types::*;
 
+/// Classification metadata for intent classification
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClassificationMetadata {
+    /// Classifier used
+    pub classifier: String,
+    /// Classification timestamp
+    pub classified_at: DateTime<Utc>,
+    /// Features used for classification
+    pub features: Vec<String>,
+    /// Alternative classifications
+    pub alternatives: Vec<String>,
+}
+
+/// Performance prediction for strategies
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PerformancePrediction {
+    /// Predicted accuracy
+    pub accuracy: f64,
+    /// Predicted latency
+    pub latency: Duration,
+    /// Predicted recall
+    pub recall: f64,
+    /// Predicted precision
+    pub precision: f64,
+    /// Overall confidence
+    pub confidence: f64,
+}
+
+/// Selection metadata for strategy selection
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectionMetadata {
+    /// Selection algorithm used
+    pub algorithm: String,
+    /// Selection timestamp
+    pub selected_at: DateTime<Utc>,
+    /// Selection factors
+    pub factors: Vec<String>,
+    /// Query characteristics
+    pub characteristics: HashMap<String, f64>,
+}
+
 /// Comprehensive metrics for query processor performance
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProcessorMetrics {
@@ -581,32 +622,28 @@ mod tests {
         let key_terms = vec![];
         let intent = IntentClassification {
             primary_intent: QueryIntent::Factual,
-            primary_confidence: 0.9,
+            confidence: 0.9,
             secondary_intents: vec![],
-            metadata: ClassificationMetadata {
-                classifier: "test".to_string(),
-                classified_at: Utc::now(),
-                features: vec![],
-                alternatives: vec![],
-            },
+            probabilities: HashMap::new(),
+            method: ClassificationMethod::RuleBased,
+            features: vec!["test".to_string()],
         };
         let strategy = StrategySelection {
-            primary_strategy: SearchStrategy::VectorSimilarity,
-            primary_confidence: 0.85,
-            fallback_strategies: vec![],
+            strategy: SearchStrategy::VectorSimilarity,
+            confidence: 0.85,
+            fallbacks: vec![],
             reasoning: "Test reasoning".to_string(),
-            predictions: PerformancePrediction {
-                accuracy: 0.9,
-                latency: Duration::from_millis(100),
-                recall: 0.85,
-                precision: 0.90,
-                confidence: 0.8,
+            expected_metrics: PerformanceMetrics {
+                expected_accuracy: 0.9,
+                expected_response_time: Duration::from_millis(100),
+                expected_recall: 0.85,
+                expected_precision: 0.90,
+                resource_usage: ResourceUsage::default(),
             },
-            metadata: SelectionMetadata {
-                algorithm: "test".to_string(),
-                selected_at: Utc::now(),
-                factors: vec![],
-                characteristics: HashMap::new(),
+            predictions: StrategyPredictions {
+                latency: 0.1,
+                accuracy: 0.9,
+                resource_usage: 0.5,
             },
         };
         

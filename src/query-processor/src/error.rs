@@ -39,6 +39,10 @@ pub enum ProcessorError {
     /// Strategy selection errors
     #[error("Strategy selection failed: {reason}")]
     StrategySelectionFailed { reason: String },
+    
+    /// Invalid strategy error
+    #[error("Invalid strategy: {0}")]
+    InvalidStrategy(String),
 
     /// Consensus errors
     #[error("Consensus validation failed: {reason}")]
@@ -211,6 +215,7 @@ impl ProcessorError {
             ProcessorError::MetricsError { .. } => ErrorSeverity::Low,
             ProcessorError::ProcessingFailed(_) => ErrorSeverity::Medium,
             ProcessorError::Internal { .. } => ErrorSeverity::Critical,
+            ProcessorError::InvalidStrategy(_) => ErrorSeverity::Medium,
         }
     }
 
@@ -246,6 +251,7 @@ impl ProcessorError {
             ProcessorError::MetricsError { .. } => RecoveryStrategy::Skip,
             ProcessorError::ProcessingFailed(_) => RecoveryStrategy::Fallback,
             ProcessorError::Internal { .. } => RecoveryStrategy::FailFast,
+            ProcessorError::InvalidStrategy(_) => RecoveryStrategy::Fallback,
         }
     }
 
@@ -334,6 +340,7 @@ impl ProcessorError {
             ProcessorError::MetricsError { .. } => "METRICS_ERROR",
             ProcessorError::ProcessingFailed(_) => "PROCESSING_FAILED",
             ProcessorError::Internal { .. } => "INTERNAL_ERROR",
+            ProcessorError::InvalidStrategy(_) => "INVALID_STRATEGY",
         }
     }
 }

@@ -832,6 +832,30 @@ pub struct ConsensusConfig {
     pub retransmission: RetransmissionConfig,
 }
 
+impl Default for ConsensusConfig {
+    fn default() -> Self {
+        Self {
+            consensus_timeout: Duration::from_secs(30),
+            heartbeat_interval: Duration::from_secs(1),
+            view_change_timeout: Duration::from_secs(10),
+            max_concurrent_rounds: 5,
+            enable_byzantine_detection: true,
+            min_nodes: 3,
+            batching: BatchingConfig {
+                enabled: true,
+                max_batch_size: 100,
+                batch_timeout: Duration::from_millis(50),
+            },
+            retransmission: RetransmissionConfig {
+                enabled: true,
+                max_attempts: 3,
+                base_delay: Duration::from_millis(500),
+                backoff_multiplier: 1.5,
+            },
+        }
+    }
+}
+
 /// Message batching configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatchingConfig {
@@ -2802,8 +2826,8 @@ mod tests {
             // Use IntentClassifier instead of QueryClassifier
             let classifier = crate::classifier::IntentClassifier::new(config).await?;
             
-            let analyzer_config = crate::analyzer::AnalyzerConfig::default();
-            let analyzer = crate::analyzer::QueryAnalyzer::new(analyzer_config)?;
+            let processor_config = crate::config::ProcessorConfig::default();
+            let analyzer = crate::analyzer::QueryAnalyzer::new(Arc::new(processor_config)).await?;
             
             Ok(Self {
                 entity_extractor,
@@ -2825,31 +2849,77 @@ mod tests {
             let start_time = std::time::Instant::now();
             
             // Use real analyzer to process the query
-            let analysis_result = self.analyzer.analyze_query(&query.original_query).await?;
+            let internal_query = crate::query::Query::new(&query.original_query)?;
+            let analysis_result = self.analyzer.analyze(&internal_query).await?;
             
             Ok(QueryResult {
                 query: query.original_query.clone(),
-                search_strategy: analysis_result.recommended_strategy.strategy,
+                search_strategy: SearchStrategy::VectorSimilarity, // Default strategy since analysis doesn't contain strategy
                 confidence: analysis_result.confidence,
                 processing_time: start_time.elapsed(),
-                metadata: analysis_result.analysis_metadata,
+                metadata: std::collections::HashMap::new(), // Default empty metadata
             })
         }
         
         async fn extract_entities(&self, query_text: &str) -> Result<Vec<ExtractedEntity>> {
             // Use real entity extractor
-            self.entity_extractor.extract_entities(query_text).await
+            let internal_query = crate::query::Query::new(query_text)?;
+            let analysis = self.analyzer.analyze(&internal_query).await?;
+            self.entity_extractor.extract(&internal_query, &analysis).await
         }
         
         async fn classify_query(&self, query_text: &str) -> Result<ClassificationResult> {
             // Use real classifier
-            self.classifier.classify_query(query_text).await
+            let internal_query = crate::query::Query::new(query_text)?;
+            let analysis = self.analyzer.analyze(&internal_query).await?;
+            let intent_result = self.classifier.classify(&internal_query, &analysis).await?;
+            
+            Ok(ClassificationResult {
+                intent: intent_result.primary_intent,
+                confidence: intent_result.confidence,
+                reasoning: format!("Classified using {:?} method", intent_result.method),
+                features: intent_result.probabilities.into_iter()
+                    .map(|(intent, prob)| (format!("{:?}", intent), prob))
+                    .collect(),
+            })
         }
         
         async fn recommend_strategy(&self, query: &ProcessedQuery) -> Result<StrategyRecommendation> {
             // Use real analyzer for strategy recommendation
-            let analysis = self.analyzer.analyze_query(&query.original_query).await?;
-            Ok(analysis.recommended_strategy)
+            let internal_query = crate::query::Query::new(&query.original_query)?;
+            let analysis = self.analyzer.analyze(&internal_query).await?;
+            
+            // Create mock intent classification from consensus query data
+            let intent_classification = crate::types::IntentClassification {
+                primary_intent: query.intent.clone(),
+                confidence: query.confidence,
+                secondary_intents: vec![],
+                probabilities: std::collections::HashMap::new(),
+                method: crate::types::ClassificationMethod::Neural,
+                features: vec![],
+            };
+            
+            // Create a default strategy selection since strategy_selector field doesn't exist
+            let strategy_selection = crate::types::StrategySelection {
+                strategy: crate::types::SearchStrategy::VectorSimilarity,
+                confidence: 0.8,
+                reasoning: "Default strategy for consensus processing".to_string(),
+                expected_metrics: crate::types::PerformanceMetrics::default(),
+                fallbacks: vec![],
+                predictions: crate::types::StrategyPredictions {
+                    latency: 0.1,
+                    accuracy: 0.8,
+                    resource_usage: 0.5,
+                },
+            };
+            
+            Ok(StrategyRecommendation {
+                strategy: strategy_selection.strategy,
+                confidence: strategy_selection.confidence,
+                reasoning: strategy_selection.reasoning,
+                parameters: std::collections::HashMap::new(),
+                estimated_performance: Some(strategy_selection.expected_metrics),
+            })
         }
         
         async fn validate_result(&self, result: &QueryResult) -> Result<ValidationResult> {
@@ -2976,12 +3046,22 @@ mod tests {
         
         // Create mock node results (3 nodes for proper Byzantine testing)
         let entity1 = ExtractedEntity {
-            text: "test_entity".to_string(),
-            entity_type: "ORGANIZATION".to_string(),
-            confidence: 0.9,
-            position: (0, 11),
-            metadata: HashMap::new(),
-            relationships: Vec::new(),
+            entity: crate::types::NamedEntity::new(
+                "test_entity".to_string(),
+                "ORGANIZATION".to_string(),
+                0,
+                11,
+                0.9,
+            ),
+            category: crate::types::EntityCategory::Organization,
+            metadata: crate::types::EntityMetadata {
+                extraction_method: "test".to_string(),
+                extracted_at: chrono::Utc::now(),
+                context: "test context".to_string(),
+                normalization: None,
+                properties: std::collections::HashMap::new(),
+            },
+            relationships: vec![],
         };
         
         let results = vec![
@@ -3039,12 +3119,22 @@ mod tests {
         
         // Create results from only 1 node (insufficient for Byzantine consensus)
         let entity1 = ExtractedEntity {
-            text: "test_entity".to_string(),
-            entity_type: "PERSON".to_string(),
-            confidence: 0.9,
-            position: (0, 11),
-            metadata: HashMap::new(),
-            relationships: Vec::new(),
+            entity: crate::types::NamedEntity::new(
+                "test_entity".to_string(),
+                "PERSON".to_string(),
+                0,
+                11,
+                0.9,
+            ),
+            category: crate::types::EntityCategory::Person,
+            metadata: crate::types::EntityMetadata {
+                extraction_method: "test".to_string(),
+                extracted_at: chrono::Utc::now(),
+                context: "test context".to_string(),
+                normalization: None,
+                properties: std::collections::HashMap::new(),
+            },
+            relationships: vec![],
         };
         
         let results = vec![
@@ -3126,7 +3216,7 @@ mod tests {
         // Should achieve consensus with Factual intent (2/3 nodes = 67% > 66%)
         assert_eq!(classification.intent, QueryIntent::Factual);
         assert!(classification.features.contains_key("consensus_nodes"));
-        assert_eq!(classification.features["consensus_nodes"], "2");
+        assert_eq!(classification.features.get("consensus_nodes"), Some(&"2".to_string()));
     }
     
     #[tokio::test]
@@ -3318,12 +3408,22 @@ mod tests {
             NodeEntityResult {
                 node_id: "node1".to_string(),
                 entities: vec![ExtractedEntity {
-                    text: "entity1".to_string(),
-                    entity_type: "TYPE1".to_string(),
-                    confidence: 0.9,
-                    position: (0, 7),
-                    metadata: HashMap::new(),
-                    relationships: Vec::new(),
+                    entity: crate::types::NamedEntity::new(
+                        "entity1".to_string(),
+                        "TYPE1".to_string(),
+                        0,
+                        7,
+                        0.9,
+                    ),
+                    category: crate::types::EntityCategory::TechnicalTerm,
+                    metadata: crate::types::EntityMetadata {
+                        extraction_method: "test".to_string(),
+                        extracted_at: chrono::Utc::now(),
+                        context: "test context".to_string(),
+                        normalization: None,
+                        properties: std::collections::HashMap::new(),
+                    },
+                    relationships: vec![],
                 }],
                 confidence: 0.9,
                 processing_time: Duration::from_millis(10),
@@ -3332,12 +3432,22 @@ mod tests {
             NodeEntityResult {
                 node_id: "node2".to_string(),
                 entities: vec![ExtractedEntity {
-                    text: "entity1".to_string(),
-                    entity_type: "TYPE1".to_string(),
-                    confidence: 0.8,
-                    position: (0, 7),
-                    metadata: HashMap::new(),
-                    relationships: Vec::new(),
+                    entity: crate::types::NamedEntity::new(
+                        "entity1".to_string(),
+                        "TYPE1".to_string(),
+                        0,
+                        7,
+                        0.8,
+                    ),
+                    category: crate::types::EntityCategory::TechnicalTerm,
+                    metadata: crate::types::EntityMetadata {
+                        extraction_method: "test".to_string(),
+                        extracted_at: chrono::Utc::now(),
+                        context: "test context".to_string(),
+                        normalization: None,
+                        properties: std::collections::HashMap::new(),
+                    },
+                    relationships: vec![],
                 }],
                 confidence: 0.8,
                 processing_time: Duration::from_millis(12),

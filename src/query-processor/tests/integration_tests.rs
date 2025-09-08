@@ -2,12 +2,12 @@
 //! Tests complete workflows and component interactions with MRAP control loop and Byzantine consensus
 
 use query_processor::{
-    Config, QueryProcessor, ProcessingRequest, ProcessedQuery, QueryIntent, EntityType,
-    SearchStrategy, ConsensusResult, ValidationResult, ValidationStatus, HealthStatus
+    Config, QueryProcessor, ProcessingRequest, QueryIntent, EntityType,
+    SearchStrategy, ConsensusResult, ValidationStatus
 };
-//use std::collections::HashMap; // Not needed after fixing field access
 use std::time::Instant;
 use uuid::Uuid;
+use std::collections::HashMap;
 
 // Import futures for concurrent operations
 use futures::future::join_all;
@@ -34,11 +34,19 @@ async fn test_complete_query_processing() {
     assert!(result.intent.primary_intent != QueryIntent::Unknown);
     assert!(result.strategy.strategy != SearchStrategy::ExactMatch);
     
-    // Verify Byzantine consensus validation with 66% threshold
+    // Verify Byzantine consensus validation with 66% threshold (critical requirement)
     if let Some(consensus) = &result.consensus {
         match consensus {
             ConsensusResult::QueryProcessing { result: query_result } => {
-                assert!(query_result.confidence >= 0.66);
+                // Ensure Byzantine 66% threshold is met
+                assert!(query_result.confidence >= 0.66, 
+                        "Byzantine consensus requires >=66% confidence, got {:.2}%", 
+                        query_result.confidence * 100.0);
+                
+                // Verify Byzantine consensus metadata is present
+                assert!(query_result.metadata.contains_key("consensus_type"));
+                assert_eq!(query_result.metadata.get("consensus_type"), Some(&"byzantine".to_string()));
+                assert!(query_result.metadata.contains_key("threshold"));
             },
             _ => { /* Other consensus types */ }
         }
@@ -124,7 +132,7 @@ async fn test_complex_entity_extraction() {
     
     // Should identify compliance terms
     let has_compliance_entity = result.entities.iter()
-        .any(|e| e.category == EntityType::ComplianceTerm);
+        .any(|e| e.category == EntityType::Standard);
     assert!(has_compliance_entity);
     
     // Should identify geographic entities
@@ -202,11 +210,13 @@ async fn test_concurrent_processing() {
         assert!(processing_result.processing_metadata.statistics.overall_confidence > 0.0);
         assert!(!processing_result.query.text().is_empty());
         
-        // Verify Byzantine consensus worked under concurrent load
+        // Verify Byzantine consensus worked under concurrent load (66% threshold)
         if let Some(consensus) = &processing_result.consensus {
             match consensus {
                 ConsensusResult::QueryProcessing { result: query_result } => {
-                    assert!(query_result.confidence >= 0.66);
+                    assert!(query_result.confidence >= 0.66, 
+                            "Concurrent Byzantine consensus failed: {:.2}% < 66%", 
+                            query_result.confidence * 100.0);
                 },
                 _ => { /* Other consensus types */ }
             }
@@ -404,6 +414,7 @@ async fn test_high_load_processing() {
                     if let Some(consensus) = &result.consensus {
                         match consensus {
                             ConsensusResult::QueryProcessing { result: query_result } => {
+                                // Byzantine consensus requires 66% threshold
                                 if query_result.confidence >= 0.66 {
                                     consensus_successes += 1;
                                 }
@@ -429,9 +440,9 @@ async fn test_high_load_processing() {
     let success_rate = total_successes as f64 / total_expected as f64;
     let consensus_rate = total_consensus_successes as f64 / total_successes as f64;
     
-    // Verify MRAP handles high load with Byzantine consensus
+    // Verify MRAP handles high load with Byzantine consensus (66% threshold)
     assert!(success_rate > 0.8, "Success rate {:.2}% too low under load", success_rate * 100.0);
-    assert!(consensus_rate > 0.9, "Byzantine consensus rate {:.2}% too low under load", consensus_rate * 100.0);
+    assert!(consensus_rate > 0.9, "Byzantine consensus rate {:.2}% too low under load (66% threshold)", consensus_rate * 100.0);
 }
 
 /// Test DAA error handling and recovery mechanisms

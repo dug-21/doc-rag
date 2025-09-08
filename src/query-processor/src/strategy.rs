@@ -1023,6 +1023,7 @@ fn strategy_name(strategy: &SearchStrategy) -> String {
 mod tests {
     use super::*;
     use crate::config::ProcessorConfig;
+    use crate::error::{ProcessorError, Result};
 
     #[tokio::test]
     async fn test_strategy_selector_creation() {
@@ -1047,7 +1048,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_comparison_query_strategy() -> Result<(), ProcessorError> {
+    async fn test_comparison_query_strategy() -> Result<()> {
         let config = Arc::new(ProcessorConfig::default());
         let selector = StrategySelector::new(config).await.unwrap();
         

@@ -674,11 +674,14 @@ mod tests {
     use super::*;
     use crate::config::ValidationConfig;
     use crate::query::Query;
+    use std::collections::HashMap;
+    use uuid::Uuid;
+    use std::time::Duration;
 
     fn create_test_processed_query() -> ProcessedQuery {
         let query = Query::new("What are PCI DSS encryption requirements?");
-        let analysis = SemanticAnalysis {
-            syntactic_features: SyntacticFeatures {
+        let analysis = SemanticAnalysis::new(
+            SyntacticFeatures {
                 pos_tags: vec![],
                 named_entities: vec![
                     NamedEntity::new("PCI DSS".to_string(), "STANDARD".to_string(), 9, 16, 0.95),
@@ -687,16 +690,17 @@ mod tests {
                 verb_phrases: vec![],
                 question_words: vec!["what".to_string()],
             },
-            semantic_features: SemanticFeatures {
+            SemanticFeatures {
                 semantic_roles: vec![],
                 coreferences: vec![],
                 sentiment: None,
                 similarity_vectors: vec![],
             },
-            dependencies: vec![],
-            topics: vec![],
-            confidence: 0.8,
-        };
+            vec![], // dependencies
+            vec![], // topics
+            0.8,    // confidence
+            std::time::Duration::from_millis(10), // processing_time
+        );
         let entities = vec![
             ExtractedEntity {
                 entity: NamedEntity::new("PCI DSS".to_string(), "STANDARD".to_string(), 9, 16, 0.95),
@@ -721,8 +725,7 @@ mod tests {
                 category: TermCategory::Technical,
                 positions: vec![(28, 38)],
                 importance: 0.9,
-                related_terms: vec![],
-                metadata: HashMap::new(),
+                // related_terms and metadata fields don't exist in KeyTerm
             },
         ];
         let intent = IntentClassification {
@@ -731,7 +734,7 @@ mod tests {
             secondary_intents: vec![],
             probabilities: HashMap::new(),
             method: ClassificationMethod::RuleBased,
-            features: HashMap::new(),
+            features: vec![],
         };
         let strategy = StrategySelection {
             strategy: SearchStrategy::KeywordSearch,
@@ -763,7 +766,7 @@ mod tests {
             },
         };
         
-        ProcessedQuery::new(query, analysis, entities, key_terms, intent, strategy)
+        ProcessedQuery::new(query.unwrap(), analysis, entities, key_terms, intent, strategy)
     }
 
     #[tokio::test]

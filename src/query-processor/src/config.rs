@@ -292,6 +292,8 @@ pub struct ConsensusConfig {
     pub minimum_responses: usize,
 }
 
+// Default implementation moved to avoid conflict with existing implementation
+
 /// Consensus algorithms
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

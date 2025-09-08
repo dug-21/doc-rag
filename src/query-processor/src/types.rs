@@ -769,6 +769,10 @@ pub enum ValidationRule {
     Pattern(String),
     Custom(String),
     Dependency(String),
+    /// Confidence threshold validation
+    Confidence(f64),
+    /// Performance threshold validation
+    Performance(f64),
 }
 
 /// Validation result
@@ -1223,7 +1227,7 @@ mod tests {
 
     #[test]
     fn test_consensus_result() {
-        let result = ConsensusResult {
+        let decision_result = ConsensusDecisionResult {
             decision: ConsensusDecision::Approve,
             agreement: 0.8,
             participant_count: 5,
@@ -1232,8 +1236,26 @@ mod tests {
             byzantine_tolerance: true,
         };
 
-        assert_eq!(result.decision, ConsensusDecision::Approve);
-        assert!(result.byzantine_tolerance);
+        assert_eq!(decision_result.decision, ConsensusDecision::Approve);
+        assert!(decision_result.byzantine_tolerance);
+        
+        // Test the enum variant
+        let query_result = QueryResult {
+            query: "test query".to_string(),
+            search_strategy: SearchStrategy::VectorSimilarity,
+            confidence: 0.9,
+            processing_time: Duration::from_millis(100),
+            metadata: HashMap::new(),
+        };
+        
+        let consensus_result = ConsensusResult::QueryProcessing { result: query_result };
+        match consensus_result {
+            ConsensusResult::QueryProcessing { result } => {
+                assert_eq!(result.query, "test query");
+                assert!(result.confidence > 0.8);
+            },
+            _ => panic!("Expected QueryProcessing variant"),
+        }
     }
 
     #[test]

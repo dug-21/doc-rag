@@ -24,6 +24,14 @@ pub struct EntityExtractor {
     patterns: HashMap<EntityCategory, Vec<EntityPattern>>,
 }
 
+impl std::fmt::Debug for EntityExtractor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EntityExtractor")
+            .field("config", &"EntityExtractorConfig")
+            .finish()
+    }
+}
+
 impl EntityExtractor {
     /// Create a new entity extractor
     #[instrument(skip(config))]

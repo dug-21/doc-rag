@@ -29,6 +29,14 @@ pub struct QueryAnalyzer {
     semantic_analyzer: SemanticAnalyzer,
 }
 
+impl std::fmt::Debug for QueryAnalyzer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("QueryAnalyzer")
+            .field("config", &"ProcessorConfig")
+            .finish()
+    }
+}
+
 impl QueryAnalyzer {
     /// Create a new query analyzer
     #[instrument(skip(config))]
