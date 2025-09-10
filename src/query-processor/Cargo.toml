@@ -84,7 +84,7 @@ ruv-fann = { version = "0.1.6", optional = true }
 daa = { version = "0.5.0", optional = true }
 
 # FACT integration for citation tracking - REQUIRED per Phase 2 requirements  
-# fact = { path = "../fact" } # Mandatory <50ms cache integration - REMOVED
+fact = { workspace = true } # Mandatory <50ms cache integration per Phase 2
 
 # Local embedder crate
 embedder = { path = "../embedder" }

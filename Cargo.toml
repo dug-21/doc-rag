@@ -7,6 +7,7 @@ members = [
     "src/query-processor",
     "src/response-generator",
     "src/integration",
+    "src/fact",
 ]
 exclude = [
     "src/mcp-adapter",
@@ -81,7 +82,8 @@ ndarray = { version = "0.15", features = ["serde"] }
 # Phase 1 Rework: Library Integration (Design Principle #2)
 ruv-fann = "0.1.6"  # Neural networks for boundary detection and classification
 daa-orchestrator = { git = "https://github.com/ruvnet/daa.git", branch = "main" }  # Decentralized Autonomous Agents Orchestrator
-# fact = { git = "https://github.com/ruvnet/fact.git", branch = "main" }  # Intelligent caching system - REMOVED
+# FACT - our Rust implementation for <50ms caching per Phase 2 requirements
+fact = { path = "src/fact" }
 
 # Vector databases
 qdrant-client = "1.7"

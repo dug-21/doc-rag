@@ -99,7 +99,7 @@ rand = { workspace = true }
 ruv-fann = { workspace = true }
 daa-orchestrator = { workspace = true }
 sha2.workspace = true
-# fact = { workspace = true } # Intelligent caching system enabled per Phase 2 requirements - REMOVED
+fact = { workspace = true } # Intelligent caching system enabled per Phase 2 requirements - MANDATORY
 
 [dev-dependencies]
 tempfile = "3.8"
