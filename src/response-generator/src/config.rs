@@ -2,7 +2,8 @@
 
 // Removed unused import: use crate::cache::CacheManagerConfig;
 use crate::error::{Result, ResponseError};
-// use crate::fact_accelerated::FACTConfig; // FACT REMOVED\n\n// FACT Config Stub\n#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]\npub struct FACTConfig {\n    pub enabled: bool,\n    pub cache_size: usize,\n    pub target_cached_response_time: u64,\n}\n\nimpl FACTConfig {\n    pub fn default() -> Self {\n        Self {\n            enabled: false, // Disabled since FACT removed\n            cache_size: 1000,\n            target_cached_response_time: 50,\n        }\n    }\n}"
+// Import FACTConfig from the fact crate
+pub use fact::Config as FACTConfig;
 use crate::formatter::{FormatterConfig, OutputFormat};
 use crate::query_preprocessing::QueryPreprocessingConfig;
 use crate::validator::ValidationConfig;

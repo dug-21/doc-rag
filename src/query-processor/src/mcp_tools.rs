@@ -49,6 +49,15 @@ pub struct MCPToolRegistry {
     fact_client: Arc<dyn FACTClientInterface>,
 }
 
+impl std::fmt::Debug for MCPToolRegistry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MCPToolRegistry")
+            .field("tools_count", &self.tools.len())
+            .field("fact_client", &"<FACTClient>")
+            .finish()
+    }
+}
+
 impl MCPToolRegistry {
     /// Create new tool registry
     pub fn new(fact_client: Arc<dyn FACTClientInterface>) -> Self {
@@ -561,6 +570,7 @@ mod tests {
     use std::time::Duration;
     
     // Mock FACT client for testing
+    #[derive(Debug)]
     struct MockFACTClient;
     
     #[async_trait]

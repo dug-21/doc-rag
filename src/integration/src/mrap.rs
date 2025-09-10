@@ -41,7 +41,7 @@ impl FactSystemStub {
         }
     }
     
-    pub fn get(&self, key: &str) -> Result<CachedResponseStub, &'static str> {
+    pub fn get(&self, key: &str) -> std::result::Result<CachedResponseStub, &'static str> {
         self.cache.get(key).cloned().ok_or("Cache miss")
     }
     

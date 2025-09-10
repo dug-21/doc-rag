@@ -229,13 +229,16 @@ impl QueryProcessor {
             let analysis = SemanticAnalysis::new(
                 SyntacticFeatures { 
                     pos_tags: vec![],
-                    parse_tree: None,
-                    chunks: vec![],
+                    named_entities: vec![],
+                    noun_phrases: vec![],
+                    verb_phrases: vec![],
+                    question_words: vec![],
                 },
                 SemanticFeatures {
-                    word_senses: vec![],
                     semantic_roles: vec![],
-                    conceptual_graphs: vec![],
+                    coreferences: vec![],
+                    sentiment: None,
+                    similarity_vectors: vec![],
                 },
                 vec![],
                 vec![],
@@ -288,13 +291,16 @@ impl QueryProcessor {
             let analysis = SemanticAnalysis::new(
                 SyntacticFeatures { 
                     pos_tags: vec![],
-                    parse_tree: None,
-                    chunks: vec![],
+                    named_entities: vec![],
+                    noun_phrases: vec![],
+                    verb_phrases: vec![],
+                    question_words: vec![],
                 },
                 SemanticFeatures {
-                    word_senses: vec![],
                     semantic_roles: vec![],
-                    conceptual_graphs: vec![],
+                    coreferences: vec![],
+                    sentiment: None,
+                    similarity_vectors: vec![],
                 },
                 vec![],
                 vec![],
