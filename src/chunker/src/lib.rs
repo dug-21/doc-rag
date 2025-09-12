@@ -20,9 +20,14 @@ pub mod neural_chunker;
 pub mod neural_chunker_working; // Working implementation that compiles
 pub mod neural_chunker_simple; // Simplified working implementation
 pub mod neural_trainer;   // High-performance training system
-pub mod neural_trainer_stub; // Working stub implementation
 pub mod references_simple;
 pub use references_simple as references;
+
+// Add ingestion module for neural classification
+pub mod ingestion;
+
+// Integration demo module
+pub mod integration_demo;
 
 // Re-export important types for convenience - Neural first
 pub use boundary::{BoundaryDetector, BoundaryInfo, BoundaryType}; // Legacy fallback
