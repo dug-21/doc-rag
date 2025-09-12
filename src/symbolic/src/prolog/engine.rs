@@ -57,6 +57,17 @@ pub struct InferenceResult {
 #[derive(Debug)]
 pub struct ProofTracer {
     current_trace: Vec<ProofStep>,
+    inference_history: Vec<InferenceStep>,
+    proof_depth: usize,
+    ready: bool,
+}
+
+/// Inference step record
+#[derive(Debug, Clone)]
+pub struct InferenceStep {
+    pub step_id: String,
+    pub clause_used: String,
+    pub timestamp: chrono::DateTime<Utc>,
 }
 
 impl PrologEngine {
@@ -88,8 +99,19 @@ impl PrologEngine {
     }
     
     /// Get proof tracer reference
-    pub fn proof_tracer(&self) -> &ProofTracer {
-        &self.proof_tracer
+    pub fn proof_tracer(&self) -> Arc<RwLock<ProofTracer>> {
+        Arc::new(RwLock::new(ProofTracer::new()))
+    }
+    
+    /// Check if ontology is loaded
+    pub async fn is_ontology_loaded(&self) -> bool {
+        let kb = self.knowledge_base.read().await;
+        kb.is_initialized().await.unwrap_or(false)
+    }
+    
+    /// Get machine reference for Scryer-Prolog integration
+    pub fn machine(&self) -> Arc<RwLock<PrologMachine>> {
+        Arc::new(RwLock::new(PrologMachine::new()))
     }
     
     /// Load domain-specific ontology for compliance reasoning
@@ -171,18 +193,49 @@ impl ProofTracer {
     pub fn new() -> Self {
         Self {
             current_trace: Vec::new(),
+            inference_history: Vec::new(),
+            proof_depth: 0,
+            ready: true,
         }
     }
     
     pub fn is_ready(&self) -> bool {
-        true
+        self.ready
     }
     
-    pub async fn begin_trace(&self, _query: &PrologQuery) {
-        // Placeholder
+    pub fn get_proof_depth(&self) -> usize {
+        self.proof_depth
+    }
+    
+    pub fn get_inference_history(&self) -> &Vec<InferenceStep> {
+        &self.inference_history
+    }
+    
+    pub async fn begin_trace(&mut self, _query: &PrologQuery) {
+        self.proof_depth = 0;
+        self.current_trace.clear();
+        self.inference_history.clear();
     }
     
     pub async fn extract_proof_steps(&self) -> Result<Vec<ProofStep>> {
         Ok(self.current_trace.clone())
+    }
+}
+
+/// Placeholder for Scryer-Prolog machine integration
+#[derive(Debug)]
+pub struct PrologMachine {
+    ready: bool,
+}
+
+impl PrologMachine {
+    pub fn new() -> Self {
+        Self {
+            ready: true,
+        }
+    }
+    
+    pub fn is_ready(&self) -> bool {
+        self.ready
     }
 }

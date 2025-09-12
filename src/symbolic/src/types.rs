@@ -10,6 +10,7 @@ pub enum RequirementType {
     Must,       // MUST/SHALL - mandatory
     Should,     // SHOULD - recommended
     May,        // MAY - optional
+    MustNot,    // MUST NOT/SHALL NOT - prohibited
     Guideline,  // Best practice guidance
 }
 
@@ -19,6 +20,7 @@ impl RequirementType {
             "must" | "shall" => Ok(RequirementType::Must),
             "should" => Ok(RequirementType::Should),
             "may" | "can" => Ok(RequirementType::May),
+            "must not" | "shall not" => Ok(RequirementType::MustNot),
             "guideline" => Ok(RequirementType::Guideline),
             _ => Err(crate::error::SymbolicError::ParseError(
                 format!("Unknown requirement type: {}", s)
@@ -33,6 +35,7 @@ impl ToString for RequirementType {
             RequirementType::Must => "must".to_string(),
             RequirementType::Should => "should".to_string(),
             RequirementType::May => "may".to_string(),
+            RequirementType::MustNot => "must not".to_string(),
             RequirementType::Guideline => "guideline".to_string(),
         }
     }
@@ -251,3 +254,4 @@ pub struct ParsedRequirement {
     pub cross_references: Vec<CrossReference>,
     pub confidence: f64,
 }
+
