@@ -1,0 +1,49 @@
+[package]
+name = "graph"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Neo4j graph database integration for requirement relationships"
+
+[dependencies]
+# Core async runtime
+tokio = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Date/time handling
+chrono = { workspace = true }
+uuid = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Neo4j driver (using neo4rs which is actively maintained)
+neo4rs = { workspace = true }
+
+# Concurrent data structures
+dashmap = { workspace = true }
+parking_lot = { workspace = true }
+arc-swap = { workspace = true }
+
+# Performance monitoring
+metrics = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+mockall = { workspace = true }
+criterion = { workspace = true }
+rand = { workspace = true }
+tempfile = { workspace = true }
+
+# Benchmarks will be added in future iterations

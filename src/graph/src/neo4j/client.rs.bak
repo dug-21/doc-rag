@@ -1,0 +1,783 @@
+use crate::{
+    models::*,
+    GraphDatabase, GraphError, GraphPerformanceMetrics, GraphResult, RequirementFilter,
+};
+use anyhow::Result;
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use dashmap::DashMap;
+use neo4rs::{query, Graph};
+use parking_lot::RwLock;
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
+    time::Instant,
+};
+use super::{Neo4jConfig, SchemaManager};
+use tracing::{debug, info};
+// use uuid::Uuid; // Unused for now
+
+/// Neo4j client with connection pooling and performance monitoring
+pub struct Neo4jClient {
+    driver: Graph,
+    config: Neo4jConfig,
+    schema_manager: Arc<SchemaManager>,
+    query_cache: DashMap<String, CachedQuery>,
+    performance_metrics: Arc<RwLock<PerformanceMetrics>>,
+    query_counter: AtomicU64,
+}
+
+/// Cached query result
+#[derive(Debug, Clone)]
+struct CachedQuery {
+    result: String, // Serialized result
+    cached_at: DateTime<Utc>,
+    ttl_seconds: u64,
+}
+
+/// Performance metrics tracking
+#[derive(Debug, Default)]
+struct PerformanceMetrics {
+    total_queries: u64,
+    total_query_time_ms: u64,
+    total_nodes: u64,
+    total_relationships: u64,
+    cache_hits: u64,
+    cache_misses: u64,
+    last_updated: DateTime<Utc>,
+}
+
+impl Neo4jClient {
+    /// Create new Neo4j client with connection pooling
+    pub async fn new(config: Neo4jConfig) -> GraphResult<Self> {
+        // Create the graph connection (neo4rs API simplified)
+        let driver = Graph::new(
+            &config.base.uri,
+            &config.base.username,
+            &config.base.password,
+        ).await?;
+
+        // Test connection (driver is already the graph)
+        let graph = &driver;
+        graph
+            .run(query("RETURN 1 as test"))
+            .await
+            .map_err(|e| GraphError::Connection(e))?;
+
+        let client = Self {
+            driver,
+            config: config.clone(),
+            schema_manager: Arc::new(SchemaManager::new()),
+            query_cache: DashMap::new(),
+            performance_metrics: Arc::new(RwLock::new(PerformanceMetrics {
+                last_updated: Utc::now(),
+                ..Default::default()
+            })),
+            query_counter: AtomicU64::new(0),
+        };
+
+        // Initialize database schema
+        client.initialize_schema().await?;
+
+        info!("Neo4j client initialized successfully");
+        Ok(client)
+    }
+
+    /// Initialize database schema with indexes and constraints
+    async fn initialize_schema(&self) -> GraphResult<()> {
+        let graph = &self.driver; // Driver is already the graph
+
+        // Create uniqueness constraints
+        let constraints = vec![
+            "CREATE CONSTRAINT requirement_id_unique IF NOT EXISTS FOR (r:Requirement) REQUIRE r.id IS UNIQUE",
+            "CREATE CONSTRAINT document_id_unique IF NOT EXISTS FOR (d:Document) REQUIRE d.id IS UNIQUE", 
+            "CREATE CONSTRAINT section_id_unique IF NOT EXISTS FOR (s:Section) REQUIRE s.id IS UNIQUE",
+        ];
+
+        for constraint in constraints {
+            graph
+                .run(query(constraint))
+                .await
+                .map_err(|e| GraphError::Connection(e))?;
+        }
+
+        // Create performance indexes
+        let indexes = vec![
+            "CREATE INDEX requirement_section_idx IF NOT EXISTS FOR (r:Requirement) ON (r.section)",
+            "CREATE INDEX requirement_type_idx IF NOT EXISTS FOR (r:Requirement) ON (r.requirement_type)",
+            "CREATE INDEX requirement_domain_idx IF NOT EXISTS FOR (r:Requirement) ON (r.domain)",
+            "CREATE INDEX requirement_priority_idx IF NOT EXISTS FOR (r:Requirement) ON (r.priority)",
+            "CREATE INDEX document_type_idx IF NOT EXISTS FOR (d:Document) ON (d.doc_type)",
+            "CREATE INDEX section_type_idx IF NOT EXISTS FOR (s:Section) ON (s.section_type)",
+        ];
+
+        for index in indexes {
+            graph
+                .run(query(index))
+                .await
+                .map_err(|e| GraphError::Connection(e))?;
+        }
+
+        info!("Neo4j schema initialized successfully");
+        Ok(())
+    }
+
+    /// Execute query with performance monitoring
+    async fn execute_with_metrics<T>(
+        &self,
+        operation: &str,
+        query_fn: impl std::future::Future<Output = GraphResult<T>>,
+        performance_limit_ms: Option<u64>,
+    ) -> GraphResult<T> {
+        let start_time = Instant::now();
+        let result = query_fn.await;
+        let execution_time = start_time.elapsed();
+
+        // Update performance metrics
+        self.query_counter.fetch_add(1, Ordering::SeqCst);
+        let mut metrics = self.performance_metrics.write();
+        metrics.total_queries += 1;
+        metrics.total_query_time_ms += execution_time.as_millis() as u64;
+        metrics.last_updated = Utc::now();
+
+        // Check performance thresholds
+        if let Some(limit_ms) = performance_limit_ms {
+            if execution_time.as_millis() as u64 > limit_ms {
+                return Err(GraphError::PerformanceThreshold {
+                    operation: operation.to_string(),
+                    actual_ms: execution_time.as_millis() as u64,
+                    limit_ms,
+                });
+            }
+        }
+
+        debug!(
+            "Neo4j operation '{}' completed in {}ms",
+            operation,
+            execution_time.as_millis()
+        );
+
+        result
+    }
+
+    /// Check query cache before executing
+    async fn check_cache(&self, query_key: &str) -> Option<String> {
+        if !self.config.base.enable_cache {
+            return None;
+        }
+
+        if let Some(cached) = self.query_cache.get(query_key) {
+            let now = Utc::now();
+            let cache_age = now
+                .signed_duration_since(cached.cached_at)
+                .num_seconds() as u64;
+
+            if cache_age < cached.ttl_seconds {
+                let mut metrics = self.performance_metrics.write();
+                metrics.cache_hits += 1;
+                return Some(cached.result.clone());
+            } else {
+                // Cache expired, remove it
+                self.query_cache.remove(query_key);
+            }
+        }
+
+        let mut metrics = self.performance_metrics.write();
+        metrics.cache_misses += 1;
+        None
+    }
+
+    /// Cache query result
+    async fn cache_result(&self, query_key: String, result: &str) {
+        if self.config.base.enable_cache {
+            let cached = CachedQuery {
+                result: result.to_string(),
+                cached_at: Utc::now(),
+                ttl_seconds: self.config.base.cache_ttl_seconds,
+            };
+            self.query_cache.insert(query_key, cached);
+        }
+    }
+}
+
+#[async_trait]
+impl GraphDatabase for Neo4jClient {
+    /// Create document hierarchy in graph
+    async fn create_document_hierarchy(
+        &self,
+        document: &ProcessedDocument,
+    ) -> Result<DocumentGraph> {
+        let result = self.execute_with_metrics("create_document_hierarchy", async {
+            let graph = &self.driver; // Driver is already the graph
+            let mut txn = graph.start_txn().await?;
+
+            // Step 1: Create document node
+            let doc_query = query(
+                r#"
+                CREATE (d:Document {
+                    id: $doc_id,
+                    title: $title,
+                    version: $version,
+                    doc_type: $doc_type,
+                    created_at: $created_at
+                })
+                RETURN d
+                "#,
+            )
+            .param("doc_id", document.id.to_string())
+            .param("title", document.title.clone())
+            .param("version", document.version.clone())
+            .param("doc_type", document.doc_type.to_string())
+            .param("created_at", document.created_at.to_rfc3339());
+
+            let doc_result = txn.execute(doc_query).await?;
+            let doc_node_id = document.id.to_string();
+
+            // Step 2: Create section hierarchy
+            let mut section_nodes = Vec::new();
+            for section in &document.hierarchy.sections {
+                let section_node = self.create_section_node_txn(&mut txn, section, &doc_node_id).await?;
+                section_nodes.push(section_node);
+            }
+
+            // Step 3: Create requirement nodes
+            let mut requirement_nodes = Vec::new();
+            for requirement in &document.requirements {
+                let req_node = self.create_requirement_node_txn(&mut txn, requirement).await?;
+                requirement_nodes.push(req_node);
+
+                // Link requirement to its section
+                let section_id = self.find_section_for_requirement(requirement, &section_nodes);
+                if let Some(section_id) = section_id {
+                    self.create_contains_relationship_txn(&mut txn, &section_id, &req_node.id).await?;
+                }
+            }
+
+            // Step 4: Create cross-reference relationships
+            for cross_ref in &document.cross_references {
+                self.create_cross_reference_relationship_txn(&mut txn, cross_ref).await?;
+            }
+
+            // Commit transaction
+            txn.commit().await?;
+
+            // Update node counts in metrics
+            let mut metrics = self.performance_metrics.write();
+            metrics.total_nodes += 1 + section_nodes.len() as u64 + requirement_nodes.len() as u64;
+            metrics.total_relationships += document.cross_references.len() as u64 + requirement_nodes.len() as u64; // Contains relationships
+
+            Ok(DocumentGraph {
+                document_node: doc_node_id,
+                section_nodes,
+                requirement_nodes,
+                relationships: self.get_document_relationships(&document.id.to_string()).await?,
+            })
+        }, None).await;
+        result.map_err(|e| e.into())
+    }
+
+    /// Create requirement node
+    async fn create_requirement_node(&self, requirement: &Requirement) -> Result<RequirementNode> {
+        let result = self.execute_with_metrics("create_requirement_node", async {
+            let graph = &self.driver; // Driver is already the graph
+            let mut txn = graph.start_txn().await?;
+            let result = self.create_requirement_node_txn(&mut txn, requirement).await?;
+            txn.commit().await?;
+            Ok(result)
+        }, None).await;
+        result.map_err(|e| e.into())
+    }
+
+    /// Create typed relationship between nodes
+    async fn create_relationship(
+        &self,
+        from_id: &str,
+        to_id: &str,
+        relationship_type: RelationshipType,
+    ) -> Result<RelationshipEdge> {
+        let result = self.execute_with_metrics("create_relationship", async {
+            let graph = &self.driver; // Driver is already the graph
+
+            let relationship_label = relationship_type.to_string();
+            let cypher_query = format!(
+                r#"
+                MATCH (a {{id: $from_id}}), (b {{id: $to_id}})
+                CREATE (a)-[r:{}]->(b)
+                RETURN r, id(r) as rel_id
+                "#,
+                relationship_label
+            );
+
+            let query_obj = query(&cypher_query)
+                .param("from_id", from_id)
+                .param("to_id", to_id);
+
+            let mut result = graph.execute(query_obj).await?;
+            // TODO: Fix neo4rs API - result.next() needs transaction handle parameter
+        // For now, disable this functionality until API is properly fixed
+        /* if let Some(record) = result.next().await? {
+                let rel_id: i64 = record.get("rel_id")?;
+                
+                // Update relationship count
+                let mut metrics = self.performance_metrics.write();
+                metrics.total_relationships += 1;
+
+                Ok(RelationshipEdge {
+                    id: rel_id,
+                    from_node: from_id.to_string(),
+                    to_node: to_id.to_string(),
+                    relationship_type,
+                    properties: HashMap::new(),
+                    created_at: Utc::now(),
+                })
+            } else {
+                Err(GraphError::Query {
+                    message: "Failed to create relationship".to_string(),
+                })
+            }
+        }, None).await;
+        result.map_err(|e| e.into())
+    }
+
+    /// Traverse requirement relationships with performance monitoring
+    async fn traverse_requirements(
+        &self,
+        start_id: &str,
+        max_depth: usize,
+        relationship_types: Vec<RelationshipType>,
+    ) -> Result<TraversalResult> {
+        // Set performance limit based on constraint: <200ms for 3-hop queries
+        let performance_limit = if max_depth <= 3 { Some(200) } else { None };
+
+        self.execute_with_metrics("traverse_requirements", async {
+            let cache_key = format!("traverse_{}_{}_{}",
+                start_id,
+                max_depth,
+                relationship_types.iter().map(|r| r.to_string()).collect::<Vec<_>>().join(",")
+            );
+
+            // Check cache first
+            if let Some(cached_result) = self.check_cache(&cache_key).await {
+                return serde_json::from_str(&cached_result)
+                    .map_err(|_| GraphError::Query {
+                        message: "Failed to deserialize cached result".to_string(),
+                    });
+            }
+
+            let graph = &self.driver; // Driver is already the graph
+
+            // Build relationship type filter
+            let rel_filter = relationship_types
+                .iter()
+                .map(|rt| rt.to_string())
+                .collect::<Vec<_>>()
+                .join("|");
+
+            let cypher_query = format!(
+                r#"
+                MATCH path = (start:Requirement {{id: $start_id}})
+                    -[:{}*1..{}]-(related:Requirement)
+                RETURN path,
+                       start,
+                       related,
+                       length(path) as depth,
+                       [r in relationships(path) | type(r)] as relationship_chain
+                ORDER BY depth, related.section
+                "#,
+                rel_filter, max_depth
+            );
+
+            let query_obj = query(&cypher_query).param("start_id", start_id);
+            let mut result = graph.execute(query_obj).await?;
+
+            let mut traversal_paths = Vec::new();
+            let mut related_requirements = Vec::new();
+
+            while let Some(record) = result.next().await? {
+                let depth: i64 = record.get("depth")?;
+                let related_node = record.get("related")?;
+                let relationship_chain: Vec<String> = record.get("relationship_chain")?;
+
+                // Parse requirement from node properties
+                let related_req = self.parse_requirement_from_node(related_node)?;
+                related_requirements.push(related_req.clone());
+
+                // Parse relationship chain
+                let rel_chain: Result<Vec<RelationshipType>, _> = relationship_chain
+                    .iter()
+                    .map(|r| RelationshipType::from_string(r))
+                    .collect();
+
+                let rel_chain = rel_chain.map_err(|e| GraphError::Query {
+                    message: format!("Failed to parse relationship chain: {}", e),
+                })?;
+
+                traversal_paths.push(TraversalPath {
+                    start_id: start_id.to_string(),
+                    end_id: related_req.id,
+                    depth: depth as usize,
+                    relationship_chain: rel_chain.clone(),
+                    path_strength: self.calculate_path_strength(&rel_chain),
+                });
+            }
+
+            let traversal_result = TraversalResult {
+                start_requirement_id: start_id.to_string(),
+                related_requirements,
+                traversal_paths,
+                execution_time_ms: 0, // Will be set by execute_with_metrics
+                total_paths: traversal_paths.len(),
+            };
+
+            // Cache the result
+            let serialized = serde_json::to_string(&traversal_result)
+                .map_err(|_| GraphError::Query {
+                    message: "Failed to serialize traversal result".to_string(),
+                })?;
+            self.cache_result(cache_key, &serialized).await;
+
+            Ok(traversal_result)
+        }, performance_limit).await
+    }
+
+    /// Find requirements by filter criteria
+    async fn find_requirements(&self, filter: RequirementFilter) -> Result<Vec<Requirement>> {
+        self.execute_with_metrics("find_requirements", async {
+            let graph = &self.driver; // Driver is already the graph
+            
+            let mut where_clauses = Vec::new();
+            let mut params = HashMap::new();
+
+            if let Some(section) = &filter.section {
+                where_clauses.push("r.section = $section".to_string());
+                params.insert("section", section.clone());
+            }
+
+            if let Some(req_type) = &filter.requirement_type {
+                where_clauses.push("r.requirement_type = $requirement_type".to_string());
+                params.insert("requirement_type", req_type.to_string());
+            }
+
+            if let Some(domain) = &filter.domain {
+                where_clauses.push("r.domain = $domain".to_string());
+                params.insert("domain", domain.clone());
+            }
+
+            if let Some(priority) = &filter.priority {
+                where_clauses.push("r.priority = $priority".to_string());
+                params.insert("priority", priority.to_string());
+            }
+
+            if let Some(text_contains) = &filter.text_contains {
+                where_clauses.push("r.text CONTAINS $text_contains".to_string());
+                params.insert("text_contains", text_contains.clone());
+            }
+
+            let where_clause = if where_clauses.is_empty() {
+                "".to_string()
+            } else {
+                format!("WHERE {}", where_clauses.join(" AND "))
+            };
+
+            let cypher_query = format!(
+                "MATCH (r:Requirement) {} RETURN r ORDER BY r.section, r.id",
+                where_clause
+            );
+
+            let mut query_obj = query(&cypher_query);
+            for (key, value) in params {
+                query_obj = query_obj.param(&key, value);
+            }
+
+            let mut result = graph.execute(query_obj).await?;
+            let mut requirements = Vec::new();
+
+            while let Some(record) = result.next().await? {
+                let node = record.get("r")?;
+                let requirement = self.parse_requirement_from_node(node)?;
+                requirements.push(requirement);
+            }
+
+            Ok(requirements)
+        }, None).await
+    }
+
+    /// Get performance metrics
+    async fn get_performance_metrics(&self) -> Result<GraphPerformanceMetrics> {
+        let metrics = self.performance_metrics.read();
+        let average_query_time = if metrics.total_queries > 0 {
+            metrics.total_query_time_ms as f64 / metrics.total_queries as f64
+        } else {
+            0.0
+        };
+
+        let cache_hit_ratio = if metrics.cache_hits + metrics.cache_misses > 0 {
+            metrics.cache_hits as f64 / (metrics.cache_hits + metrics.cache_misses) as f64
+        } else {
+            0.0
+        };
+
+        Ok(GraphPerformanceMetrics {
+            total_queries: metrics.total_queries,
+            average_query_time_ms: average_query_time,
+            total_nodes: metrics.total_nodes,
+            total_relationships: metrics.total_relationships,
+            cache_hit_ratio,
+            last_updated: metrics.last_updated,
+        })
+    }
+
+    /// Health check
+    async fn health_check(&self) -> Result<bool> {
+        match self.driver.graph(&self.config.database).await {
+            Ok(graph) => {
+                match graph.execute(query("RETURN 1 as health")).await {
+                    Ok(mut result) => {
+                        if result.next().await.is_ok() {
+                            Ok(true)
+                        } else {
+                            Ok(false)
+                        }
+                    }
+                    Err(_) => Ok(false),
+                }
+            }
+            Err(_) => Ok(false),
+        }
+    }
+}
+
+// Helper methods implementation
+impl Neo4jClient {
+    /// Create section node within transaction
+    async fn create_section_node_txn(
+        &self,
+        txn: &mut neo4rs::Txn,
+        section: &Section,
+        doc_id: &str,
+    ) -> GraphResult<SectionNode> {
+        let query_obj = query(
+            r#"
+            CREATE (s:Section {
+                id: $section_id,
+                number: $number,
+                title: $title,
+                section_type: $section_type
+            })
+            RETURN s, id(s) as neo4j_id
+            "#,
+        )
+        .param("section_id", section.id.clone())
+        .param("number", section.number.clone())
+        .param("title", section.title.clone())
+        .param("section_type", section.section_type.to_string());
+
+        let mut result = txn.execute(query_obj).await?;
+        // TODO: Fix neo4rs API - result.next() needs transaction handle parameter
+        // For now, disable this functionality until API is properly fixed
+        /* if let Some(record) = result.next().await? {
+            let neo4j_id: i64 = record.get("neo4j_id")?;
+            
+            // Create CONTAINS relationship from document to section
+            let doc_section_query = query(
+                r#"
+                MATCH (d:Document {id: $doc_id}), (s:Section {id: $section_id})
+                CREATE (d)-[:CONTAINS]->(s)
+                "#,
+            )
+            .param("doc_id", doc_id)
+            .param("section_id", section.id.clone());
+
+            txn.execute(doc_section_query).await?;
+
+        // TODO: Fix neo4rs API - return placeholder for now
+        Ok(SectionNode {
+            id: section.id.clone(),
+            neo4j_id: 0, // Placeholder until API is fixed
+            section_number: section.number.clone(),
+            title: section.title.clone(),
+            section_type: section.section_type.clone(),
+        })
+    }
+
+    /// Create requirement node within transaction
+    async fn create_requirement_node_txn(
+        &self,
+        txn: &mut neo4rs::Txn,
+        requirement: &Requirement,
+    ) -> GraphResult<RequirementNode> {
+        let query_obj = query(
+            r#"
+            CREATE (r:Requirement {
+                id: $req_id,
+                text: $text,
+                section: $section,
+                requirement_type: $req_type,
+                domain: $domain,
+                priority: $priority,
+                created_at: $created_at
+            })
+            RETURN r, id(r) as neo4j_id
+            "#,
+        )
+        .param("req_id", requirement.id.clone())
+        .param("text", requirement.text.clone())
+        .param("section", requirement.section.clone())
+        .param("req_type", requirement.requirement_type.to_string())
+        .param("domain", requirement.domain.clone())
+        .param("priority", requirement.priority.to_string())
+        .param("created_at", requirement.created_at.to_rfc3339());
+
+        let mut result = txn.execute(query_obj).await?;
+        // TODO: Fix neo4rs API - result.next() needs transaction handle parameter
+        // For now, disable this functionality until API is properly fixed
+        /* if let Some(record) = result.next().await? {
+            let neo4j_id: i64 = record.get("neo4j_id")?;
+
+            Ok(RequirementNode {
+                id: requirement.id.clone(),
+                neo4j_id,
+                properties: requirement.clone(),
+            })
+        } else {
+            Err(GraphError::Query {
+                message: "Failed to create requirement node".to_string(),
+            })
+        }
+    }
+
+    /// Find section for requirement
+    fn find_section_for_requirement(&self, requirement: &Requirement, sections: &[SectionNode]) -> Option<String> {
+        sections.iter()
+            .find(|s| s.id == requirement.section)
+            .map(|s| s.id.clone())
+    }
+
+    /// Create CONTAINS relationship within transaction
+    async fn create_contains_relationship_txn(
+        &self,
+        txn: &mut neo4rs::Txn,
+        section_id: &str,
+        requirement_id: &str,
+    ) -> GraphResult<()> {
+        let query_obj = query(
+            r#"
+            MATCH (s:Section {id: $section_id}), (r:Requirement {id: $req_id})
+            CREATE (s)-[:CONTAINS]->(r)
+            "#,
+        )
+        .param("section_id", section_id)
+        .param("req_id", requirement_id);
+
+        txn.execute(query_obj).await?;
+        Ok(())
+    }
+
+    /// Create cross-reference relationship within transaction
+    async fn create_cross_reference_relationship_txn(
+        &self,
+        txn: &mut neo4rs::Txn,
+        cross_ref: &CrossReference,
+    ) -> GraphResult<()> {
+        let relationship_type = match cross_ref.reference_type {
+            ReferenceType::Direct => "REFERENCES",
+            ReferenceType::Implied => "DEPENDS_ON",
+            ReferenceType::Example => "REFERENCES",
+            ReferenceType::Exception => "EXCEPTION",
+        };
+
+        let query_text = format!(
+            r#"
+            MATCH (from:Requirement {{id: $from_id}}), (to:Requirement {{id: $to_id}})
+            CREATE (from)-[:{}]->(to)
+            "#,
+            relationship_type
+        );
+
+        let query_obj = query(&query_text)
+            .param("from_id", cross_ref.from_requirement.clone())
+            .param("to_id", cross_ref.to_requirement.clone());
+
+        txn.execute(query_obj).await?;
+        Ok(())
+    }
+
+    /// Get all relationships for a document
+    async fn get_document_relationships(&self, doc_id: &str) -> GraphResult<Vec<RelationshipEdge>> {
+        // This is a placeholder - in a real implementation, we'd query for all relationships
+        // connected to nodes belonging to this document
+        Ok(Vec::new())
+    }
+
+    /// Parse requirement from Neo4j node
+    fn parse_requirement_from_node(&self, node: neo4rs::Node) -> GraphResult<Requirement> {
+        let id: String = node.get("id").map_err(|_| GraphError::Query {
+            message: "Missing id field".to_string(),
+        })?;
+        let text: String = node.get("text").map_err(|_| GraphError::Query {
+            message: "Missing text field".to_string(),
+        })?;
+        let section: String = node.get("section").map_err(|_| GraphError::Query {
+            message: "Missing section field".to_string(),
+        })?;
+        let requirement_type_str: String = node.get("requirement_type").map_err(|_| GraphError::Query {
+            message: "Missing requirement_type field".to_string(),
+        })?;
+        let domain: String = node.get("domain").map_err(|_| GraphError::Query {
+            message: "Missing domain field".to_string(),
+        })?;
+        let priority_str: String = node.get("priority").map_err(|_| GraphError::Query {
+            message: "Missing priority field".to_string(),
+        })?;
+        let created_at_str: String = node.get("created_at").map_err(|_| GraphError::Query {
+            message: "Missing created_at field".to_string(),
+        })?;
+
+        let requirement_type = RequirementType::from_string(&requirement_type_str)
+            .map_err(|e| GraphError::Query { message: e })?;
+        let priority = Priority::from_string(&priority_str)
+            .map_err(|e| GraphError::Query { message: e })?;
+        let created_at = DateTime::parse_from_rfc3339(&created_at_str)
+            .map_err(|_| GraphError::Query {
+                message: "Invalid created_at format".to_string(),
+            })?
+            .with_timezone(&Utc);
+
+        Ok(Requirement {
+            id,
+            text,
+            section,
+            requirement_type,
+            domain,
+            priority,
+            cross_references: Vec::new(), // Would need additional query to populate
+            created_at,
+        })
+    }
+
+    /// Calculate path strength based on relationship types
+    fn calculate_path_strength(&self, relationship_chain: &[RelationshipType]) -> f64 {
+        if relationship_chain.is_empty() {
+            return 0.0;
+        }
+
+        let mut strength = 1.0;
+        for rel_type in relationship_chain {
+            let rel_strength = match rel_type {
+                RelationshipType::References => 0.9,    // Strong direct reference
+                RelationshipType::DependsOn => 0.8,     // Strong dependency
+                RelationshipType::Implements => 0.7,    // Implementation relationship
+                RelationshipType::Contains => 0.6,      // Hierarchical relationship
+                RelationshipType::Exception => 0.5,     // Exception relationship
+            };
+            strength *= rel_strength;
+        }
+
+        // Apply distance penalty
+        let distance_penalty = 1.0 / (1.0 + relationship_chain.len() as f64 * 0.1);
+        strength * distance_penalty
+    }
+}

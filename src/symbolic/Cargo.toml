@@ -1,0 +1,58 @@
+[package]
+name = "symbolic"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Symbolic reasoning engine for neurosymbolic RAG - Datalog and Prolog inference"
+
+[dependencies]
+# Symbolic reasoning engines  
+crepe = { workspace = true }
+# scryer-prolog = { workspace = true }  # Will add when available
+
+# Core async runtime
+tokio = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Logging and tracing
+tracing = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+dashmap = { workspace = true }
+parking_lot = { workspace = true }
+once_cell = { workspace = true }
+
+# Text processing for logic parsing
+regex = { workspace = true }
+
+# Neural network integration
+ruv-fann = { workspace = true }
+
+# FACT cache integration
+fact = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+tokio-test = { workspace = true }
+rand = { workspace = true }
+tempfile = { workspace = true }
+proptest = { workspace = true }
+
+
+[features]
+default = []
+performance-tests = []
+proof-validation = []
