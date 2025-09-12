@@ -10,10 +10,8 @@
 //! - Proof chain generation and validation
 //! - <100ms symbolic query response time
 
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use async_trait::async_trait;
 use tracing::{info, debug, warn, instrument};
 use serde::{Deserialize, Serialize};
 use regex::Regex;
@@ -1091,7 +1089,7 @@ impl NaturalLanguageConverter {
         }
         
         // Pattern 2: Access control requirements
-        if (lower_text.contains("access") || lower_text.contains("restrict")) {
+        if lower_text.contains("access") || lower_text.contains("restrict") {
             for entity in entities {
                 if entity.contains("data") || entity.contains("system") {
                     datalog_rules.push(format!("requires_access_control({}) :- sensitive_data({}).", entity, entity));

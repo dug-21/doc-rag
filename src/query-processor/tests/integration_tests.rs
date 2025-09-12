@@ -3,11 +3,12 @@
 
 use query_processor::{
     Config, QueryProcessor, ProcessingRequest, QueryIntent, EntityType,
-    SearchStrategy, ConsensusResult, ValidationStatus
+    SearchStrategy, ValidationStatus
 };
+use query_processor::types::ConsensusResult;
 use std::time::Instant;
 use uuid::Uuid;
-use std::collections::HashMap;
+// use std::collections::HashMap; // Unused import
 
 // Import futures for concurrent operations
 use futures::future::join_all;

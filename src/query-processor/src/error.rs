@@ -514,6 +514,15 @@ impl From<validator::ValidationErrors> for ProcessorError {
     }
 }
 
+impl From<regex::Error> for ProcessorError {
+    fn from(err: regex::Error) -> Self {
+        ProcessorError::DataProcessingError {
+            stage: "regex_compilation".to_string(),
+            reason: err.to_string(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
