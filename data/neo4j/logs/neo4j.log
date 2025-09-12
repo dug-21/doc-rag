@@ -1,0 +1,17 @@
+2025-09-10 18:08:45.724+0000 INFO  Logging config in use: Embedded default config 'default-user-logs.xml'
+2025-09-10 18:08:45.726+0000 WARN  Use of deprecated setting 'dbms.memory.pagecache.size'. It is replaced by 'server.memory.pagecache.size'.
+2025-09-10 18:08:45.726+0000 WARN  Use of deprecated setting 'dbms.memory.heap.max_size'. It is replaced by 'server.memory.heap.max_size'.
+2025-09-10 18:08:45.726+0000 WARN  Use of deprecated setting 'dbms.memory.heap.initial_size'. It is replaced by 'server.memory.heap.initial_size'.
+2025-09-10 18:08:45.727+0000 INFO  Starting...
+2025-09-10 18:08:46.044+0000 INFO  This instance is ServerId{afb64699} (afb64699-3d7b-432d-a15a-6f47b3c29a82)
+2025-09-10 18:08:46.296+0000 INFO  ======== Neo4j 5.15.0 ========
+2025-09-10 18:08:48.429+0000 INFO  Bolt enabled on 0.0.0.0:7687.
+2025-09-10 18:08:48.707+0000 INFO  HTTP enabled on 0.0.0.0:7474.
+2025-09-10 18:08:48.708+0000 INFO  Remote interface available at http://localhost:7474/
+2025-09-10 18:08:48.709+0000 INFO  id: 86B00D5E6390A2CFBBB5FDC13AE7F68FB143F644E7817898EA71F09B6E767157
+2025-09-10 18:08:48.709+0000 INFO  name: system
+2025-09-10 18:08:48.710+0000 INFO  creationDate: 2025-09-10T18:08:46.616Z
+2025-09-10 18:08:48.710+0000 INFO  Started.
+2025-09-10 18:46:53.055+0000 INFO  Neo4j Server shutdown initiated by request
+2025-09-10 18:46:53.056+0000 INFO  Stopping...
+2025-09-10 18:46:58.127+0000 INFO  Stopped.
