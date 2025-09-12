@@ -8,7 +8,9 @@ members = [
     "src/response-generator",
     "src/integration",
     "src/fact",
-]
+    "src/symbolic",
+    "src/graph",
+    ]
 exclude = [
     "src/mcp-adapter",
 ]
@@ -85,10 +87,18 @@ daa-orchestrator = { git = "https://github.com/ruvnet/daa.git", branch = "main" 
 # FACT - our Rust implementation for <50ms caching per Phase 2 requirements
 fact = { path = "src/fact" }
 
+# Phase 0 Dependencies: Neurosymbolic Foundation
+crepe = "0.1"          # Datalog engine for symbolic reasoning
+# scryer-prolog = "0.9"  # Prolog reasoning engine (will add when available)
+neo4j = "0.6"          # Graph database client
+
 # Vector databases
 qdrant-client = "1.7"
 pinecone-sdk = "0.6"
 weaviate-client = "0.3"
+
+# Neo4j graph database
+neo4rs = "0.7.2"
 
 # Text processing
 tiktoken-rs = "0.5"
@@ -137,6 +147,9 @@ mockall = "0.12"
 tokio-test = "0.4"
 rand = "0.8"
 tempfile = "3.8"
+
+# Docker testing utilities
+testcontainers = "0.15"
 
 [profile.release]
 opt-level = 3

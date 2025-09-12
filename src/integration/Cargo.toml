@@ -59,6 +59,7 @@ arc-swap = { workspace = true }
 once_cell = { workspace = true }
 parking_lot = { workspace = true }
 rand = { workspace = true }
+lru = "0.12"
 
 # Time handling
 time = "0.3"

@@ -36,6 +36,8 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 
 # Regular expressions for entity extraction
 regex = "1.10"
+crepe = { workspace = true }  # Datalog engine integration
+# scryer-prolog = { workspace = true }  # Prolog engine integration (commented until available)
 
 # Natural language processing
 whatlang = "0.16"
