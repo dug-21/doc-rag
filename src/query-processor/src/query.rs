@@ -680,6 +680,56 @@ impl ProcessedQuery {
             }),
         }
     }
+
+    /// Add metadata key-value pair to the query
+    /// 
+    /// Returns the previous value if the key already existed, None otherwise.
+    /// This method supports dynamic metadata addition during processing phases.
+    pub fn add_metadata(&mut self, key: String, value: String) -> Result<Option<String>> {
+        // Validate key is not empty
+        if key.trim().is_empty() {
+            return Err(ProcessorError::InvalidQuery {
+                reason: "Metadata key cannot be empty".to_string(),
+            });
+        }
+
+        // Insert into query metadata attributes and return previous value
+        let previous = self.query.metadata.attributes.insert(key, value);
+        Ok(previous)
+    }
+
+    /// Get metadata value by key
+    /// 
+    /// Returns the metadata value if found, None otherwise.
+    pub fn get_metadata(&self, key: &str) -> Option<&String> {
+        self.query.metadata.attributes.get(key)
+    }
+
+    /// Get all metadata as a reference to the HashMap
+    /// 
+    /// Provides access to all metadata for inspection and iteration.
+    pub fn metadata(&self) -> &HashMap<String, String> {
+        &self.query.metadata.attributes
+    }
+
+    /// Remove metadata by key
+    /// 
+    /// Returns the removed value if the key existed, None otherwise.
+    pub fn remove_metadata(&mut self, key: &str) -> Option<String> {
+        self.query.metadata.attributes.remove(key)
+    }
+
+    /// Clear all metadata
+    /// 
+    /// Removes all metadata key-value pairs.
+    pub fn clear_metadata(&mut self) {
+        self.query.metadata.attributes.clear();
+    }
+
+    /// Check if metadata contains a specific key
+    pub fn contains_metadata_key(&self, key: &str) -> bool {
+        self.query.metadata.attributes.contains_key(key)
+    }
 }
 
 /// Summary of processing results

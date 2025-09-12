@@ -497,7 +497,7 @@ impl From<reqwest::Error> for ProcessorError {
 }
 
 impl From<tokio::time::error::Elapsed> for ProcessorError {
-    fn from(err: tokio::time::error::Elapsed) -> Self {
+    fn from(_err: tokio::time::error::Elapsed) -> Self {
         ProcessorError::Timeout {
             operation: "async_operation".to_string(),
             duration: std::time::Duration::from_secs(5), // Default timeout

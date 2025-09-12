@@ -66,6 +66,7 @@ pub mod metrics;
 pub mod performance_optimizer; // High-performance <2s query processing
 pub mod query;
 pub mod strategy;
+pub mod symbolic_router; // Week 5: Symbolic query routing for symbolic/graph/vector engines
 pub mod types;
 pub mod validation;
 
@@ -81,12 +82,14 @@ pub use crate::mcp_tools::{MCPToolRegistry, MCPToolHandler}; // Export MCP tools
 pub use metrics::ProcessorMetrics;
 pub use query::{ProcessedQuery, Query, QueryMetadata, ProcessingRequest, ProcessingRequestBuilder, ValidationStatus};
 pub use strategy::StrategySelector;
+pub use symbolic_router::{SymbolicQueryRouter, RoutingDecision, QueryEngine, LogicConversion, ProofChain}; // Week 5: Symbolic routing exports
 pub use types::*;
 pub use validation::ValidationEngine;
 
 // Internal imports for implementation
 use crate::fact_client::{FACTClient as InternalFACTClient, FACTClientInterface as InternalFACTClientInterface, FACTConfig as InternalFACTConfig};
 use crate::mcp_tools::{MCPToolRegistry as InternalMCPToolRegistry, MCPToolHandler as InternalMCPToolHandler};
+use crate::symbolic_router::{SymbolicQueryRouter as InternalSymbolicQueryRouter, SymbolicRouterConfig}; // Week 5: Import symbolic router
 use crate::types::{ExecutionPlan, IntentClassification, ClassificationMethod, StrategySelection, StrategyPredictions, ConsensusResult, QueryResult, ClassificationResult};
 
 /// Main Query Processor that coordinates all processing stages
@@ -114,6 +117,8 @@ pub struct QueryProcessor {
     fact_client: Arc<dyn InternalFACTClientInterface>,
     /// MCP tool registry for tool-based processing
     mcp_tools: Arc<InternalMCPToolRegistry>,
+    /// Symbolic query router for Week 5 enhancement
+    symbolic_router: Arc<InternalSymbolicQueryRouter>,
     /// Performance metrics
     metrics: Arc<RwLock<ProcessorMetrics>>,
 }
@@ -137,6 +142,17 @@ impl QueryProcessor {
         
         // Initialize MCP tool registry
         let mcp_tools = Arc::new(InternalMCPToolRegistry::new(fact_client.clone()));
+        
+        // Initialize symbolic query router for Week 5 enhancement
+        let symbolic_router_config = SymbolicRouterConfig {
+            enable_neural_scoring: config.enable_neural,
+            target_symbolic_latency_ms: 100, // Week 5 requirement: <100ms symbolic queries
+            min_routing_confidence: 0.8, // 80%+ accuracy requirement
+            enable_proof_chains: true,
+            max_proof_depth: 10,
+            enable_performance_monitoring: true,
+        };
+        let symbolic_router = Arc::new(InternalSymbolicQueryRouter::new(symbolic_router_config).await?);
         
         // Consensus engine initialization (if enabled)
         let consensus_engine = if config.enable_consensus {
@@ -162,6 +178,7 @@ impl QueryProcessor {
             validation_engine,
             fact_client,
             mcp_tools,
+            symbolic_router,
             metrics,
         })
     }
@@ -182,6 +199,10 @@ impl QueryProcessor {
         
         // Initialize MCP tool registry
         let mcp_tools = Arc::new(InternalMCPToolRegistry::new(fact_client.clone()));
+        
+        // Initialize symbolic query router for Week 5 enhancement
+        let symbolic_router_config = SymbolicRouterConfig::default();
+        let symbolic_router = Arc::new(InternalSymbolicQueryRouter::new(symbolic_router_config).await?);
         
         let consensus_engine = if config.enable_consensus {
             info!("Consensus enabled - initializing consensus manager");
@@ -205,6 +226,7 @@ impl QueryProcessor {
             validation_engine,
             fact_client,
             mcp_tools,
+            symbolic_router,
             metrics,
         })
     }
@@ -346,17 +368,27 @@ impl QueryProcessor {
         // Stage 4: Key Term Extraction
         let key_terms = self.term_extractor.extract(&query, &analysis).await?;
         
-        // Stage 5: Strategy Selection
+        // Stage 5: Week 5 Enhancement - Symbolic Query Routing
+        let routing_decision = self.symbolic_router.route_query(&query, &analysis).await?;
+        info!("Query routed to {:?} engine with confidence {:.3}", 
+              routing_decision.engine, routing_decision.confidence);
+        
+        // Stage 6: Strategy Selection (enhanced with symbolic routing)
         let strategy = self.strategy_selector
             .select(&query, &analysis, &intent_classification.primary_intent, &entities)
             .await?;
         
-        // Stage 6: Build processed query
+        // Stage 7: Build processed query with routing information
         let mut processed = ProcessedQuery::new(query.clone(), analysis, entities, key_terms, intent_classification, strategy);
         
-        // MRAP Phase 3: Plan - Determine optimal execution path based on analysis
-        let execution_plan = self.determine_execution_plan(&processed).await?;
-        debug!("Execution plan determined: {:?}", execution_plan);
+        // Store routing decision in processed query metadata
+        processed.add_metadata("routing_engine".to_string(), format!("{:?}", routing_decision.engine));
+        processed.add_metadata("routing_confidence".to_string(), routing_decision.confidence.to_string());
+        processed.add_metadata("routing_reasoning".to_string(), routing_decision.reasoning.clone());
+        
+        // MRAP Phase 3: Plan - Determine optimal execution path based on analysis and routing
+        let execution_plan = self.determine_execution_plan(&processed, &routing_decision).await?;
+        debug!("Execution plan determined: {:?} for engine: {:?}", execution_plan, routing_decision.engine);
         
         // Stage 7: Byzantine Consensus Validation with 66% threshold (MRAP compliance)
         if self.config.enable_consensus {
@@ -403,8 +435,8 @@ impl QueryProcessor {
         // Stage 8: Final Validation
         processed = self.validation_engine.validate(processed).await?;
         
-        // MRAP Phase 4: Act - Execute the planned processing
-        processed = self.execute_processing_plan(&mut processed, &execution_plan).await?;
+        // MRAP Phase 4: Act - Execute the planned processing with symbolic enhancement
+        processed = self.execute_processing_plan(&mut processed, &execution_plan, &routing_decision).await?;
         
         // MRAP Phase 5: Reflect - Cache results and update metrics
         let total_duration = start.elapsed();
@@ -447,28 +479,49 @@ impl QueryProcessor {
         Ok(processed)
     }
     
-    /// Determine optimal execution plan based on query analysis (MRAP Plan phase)
-    async fn determine_execution_plan(&self, processed: &ProcessedQuery) -> Result<ExecutionPlan> {
+    /// Determine optimal execution plan based on query analysis and routing decision (MRAP Plan phase)
+    async fn determine_execution_plan(&self, processed: &ProcessedQuery, routing_decision: &RoutingDecision) -> Result<ExecutionPlan> {
         let complexity = processed.overall_confidence();
         let entity_count = processed.entities.len();
         let intent = &processed.intent.primary_intent;
         
-        let plan = if complexity < 0.5 || entity_count > 10 {
-            ExecutionPlan::FullProcessing
-        } else if matches!(intent, QueryIntent::Factual | QueryIntent::Definition) {
-            ExecutionPlan::FastTrack
-        } else {
-            ExecutionPlan::Standard
+        // Week 5 Enhancement: Consider routing decision in execution planning
+        let plan = match &routing_decision.engine {
+            QueryEngine::Symbolic => {
+                // Symbolic queries need full processing for proof generation
+                if routing_decision.confidence >= 0.8 {
+                    ExecutionPlan::FullProcessing
+                } else {
+                    ExecutionPlan::Standard
+                }
+            },
+            QueryEngine::Graph => {
+                // Graph queries can use standard processing
+                ExecutionPlan::Standard
+            },
+            QueryEngine::Vector => {
+                // Vector queries can often use fast track
+                if complexity > 0.7 {
+                    ExecutionPlan::Standard
+                } else {
+                    ExecutionPlan::FastTrack
+                }
+            },
+            QueryEngine::Hybrid(_) => {
+                // Hybrid requires full processing coordination
+                ExecutionPlan::FullProcessing
+            },
         };
         
         Ok(plan)
     }
     
-    /// Execute processing plan (MRAP Act phase)
+    /// Execute processing plan with symbolic enhancement (MRAP Act phase)
     async fn execute_processing_plan(
         &self, 
         processed: &mut ProcessedQuery, 
-        plan: &ExecutionPlan
+        plan: &ExecutionPlan,
+        routing_decision: &RoutingDecision
     ) -> Result<ProcessedQuery> {
         match plan {
             ExecutionPlan::FastTrack => {
@@ -483,7 +536,37 @@ impl QueryProcessor {
                 }
             }
             ExecutionPlan::FullProcessing => {
-                debug!("Executing full processing with MCP tools");
+                debug!("Executing full processing with MCP tools and symbolic enhancement");
+                
+                // Week 5 Enhancement: Generate symbolic logic conversion and proof chains
+                if matches!(routing_decision.engine, QueryEngine::Symbolic | QueryEngine::Hybrid(_)) {
+                    debug!("Generating logic conversion and proof chains for symbolic query");
+                    
+                    // Convert to logic representation
+                    let logic_conversion = self.symbolic_router.convert_to_logic(&processed.query).await?;
+                    processed.add_metadata("datalog_conversion".to_string(), logic_conversion.datalog.clone());
+                    processed.add_metadata("prolog_conversion".to_string(), logic_conversion.prolog.clone());
+                    processed.add_metadata("logic_confidence".to_string(), logic_conversion.confidence.to_string());
+                    
+                    // Create mock QueryResult for proof chain generation
+                    let mock_result = QueryResult {
+                        query: processed.query.text().to_string(),
+                        search_strategy: processed.strategy.strategy.clone(),
+                        confidence: processed.overall_confidence(),
+                        processing_time: Duration::from_millis(50),
+                        metadata: std::collections::HashMap::new(),
+                    };
+                    
+                    // Generate proof chain if enabled
+                    if let Ok(proof_chain) = self.symbolic_router.generate_proof_chain(&processed.query, &mock_result).await {
+                        processed.add_metadata("proof_chain_generated".to_string(), "true".to_string());
+                        processed.add_metadata("proof_confidence".to_string(), proof_chain.overall_confidence.to_string());
+                        processed.add_metadata("proof_elements_count".to_string(), proof_chain.elements.len().to_string());
+                        info!("Generated proof chain with {} elements and confidence {:.3}", 
+                              proof_chain.elements.len(), proof_chain.overall_confidence);
+                    }
+                }
+                
                 // Use MCP tools for complex queries
                 let tool_handler = InternalMCPToolHandler::new(self.mcp_tools.clone());
                 let _tool_result = tool_handler.orchestrate_query(processed.query.text()).await?;
@@ -546,6 +629,39 @@ impl QueryProcessor {
     /// Get MCP tool registry for external access
     pub fn mcp_tools(&self) -> &InternalMCPToolRegistry {
         &self.mcp_tools
+    }
+    
+    /// Get symbolic query router for external access (Week 5 enhancement)
+    pub fn symbolic_router(&self) -> &InternalSymbolicQueryRouter {
+        &self.symbolic_router
+    }
+    
+    /// Route query to appropriate engine with confidence scoring (Week 5 enhancement)
+    pub async fn route_query_to_engine(
+        &self,
+        query: &Query,
+        analysis: &SemanticAnalysis,
+    ) -> Result<RoutingDecision> {
+        self.symbolic_router.route_query(query, analysis).await
+    }
+    
+    /// Convert natural language query to symbolic logic (Week 5 enhancement)
+    pub async fn convert_query_to_logic(&self, query: &Query) -> Result<LogicConversion> {
+        self.symbolic_router.convert_to_logic(query).await
+    }
+    
+    /// Generate proof chain for query result (Week 5 enhancement)
+    pub async fn generate_query_proof_chain(
+        &self,
+        query: &Query,
+        result: &QueryResult,
+    ) -> Result<ProofChain> {
+        self.symbolic_router.generate_proof_chain(query, result).await
+    }
+    
+    /// Get symbolic routing statistics (Week 5 enhancement)
+    pub async fn get_symbolic_routing_stats(&self) -> crate::symbolic_router::RoutingStatistics {
+        self.symbolic_router.get_routing_statistics().await
     }
 
     /// Process multiple queries concurrently
@@ -676,7 +792,7 @@ impl consensus::QueryProcessorInterface for QueryProcessorProxy {
             confidence: intent_classification.confidence,
             reasoning: format!("Classified using {:?} method", intent_classification.method),
             features: intent_classification.features.into_iter().enumerate()
-                .map(|(i, feature)| (format!("feature_{}", i), 1.0))
+                .map(|(i, _feature)| (format!("feature_{}", i), 1.0))
                 .collect(),
         })
     }

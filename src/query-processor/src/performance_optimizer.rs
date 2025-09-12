@@ -518,7 +518,7 @@ impl QueryProcessorOptimizer {
     fn calculate_performance_grade(&self, metrics: &PerformanceMetrics) -> PerformanceGrade {
         let score = (metrics.target_achievement_rate * 0.5) + 
                    (metrics.cache_hit_rate * 0.3) + 
-                   ((2000.0 / metrics.avg_response_time_ms.max(1.0)).min(1.0) * 0.2);
+                   ((2000.0f64 / metrics.avg_response_time_ms.max(1.0)).min(1.0) * 0.2);
         
         if score >= 0.95 {
             PerformanceGrade::Excellent
