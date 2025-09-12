@@ -43,7 +43,7 @@ pub mod citation;
 pub mod config;
 pub mod enhanced_citation_formatter; // Week 6: Enhanced citation formatter with audit trails
 pub mod error;
-// pub mod fact_accelerated; // FACT REMOVED
+pub mod fact_accelerated;
 pub mod fact_cache_impl;
 pub mod fact_cache_optimized; // High-performance sub-50ms FACT cache
 pub mod formatter;
@@ -66,7 +66,8 @@ pub use citation::{
     CitationQualityAssurance, CitationCoverageAnalyzer, CitationChain,
     CitationQualityMetrics, CitationValidationResult, CitationValidationResults, 
     CitationCoverageReport, FACTCitationProvider, FACTCitationManager, 
-    ComprehensiveCitationSystem, ComprehensiveCitationResult, CitationType, 
+    ComprehensiveCitationSystem, ComprehensiveCitationResult, CitationType,
+    CitationStyle, 
     CitationNecessity, ClaimType, GapType, CitationRequirement, 
     CitationRequirementAnalysis, TextRange, CitationQualityCalculator,
     CoverageGap, GapSeverity, CitationDeduplicationStrategy
@@ -77,7 +78,7 @@ pub use enhanced_citation_formatter::{
     EnhancedFormattedCitation, CitationAuditTrail
 };
 pub use error::{ResponseError, Result};
-// pub use fact_accelerated::{FACTAcceleratedGenerator, FACTConfig, FACTGeneratedResponse}; // FACT REMOVED
+pub use fact_accelerated::{FACTAcceleratedGenerator, FACTConfig, FACTGeneratedResponse};
 pub use formatter::{FormatterConfig, OutputFormat, ResponseFormatter};
 pub use mongodb_integration::{
     MongoDBIntegratedGenerator, MongoDBIntegrationConfig, IntegrationResult, 

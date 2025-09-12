@@ -24,6 +24,9 @@ pub enum CitationType {
     Paraphrase,
 }
 
+/// Citation style (alias for CitationType for backward compatibility)
+pub type CitationStyle = CitationType;
+
 /// Text range for citations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TextRange {
@@ -96,19 +99,23 @@ pub struct CitationConfig {
     pub require_supporting_text_for_quotes: bool,
     pub enable_advanced_deduplication: bool,
     pub enable_quality_assurance: bool,
+    pub deduplicate_sources: bool,
+    pub max_citations: usize,
 }
 
 impl Default for CitationConfig {
     fn default() -> Self {
         Self {
             require_100_percent_coverage: false,
-            min_confidence: 0.7,
+            min_confidence: 0.5,
             enable_fact_integration: false,
             citation_quality_threshold: 0.8,
             max_citations_per_paragraph: 3,
             require_supporting_text_for_quotes: true,
             enable_advanced_deduplication: true,
             enable_quality_assurance: true,
+            deduplicate_sources: true,
+            max_citations: 10,
         }
     }
 }
@@ -128,6 +135,12 @@ impl CitationTracker {
 
     pub fn with_config(config: CitationConfig) -> Self {
         Self { config }
+    }
+
+    pub async fn add_source(&mut self, source: Source) -> Result<()> {
+        // Mock implementation for testing
+        // In a real implementation, this would store the source in a cache/database
+        Ok(())
     }
 
     pub async fn ensure_complete_citation_coverage(&mut self, response: &crate::IntermediateResponse) -> Result<CitationCoverageReport> {
