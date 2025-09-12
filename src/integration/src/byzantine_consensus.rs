@@ -9,7 +9,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error, debug};
+use tracing::{info, warn};
 
 // DAA consensus module not available yet - using local implementation
 // TODO: Replace with DAA consensus when available

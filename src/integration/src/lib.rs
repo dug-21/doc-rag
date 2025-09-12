@@ -141,7 +141,7 @@ pub use temp_types::*;
 pub use mrap::*;
 
 // Additional type definitions for compatibility
-use daa_orchestrator::OrchestrationMetrics;
+// OrchestrationMetrics imported via glob re-export from daa_orchestrator
 
 // SystemStatus type alias moved to avoid duplication - using the one defined below
 
