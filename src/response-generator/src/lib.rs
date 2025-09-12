@@ -41,6 +41,7 @@ pub mod builder;
 pub mod cache;
 pub mod citation;
 pub mod config;
+pub mod enhanced_citation_formatter; // Week 6: Enhanced citation formatter with audit trails
 pub mod error;
 // pub mod fact_accelerated; // FACT REMOVED
 pub mod fact_cache_impl;
@@ -48,7 +49,11 @@ pub mod fact_cache_optimized; // High-performance sub-50ms FACT cache
 pub mod formatter;
 pub mod mongodb_integration; // MongoDB optimization integration for Phase 2
 pub mod pipeline;
+pub mod proof_chain_integration; // Week 6: Proof chain integration for template variables
 pub mod query_preprocessing;
+pub mod template_engine; // Week 6: Template engine for deterministic response generation
+pub mod template_integration; // Week 6: Complete template integration with performance validation
+pub mod template_structures; // Week 6: Template response structures for different query types
 pub mod validator;
 
 use std::time::Duration;
@@ -64,9 +69,13 @@ pub use citation::{
     ComprehensiveCitationSystem, ComprehensiveCitationResult, CitationType, 
     CitationNecessity, ClaimType, GapType, CitationRequirement, 
     CitationRequirementAnalysis, TextRange, CitationQualityCalculator,
-    CoverageGap, GapSeverity
+    CoverageGap, GapSeverity, CitationDeduplicationStrategy
 };
 pub use config::Config;
+pub use enhanced_citation_formatter::{
+    EnhancedCitationFormatter, EnhancedCitationConfig, ComprehensiveCitationResult as EnhancedComprehensiveCitationResult,
+    EnhancedFormattedCitation, CitationAuditTrail
+};
 pub use error::{ResponseError, Result};
 // pub use fact_accelerated::{FACTAcceleratedGenerator, FACTConfig, FACTGeneratedResponse}; // FACT REMOVED
 pub use formatter::{FormatterConfig, OutputFormat, ResponseFormatter};
@@ -75,7 +84,22 @@ pub use mongodb_integration::{
     IntegrationMetrics, Phase2ComplianceReport, OptimizationRecommendation
 };
 pub use pipeline::{Pipeline, PipelineStage, ProcessingContext};
+pub use proof_chain_integration::{
+    ProofChainIntegrationManager, ProofChainQuery, ProofChainResponse, 
+    ExtractedVariable, VariableRequirement
+};
 pub use query_preprocessing::{FACTQueryPreprocessingStage, QueryPreprocessingConfig};
+pub use template_engine::{
+    TemplateEngine, TemplateEngineConfig, TemplateResponse, TemplateGenerationRequest,
+    TemplateType, ResponseTemplate, VariableSubstitution
+};
+pub use template_integration::{
+    IntegratedTemplateResponseGenerator, IntegratedTemplateResponse, IntegrationConfig,
+    PerformanceTargets, TemplateSelectionStrategy
+};
+pub use template_structures::{
+    TemplateLibrary, TemplateMetadata, TemplateUsageStats, PerformanceCharacteristics
+};
 pub use validator::{ValidationConfig, ValidationLayer, ValidationResult, Validator, ValidationSeverity};
 
 // use async_trait::async_trait; // Currently unused
@@ -85,7 +109,7 @@ use tokio::time::Instant;
 use tracing::{info, warn, error, instrument};
 use uuid::Uuid;
 
-/// Main response generator interface
+/// Main response generator interface  
 #[derive(Debug)]
 pub struct ResponseGenerator {
     config: Config,

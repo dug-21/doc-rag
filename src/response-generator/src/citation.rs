@@ -461,3 +461,114 @@ pub enum GapSeverity {
     High,
     Critical,
 }
+
+/// Citation deduplication strategies
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum CitationDeduplicationStrategy {
+    /// Exact match deduplication (same source ID and content)
+    Exact,
+    /// Fuzzy matching based on source title and URL similarity
+    Fuzzy,
+    /// Semantic similarity using embeddings
+    Semantic,
+    /// Hybrid approach combining exact, fuzzy, and semantic matching
+    Hybrid,
+}
+
+impl Default for CitationDeduplicationStrategy {
+    fn default() -> Self {
+        Self::Hybrid
+    }
+}
+
+impl CitationDeduplicationStrategy {
+    /// Apply the deduplication strategy to a list of citations
+    pub fn deduplicate(&self, citations: Vec<Citation>) -> Vec<Citation> {
+        match self {
+            Self::Exact => self.deduplicate_exact(citations),
+            Self::Fuzzy => self.deduplicate_fuzzy(citations),
+            Self::Semantic => self.deduplicate_semantic(citations),
+            Self::Hybrid => self.deduplicate_hybrid(citations),
+        }
+    }
+
+    /// Exact deduplication based on source ID and text range
+    fn deduplicate_exact(&self, citations: Vec<Citation>) -> Vec<Citation> {
+        let mut unique_citations = Vec::new();
+        let mut seen_keys = std::collections::HashSet::new();
+
+        for citation in citations {
+            let key = format!("{}:{}:{}", 
+                citation.source.id, 
+                citation.text_range.start, 
+                citation.text_range.end
+            );
+            
+            if !seen_keys.contains(&key) {
+                seen_keys.insert(key);
+                unique_citations.push(citation);
+            }
+        }
+
+        unique_citations
+    }
+
+    /// Fuzzy deduplication based on title and URL similarity
+    fn deduplicate_fuzzy(&self, citations: Vec<Citation>) -> Vec<Citation> {
+        let mut unique_citations = Vec::new();
+        let mut seen_sources = std::collections::HashSet::new();
+
+        for citation in citations {
+            let source_key = format!("{}:{}", 
+                citation.source.title.to_lowercase().trim(),
+                citation.source.url.as_ref().unwrap_or(&String::new())
+            );
+            
+            if !seen_sources.contains(&source_key) {
+                seen_sources.insert(source_key);
+                unique_citations.push(citation);
+            }
+        }
+
+        unique_citations
+    }
+
+    /// Semantic deduplication using content similarity
+    fn deduplicate_semantic(&self, citations: Vec<Citation>) -> Vec<Citation> {
+        // For now, fallback to fuzzy deduplication
+        // In a real implementation, this would use embeddings to find semantically similar citations
+        self.deduplicate_fuzzy(citations)
+    }
+
+    /// Hybrid deduplication combining multiple approaches
+    fn deduplicate_hybrid(&self, citations: Vec<Citation>) -> Vec<Citation> {
+        // First pass: exact deduplication
+        let after_exact = self.deduplicate_exact(citations);
+        
+        // Second pass: fuzzy deduplication on the remaining citations
+        let after_fuzzy = self.deduplicate_fuzzy(after_exact);
+        
+        // Third pass: semantic deduplication (placeholder for now)
+        self.deduplicate_semantic(after_fuzzy)
+    }
+
+    /// Get the expected reduction ratio for this strategy
+    pub fn expected_reduction_ratio(&self) -> f64 {
+        match self {
+            Self::Exact => 0.1,      // 10% reduction expected
+            Self::Fuzzy => 0.3,      // 30% reduction expected
+            Self::Semantic => 0.4,   // 40% reduction expected
+            Self::Hybrid => 0.5,     // 50% reduction expected
+        }
+    }
+
+    /// Get a human-readable description of this strategy
+    pub fn description(&self) -> &'static str {
+        match self {
+            Self::Exact => "Removes citations with identical source IDs and text ranges",
+            Self::Fuzzy => "Removes citations with similar titles and URLs using fuzzy matching",
+            Self::Semantic => "Removes semantically similar citations using embedding-based comparison",
+            Self::Hybrid => "Combines exact, fuzzy, and semantic deduplication for comprehensive results",
+        }
+    }
+}

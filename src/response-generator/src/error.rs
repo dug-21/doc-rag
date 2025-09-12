@@ -95,6 +95,14 @@ pub enum ResponseError {
     /// Internal errors (should not occur in production)
     #[error("Internal error: {message}")]
     Internal { message: String },
+
+    /// Template not found errors
+    #[error("Template not found: {template_type} - {message}")]
+    TemplateNotFound { template_type: String, message: String },
+
+    /// Constraint violations (enforcing system constraints)
+    #[error("Constraint violation: {0}")]
+    ConstraintViolation(String),
 }
 
 /// Error recovery strategies
