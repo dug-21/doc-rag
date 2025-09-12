@@ -1,0 +1,5 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /Users/dmf/repos/doc-rag/src/response-generator/Cargo.toml
+workspace: /Users/dmf/repos/doc-rag/Cargo.toml
+    Blocking waiting for file lock on build directory
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 46.05s
