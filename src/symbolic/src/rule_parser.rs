@@ -42,29 +42,29 @@ impl RuleParser {
             let conclusion = caps.get(2).unwrap().as_str();
             
             // Create basic rule structure
-            let head = SymbolicFact {
-                predicate: "parsed_conclusion".to_string(),
-                arguments: vec![conclusion.to_string()],
-                confidence: 0.8,
-                source: "rule_parser".to_string(),
-                created_at: Utc::now(),
-            };
-            
-            let body = vec![SymbolicFact {
-                predicate: "parsed_premise".to_string(),
-                arguments: vec![premise.to_string()],
-                confidence: 0.8,
-                source: "rule_parser".to_string(),
-                created_at: Utc::now(),
-            }];
-            
+            let head_pred = "parsed_conclusion".to_string();
+            let body_preds = vec!["parsed_premise".to_string()];
+
             let rule = SymbolicRule {
-                id: Uuid::new_v4(),
-                head,
-                body,
+                id: uuid::Uuid::new_v4(),
+                head: SymbolicFact {
+                    predicate: head_pred,
+                    arguments: vec![],
+                    confidence: 0.8,
+                    source: "rule_parser".to_string(),
+                    created_at: chrono::Utc::now(),
+                },
+                body: vec![SymbolicFact {
+                    predicate: body_preds[0].clone(),
+                    arguments: vec![],
+                    confidence: 0.8,
+                    source: "rule_parser".to_string(),
+                    created_at: chrono::Utc::now(),
+                }],
                 confidence: 0.8,
-                priority: 0,
-                created_at: Utc::now(),
+                priority: 1,
+                source: "rule_parser".to_string(),
+                created_at: chrono::Utc::now(),
             };
             
             return Ok(Some(rule));
@@ -83,8 +83,29 @@ impl RuleParser {
             source: "rule_parser".to_string(),
             created_at: Utc::now(),
         };
-        
+
         Ok(Some(fact))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_if_then_rule() {
+        let parser = RuleParser::new().unwrap();
+        let result = parser.parse_rule("if X is valid then Y is allowed");
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_some());
+    }
+
+    #[test]
+    fn test_parse_fact() {
+        let parser = RuleParser::new().unwrap();
+        let result = parser.parse_fact("user authentication is required");
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_some());
     }
 }
 

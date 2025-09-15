@@ -123,6 +123,7 @@ pub enum QueryType {
 pub struct ProofStep {
     pub step_number: usize,
     pub rule: String,
+    pub rule_applied: String,
     pub premises: Vec<String>,
     pub conclusion: String,
     pub source_section: String,
@@ -243,6 +244,48 @@ pub struct AlternativeInterpretation {
     pub rationale: String,
 }
 
+/// Symbolic fact for reasoning
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SymbolicFact {
+    pub predicate: String,
+    pub arguments: Vec<String>,
+    pub confidence: f64,
+    pub source: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Proof chain for complex reasoning
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProofChain {
+    pub query: String,
+    pub conclusion: SymbolicFact,
+    pub steps: Vec<ProofStep>,
+    pub confidence: f64,
+    pub inference_time_ms: u64,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Reasoning type for inference engine
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ReasoningType {
+    Deductive,
+    Inductive,
+    Abductive,
+    Analogical,
+}
+
+/// Symbolic rule for logic engines
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SymbolicRule {
+    pub id: uuid::Uuid,
+    pub head: SymbolicFact,
+    pub body: Vec<SymbolicFact>,
+    pub confidence: f64,
+    pub priority: i32,
+    pub source: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
 /// Parsed requirement components
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedRequirement {
@@ -252,6 +295,26 @@ pub struct ParsedRequirement {
     pub actions: Vec<Action>,
     pub conditions: Vec<Condition>,
     pub cross_references: Vec<CrossReference>,
+    pub confidence: f64,
+}
+
+/// Query result from symbolic reasoning engines
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueryResult {
+    pub predicate: String,
+    pub bindings: std::collections::HashMap<String, String>,
+    pub proof_steps: Vec<ProofStep>,
+    pub confidence: f64,
+    pub source: Option<String>,
+}
+
+/// Requirement rule for Datalog processing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RequirementRule {
+    pub id: String,
+    pub requirement_type: String,
+    pub conditions: Vec<String>,
+    pub section: String,
     pub confidence: f64,
 }
 

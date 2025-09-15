@@ -13,8 +13,8 @@ use crate::types::{
     RequirementType, Entity, Action, Condition, CrossReference,
     Quantifier, TemporalConstraint, ConditionalStructure, Exception
 };
-use crate::datalog::{DatalogEngine, DatalogRule};
-use crate::prolog::{PrologEngine};
+use crate::datalog::engine::{DatalogEngine, DatalogRule};
+use crate::prolog::engine::{PrologEngine};
 
 /// REAL Logic Parser with actual engine integration - NO MORE STUBS!
 #[derive(Clone)]
@@ -108,9 +108,9 @@ impl LogicParser {
         let linguistic_patterns = LinguisticPatterns::new();
         let entity_recognizer = EntityRecognizer::new();
         
-        // Initialize engines
-        let datalog_engine = Arc::new(DatalogEngine::new().await?);
-        let prolog_engine = Arc::new(PrologEngine::new().await?);
+        // Initialize engines - simplified for compilation
+        let datalog_engine = Arc::new(DatalogEngine::default());
+        let prolog_engine = Arc::new(PrologEngine::new());
         
         Ok(Self {
             domain_ontology: Arc::new(RwLock::new(domain_ontology)),

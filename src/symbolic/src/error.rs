@@ -17,6 +17,9 @@ pub enum SymbolicError {
     
     #[error("Query execution error: {0}")]
     QueryError(String),
+
+    #[error("Query execution error: {0}")]
+    QueryExecutionError(String),
     
     #[error("Performance constraint violation: {message} (took {duration_ms}ms, limit {limit_ms}ms)")]
     PerformanceViolation {
@@ -51,6 +54,24 @@ pub enum SymbolicError {
     
     #[error("Generic error: {0}")]
     GenericError(String),
+
+    #[error("Neural network error: {0}")]
+    NeuralNetworkError(String),
+
+    #[error("Classification error: {0}")]
+    ClassificationError(String),
+
+    #[error("Feature extraction error: {0}")]
+    FeatureExtractionError(String),
+
+    #[error("Training error: {0}")]
+    TrainingError(String),
+
+    #[error("Neural network not initialized")]
+    NotInitialized,
+
+    #[error("Timeout error: operation timed out")]
+    Timeout,
 }
 
 /// Result type for symbolic reasoning operations
@@ -73,3 +94,8 @@ impl From<regex::Error> for SymbolicError {
         SymbolicError::ParseError(format!("Regex error: {}", err))
     }
 }
+
+// Legacy compatibility aliases for existing code
+pub type DatalogError = SymbolicError;
+pub type ClassificationError = SymbolicError;
+pub type ProcessorError = SymbolicError;
