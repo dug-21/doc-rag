@@ -575,15 +575,15 @@ impl RagSystemIntegration {
         let query_duration = query_start.elapsed();
 
         // Stage 2: Generate query embedding for search
-        let mut query_chunk = DocumentChunk {
+        let mut query_chunks = vec![DocumentChunk {
             id: Uuid::new_v4(),
             content: query.to_string(),
             embeddings: None,
             metadata: HashMap::new(),
             references: vec![],
-        };
-        self.embedder.generate_embeddings(&mut [query_chunk]).await?;
-        let query_embedding = query_chunk.embeddings.unwrap();
+        }];
+        self.embedder.generate_embeddings(&mut query_chunks).await?;
+        let query_embedding = query_chunks[0].embeddings.clone().unwrap();
 
         // Stage 3: Vector similarity search
         let search_start = Instant::now();
@@ -741,7 +741,7 @@ impl LoadTestRunner {
 
         // Spawn concurrent users
         for user_id in 0..concurrent_users {
-            let system = &self.system;
+            let system = self.system.clone();
             let queries = self.queries.clone();
             let end_time = start_time + duration;
 
@@ -1040,10 +1040,11 @@ async fn test_error_handling_resilience() {
     let system = RagSystemIntegration::new(config);
 
     // Test edge cases
+    let long_query_string = "a".repeat(2000);
     let edge_cases = vec![
         "",                                    // Empty query
         "?",                                  // Single character
-        &"a".repeat(2000),                     // Very long query
+        &long_query_string,                    // Very long query
         "ñoño español 中文 العربية 🚀",        // Unicode and emojis
         "   \n\t  ",                          // Whitespace only
         "SELECT * FROM users; DROP TABLE users;", // SQL injection attempt

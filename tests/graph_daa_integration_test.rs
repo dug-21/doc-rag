@@ -130,16 +130,21 @@ async fn test_neo4j_daa_complete_integration() {
             // Test 3: Message Bus Integration
             let message = Message {
                 id: Uuid::new_v4(),
-                topic: "graph.query".to_string(),
                 source: "test-client".to_string(),
+                target: None,
+                topic: "graph.query".to_string(),
                 payload: serde_json::json!({
                     "type": "traverse_requirements",
                     "start_id": "req_test_001",
                     "max_depth": 2
                 }),
-                timestamp: chrono::Utc::now(),
+                priority: integration::message_bus::MessagePriority::Normal,
+                delivery_guarantee: integration::message_bus::DeliveryGuarantee::AtLeastOnce,
+                created_at: chrono::Utc::now(),
+                expires_at: None,
+                retry_count: 0,
+                max_retries: 3,
                 correlation_id: Some(Uuid::new_v4()),
-                reply_to: None,
                 headers: std::collections::HashMap::new(),
             };
             

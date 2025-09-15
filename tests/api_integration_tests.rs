@@ -4,7 +4,6 @@
 
 use std::time::{Duration, Instant};
 use tokio::time::timeout;
-use uuid::Uuid;
 use serde_json::json;
 
 // Simple structures for testing
@@ -170,7 +169,7 @@ mod simple_api_tests {
         
         for (i, task_result) in results.into_iter().enumerate() {
             let (task_id, duration) = task_result.unwrap();
-            assert_eq!(task_id, i, "Task ID should match");
+            assert_eq!(task_id, i as u64, "Task ID should match");
             assert!(duration.as_millis() < 1000, "Task should complete quickly");
         }
 
