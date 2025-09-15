@@ -1,0 +1,69 @@
+# Development environment configuration
+[server]
+host = "127.0.0.1"
+port = 8080
+metrics_port = 9090
+
+[environment]
+name = "development"
+log_level = "debug"
+enable_metrics = true
+enable_cors = true
+
+[security]
+enable_tls = false
+api_key_required = false
+cors_allowed_origins = ["*"]
+
+[database]
+# Local development database connections
+neo4j_uri = "bolt://localhost:7687"
+neo4j_user = "neo4j"
+neo4j_password = "password"
+mongodb_uri = "mongodb://localhost:27017/neurosymbolic-rag-dev"
+redis_url = "redis://localhost:6379"
+qdrant_url = "http://localhost:6333"
+
+# Development connection settings
+db_connection_timeout_secs = 10
+db_connection_pool_size = 5
+db_connection_retry_attempts = 2
+db_connection_retry_delay_ms = 500
+
+[performance]
+worker_threads = 2
+connection_pool_size = 10
+keep_alive_timeout_secs = 60
+max_concurrent_requests = 50
+request_queue_size = 200
+
+[pipeline]
+timeout_secs = 120
+max_concurrent_requests = 50
+
+[circuit_breaker]
+enabled = false
+
+[retry]
+max_attempts = 2
+base_delay_ms = 100
+max_delay_ms = 2000
+
+[logging]
+level = "debug"
+format = "pretty"
+
+[health_checks]
+interval_secs = 5
+timeout_secs = 2
+
+[monitoring]
+jaeger_endpoint = "http://localhost:14268"
+metrics_enabled = true
+tracing_enabled = true
+
+[feature_flags]
+neural_chunker_enabled = true
+symbolic_reasoning_enabled = true
+fact_cache_enabled = true
+development_mode = true

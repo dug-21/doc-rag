@@ -1,0 +1,71 @@
+# Production environment configuration
+[server]
+host = "0.0.0.0"
+port = 8080
+metrics_port = 9090
+
+[environment]
+name = "production"
+log_level = "warn"
+enable_metrics = true
+enable_cors = false
+
+[security]
+enable_tls = true
+api_key_required = true
+cors_allowed_origins = ["https://your-domain.com"]
+
+[database]
+# Production database connections
+neo4j_uri = "${NEO4J_URI}"
+neo4j_user = "${NEO4J_USER}"
+neo4j_password = "${NEO4J_PASSWORD}"
+mongodb_uri = "${MONGODB_URI}"
+redis_url = "${REDIS_URL}"
+qdrant_url = "${QDRANT_URL}"
+
+# Production connection settings
+db_connection_timeout_secs = 30
+db_connection_pool_size = 20
+db_connection_retry_attempts = 3
+db_connection_retry_delay_ms = 1000
+
+[performance]
+worker_threads = 8
+connection_pool_size = 50
+keep_alive_timeout_secs = 30
+max_concurrent_requests = 200
+request_queue_size = 2000
+
+[pipeline]
+timeout_secs = 60
+max_concurrent_requests = 200
+
+[circuit_breaker]
+enabled = true
+failure_threshold = 3
+timeout_ms = 30000
+half_open_max_calls = 2
+
+[retry]
+max_attempts = 3
+base_delay_ms = 200
+max_delay_ms = 5000
+
+[logging]
+level = "warn"
+format = "json"
+
+[health_checks]
+interval_secs = 30
+timeout_secs = 10
+
+[monitoring]
+jaeger_endpoint = "${JAEGER_ENDPOINT}"
+metrics_enabled = true
+tracing_enabled = true
+
+[feature_flags]
+neural_chunker_enabled = true
+symbolic_reasoning_enabled = true
+fact_cache_enabled = true
