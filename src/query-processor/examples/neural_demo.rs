@@ -45,12 +45,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Text: {}", query_text);
         
         // Create query
-        let query = Query::new(query_text);
-        
+        let query = Query::new(query_text.to_string())?;
+
         // Analyze with neural components
         let analysis = analyzer.analyze(&query).await?;
         println!("✓ Semantic analysis completed (confidence: {:.3})", analysis.confidence);
-        
+
         // Classify intent with neural network
         let classification = classifier.classify(&query, &analysis).await?;
         println!("🎯 Intent: {:?} (confidence: {:.3})", classification.primary_intent, classification.confidence);
