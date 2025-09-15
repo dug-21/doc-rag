@@ -18,7 +18,7 @@ resolver = "2"
 
 # Root workspace package for Docker builds
 [package]
-name = "neurosymbolic-rag"
+name = "doc-rag"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -33,6 +33,9 @@ path = "src/integration/src/main.rs"
 
 [dependencies]
 integration = { path = "src/integration" }
+graph = { path = "src/graph" }
+fact = { path = "src/fact" }
+symbolic = { path = "src/symbolic" }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
@@ -207,6 +210,7 @@ uuid = { workspace = true }
 anyhow = { workspace = true }
 serde = { workspace = true }
 chrono = { workspace = true }
+futures = { workspace = true }
 api = { path = "src/api" }
 
 [[bench]]

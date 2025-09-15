@@ -1593,6 +1593,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "doc-rag"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "api",
+ "axum",
+ "axum-test",
+ "chrono",
+ "criterion",
+ "fact",
+ "futures",
+ "graph",
+ "integration",
+ "mockall",
+ "proptest",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "symbolic",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3605,29 +3632,6 @@ checksum = "53a0d57c55d2d1dc62a2b1d16a0a1079eb78d67c36bdf468d582ab4482ec7002"
 dependencies = [
  "quote",
  "syn 2.0.106",
-]
-
-[[package]]
-name = "neurosymbolic-rag"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "api",
- "axum",
- "axum-test",
- "chrono",
- "criterion",
- "integration",
- "mockall",
- "proptest",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "tokio",
- "tokio-test",
- "tracing",
- "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]
