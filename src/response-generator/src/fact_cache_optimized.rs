@@ -6,11 +6,10 @@
 use crate::error::{Result, ResponseError};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
-use tokio::sync::{RwLock, Semaphore};
+use tokio::sync::Semaphore;
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 

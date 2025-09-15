@@ -3,14 +3,14 @@
 //! Provides comprehensive citation formatting with full audit trails for CONSTRAINT-001 compliance
 //! and integration with template engine variable substitution system.
 
-use crate::{Result, ResponseError, Citation, Source};
+use crate::{Result, ResponseError, Citation};
 use crate::template_engine::{FormattedCitation, CitationFormat, CitationFormatterConfig};
-use crate::proof_chain_integration::{ProofElement, SourceReference, SourceType};
+use crate::proof_chain_integration::{ProofElement, SourceType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
-use tracing::{debug, info, instrument, warn};
+use tracing::{info, instrument, warn};
 
 /// Enhanced citation formatter with audit trail capabilities
 #[derive(Debug, Clone)]

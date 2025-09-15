@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
-use crate::{Result, ResponseError};
+use crate::Result;
 
 /// Citation necessity levels
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

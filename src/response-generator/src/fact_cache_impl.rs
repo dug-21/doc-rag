@@ -5,7 +5,7 @@
 //! - Citation tracking and source attribution
 //! - Semantic similarity matching for cache hits
 
-use crate::error::{Result, ResponseError};
+use crate::error::Result;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;

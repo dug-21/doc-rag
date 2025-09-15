@@ -3,13 +3,13 @@
 use crate::{
     error::{Result, ResponseError},
     GenerationRequest, ContextChunk, IntermediateResponse,
-    citation::Source,
 };
 use serde_json;
 use std::collections::{HashMap, HashSet};
 use tokio::time::{Duration, Instant};
 use tracing::{debug, instrument, warn};
 use uuid::Uuid;
+use crate::citation::Source;
 
 /// Response builder for assembling responses from context
 #[derive(Debug, Clone)]
@@ -812,6 +812,7 @@ enum QueryType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Source;
 
     #[tokio::test]
     async fn test_response_builder_creation() {
