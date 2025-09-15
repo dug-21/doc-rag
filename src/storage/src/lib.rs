@@ -10,7 +10,6 @@
 //! - Comprehensive error handling and monitoring
 
 use std::time::Duration;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use mongodb::{
