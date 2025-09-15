@@ -36,6 +36,9 @@ integration = { path = "src/integration" }
 graph = { path = "src/graph" }
 fact = { path = "src/fact" }
 symbolic = { path = "src/symbolic" }
+chunker = { path = "src/chunker" }
+query-processor = { path = "src/query-processor" }
+response-generator = { path = "src/response-generator" }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
