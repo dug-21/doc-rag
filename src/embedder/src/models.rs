@@ -5,11 +5,14 @@
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use anyhow::{Result, Context};
 use tracing::{info, warn, debug, instrument};
 use tokio::fs;
 use candle_core::IndexOp;
+
+#[cfg(feature = "ort")]
+use ort::value::Tensor;
 
 use crate::{EmbedderConfig, EmbedderError, ModelType, Device};
 
@@ -18,7 +21,7 @@ use crate::{EmbedderConfig, EmbedderError, ModelType, Device};
 pub trait EmbeddingModel: Send + Sync {
     /// Encode a single text into an embedding
     async fn encode(&self, text: &str) -> Result<Vec<f32>>;
-    
+
     /// Encode a batch of texts into embeddings
     async fn encode_batch(&self, texts: &[String]) -> Result<Vec<Vec<f32>>>;
     
@@ -35,7 +38,7 @@ pub trait EmbeddingModel: Send + Sync {
 /// ONNX Runtime based embedding model
 pub struct OnnxEmbeddingModel {
     #[cfg(feature = "ort")]
-    session: ort::session::Session,
+    session: Mutex<ort::session::Session>,
     #[cfg(not(feature = "ort"))]
     session: (),
     tokenizer: Box<dyn Tokenizer + Send + Sync>,
@@ -186,7 +189,7 @@ impl EmbeddingModel for OnnxEmbeddingModel {
         let embeddings = self.encode_tokenized_batch(&batch).await?;
         Ok(embeddings.into_iter().next().unwrap())
     }
-    
+
     async fn encode_batch(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
         let tokenized_batch = self.tokenizer.encode_batch(texts)?;
         self.encode_tokenized_batch(&tokenized_batch).await
@@ -209,25 +212,25 @@ impl OnnxEmbeddingModel {
     #[instrument(skip(config))]
     pub async fn load(model_path: &Path, config: &EmbedderConfig) -> Result<Self> {
         info!("Loading ONNX model from: {:?}", model_path);
-        
+
         // Initialize ONNX Runtime session with ORT 2.0 API
         #[cfg(feature = "ort")]
         let session = {
             ort::session::Session::builder()?
                 .commit_from_file(model_path)?
         };
-        
+
         #[cfg(not(feature = "ort"))]
         let _session = ();
-        
+
         // Load tokenizer
         let tokenizer_path = model_path.parent()
             .ok_or_else(|| EmbedderError::ModelNotFound)?
             .join("vocab.txt");
-        
+
         let tokenizer = Box::new(BertTokenizer::new(&tokenizer_path, config.max_length)?)
             as Box<dyn Tokenizer + Send + Sync>;
-        
+
         // Get model metadata
         let dimension = match config.model_type {
             ModelType::AllMiniLmL6V2 => 384,
@@ -235,15 +238,15 @@ impl OnnxEmbeddingModel {
             ModelType::SentenceT5Base => 768,
             ModelType::Custom { dimension, .. } => dimension,
         };
-        
+
         let name = model_path.file_stem()
             .unwrap_or_default()
             .to_string_lossy()
             .to_string();
-        
+
         Ok(Self {
             #[cfg(feature = "ort")]
-            session,
+            session: Mutex::new(session),
             #[cfg(not(feature = "ort"))]
             session: _session,
             tokenizer,
@@ -252,7 +255,7 @@ impl OnnxEmbeddingModel {
             max_length: config.max_length,
         })
     }
-    
+
     async fn encode_tokenized_batch(&self, batch: &[TokenizerOutput]) -> Result<Vec<Vec<f32>>> {
         // ORT inputs functionality - API changed in newer versions
         
@@ -268,28 +271,6 @@ impl OnnxEmbeddingModel {
             attention_mask.extend(&tokenized.attention_mask);
         }
         
-        // Run inference
-        #[cfg(feature = "ort")]
-        let outputs = {
-            // Create ORT Values for input with proper type conversion
-            let input_ids_array = ndarray::Array2::from_shape_vec(
-                (batch_size, seq_len),
-                input_ids
-            )?.into_dyn().mapv(|x| x as i64);
-            let attention_mask_array = ndarray::Array2::from_shape_vec(
-                (batch_size, seq_len),
-                attention_mask
-            )?.into_dyn().mapv(|x| x as i64);
-            
-            let input_ids_value = ort::Value::from_array(input_ids_array)?;
-            let attention_mask_value = ort::Value::from_array(attention_mask_array)?;
-            
-            self.session.run(ort::inputs![
-                "input_ids" => &input_ids_value,
-                "attention_mask" => &attention_mask_value
-            ])?
-        };
-        
         #[cfg(not(feature = "ort"))]
         {
             // Return dummy results when ONNX is disabled
@@ -299,15 +280,34 @@ impl OnnxEmbeddingModel {
             }
             return Ok(results);
         }
-        
-        // Extract embeddings (usually from the pooler output or mean pooling of last hidden states)
+
+        // Run inference and extract embeddings immediately
         #[cfg(feature = "ort")]
-        let embeddings_tensor = outputs["last_hidden_state"]
-            .try_extract_tensor::<f32>()?;
-        
-        #[cfg(feature = "ort")]
-        let embeddings_array = embeddings_tensor.view();
-        
+        let embeddings_data = {
+            // Create ORT tensors using new 2.0 API format: (shape, data)
+            let input_ids_value = Tensor::from_array((
+                [batch_size, seq_len],
+                input_ids.into_boxed_slice()
+            ))?;
+            let attention_mask_value = Tensor::from_array((
+                [batch_size, seq_len],
+                attention_mask.into_boxed_slice()
+            ))?;
+
+            let mut session = self.session.lock().unwrap();
+            let outputs = session.run(ort::inputs![
+                "input_ids" => &input_ids_value,
+                "attention_mask" => &attention_mask_value
+            ])?;
+
+            // Extract embeddings immediately while session is locked
+            let (_embeddings_shape, embeddings_data) = outputs["last_hidden_state"]
+                .try_extract_tensor::<f32>()?;
+
+            // Clone the data to own it
+            embeddings_data.to_vec()
+        };
+
         // Mean pooling over sequence dimension
         #[cfg(feature = "ort")]
         {
@@ -315,12 +315,14 @@ impl OnnxEmbeddingModel {
             for batch_idx in 0..batch_size {
                 let mut embedding = vec![0.0f32; self.dimension];
                 let mut valid_tokens = 0;
-                
+
                 for seq_idx in 0..seq_len {
                     // Only consider non-padded tokens
                     if batch[batch_idx].attention_mask[seq_idx] == 1 {
                         for dim in 0..self.dimension {
-                            embedding[dim] += embeddings_array[[batch_idx, seq_idx, dim]];
+                            // Calculate flat index for 3D tensor: [batch_size, seq_len, hidden_size]
+                            let flat_idx = batch_idx * seq_len * self.dimension + seq_idx * self.dimension + dim;
+                            embedding[dim] += embeddings_data[flat_idx];
                         }
                         valid_tokens += 1;
                     }
@@ -347,7 +349,7 @@ impl EmbeddingModel for CandleEmbeddingModel {
         let embeddings = self.encode_batch(&batch).await?;
         Ok(embeddings.into_iter().next().unwrap())
     }
-    
+
     async fn encode_batch(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
         let tokenized_batch = self.tokenizer.encode_batch(texts)?;
         self.encode_tokenized_batch(&tokenized_batch).await
