@@ -1,0 +1,99 @@
+# Multi-stage Rust Docker build for neurosymbolic RAG
+FROM rust:1.75 AS builder
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    cmake \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy workspace Cargo files first (for dependency caching)
+COPY Cargo.toml Cargo.lock ./
+
+# Create src directory structure
+RUN mkdir -p src
+
+# Copy all crate Cargo.toml files
+COPY src/integration/Cargo.toml ./src/integration/
+COPY src/symbolic/Cargo.toml ./src/symbolic/
+COPY src/api/Cargo.toml ./src/api/
+COPY src/storage/Cargo.toml ./src/storage/
+COPY src/chunker/Cargo.toml ./src/chunker/
+COPY src/embedder/Cargo.toml ./src/embedder/
+COPY src/query-processor/Cargo.toml ./src/query-processor/
+COPY src/response-generator/Cargo.toml ./src/response-generator/
+COPY src/graph/Cargo.toml ./src/graph/
+COPY src/fact/Cargo.toml ./src/fact/
+COPY src/tests/Cargo.toml ./src/tests/
+COPY src/mcp-adapter/Cargo.toml ./src/mcp-adapter/
+
+# Create minimal dummy source files for dependency caching
+RUN mkdir -p src/integration/src && echo "fn main() {}" > src/integration/src/main.rs
+RUN mkdir -p src/integration/src && echo "// placeholder" > src/integration/src/lib.rs
+RUN for dir in symbolic api storage chunker embedder query-processor response-generator graph fact tests mcp-adapter; do \
+    mkdir -p src/$dir/src && echo "// placeholder" > src/$dir/src/lib.rs; \
+    done
+
+# Build dependencies only
+RUN cargo build --release --bin integration-server
+RUN rm -rf src
+
+# Copy actual source code
+COPY src ./src
+
+# Build final application
+RUN cargo build --release --bin integration-server
+
+# Runtime stage  
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    wget \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app user
+RUN useradd -m -u 1001 appuser
+
+# Create application directory
+WORKDIR /app
+
+# Copy binary from builder stage
+COPY --from=builder /app/target/release/integration-server /app/neurosymbolic-rag
+RUN chmod +x /app/neurosymbolic-rag
+
+# Create required directories
+RUN mkdir -p /app/documents /app/models /app/logs /app/config \
+    && chown -R appuser:appuser /app
+
+# Copy configuration files if they exist
+COPY config/ /app/config/ 2>/dev/null || true
+
+# Switch to app user
+USER appuser
+
+# Expose ports
+EXPOSE 8080 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Set environment variables
+ENV RUST_LOG=info
+ENV RUST_BACKTRACE=1
+ENV APP_ENV=docker
+ENV DOCKER_ENV=1
+
+# Start application
+CMD ["./neurosymbolic-rag"]

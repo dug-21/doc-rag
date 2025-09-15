@@ -1,0 +1,75 @@
+# Rust build artifacts
+target/
+**/target/
+**/*.pdb
+
+# Local development files
+.env
+.env.local
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Documentation and non-essential directories
+docs/
+README*.md
+*.md
+!CLAUDE.md
+
+# Test artifacts
+test_results*
+*.log
+**/*.profraw
+
+# Development tools
+.roo/
+.hive-mind/
+.swarm/
+.claude/
+.claude-flow/
+.devcontainter/
+memory/
+archmemory/
+coordination/
+hive/
+
+# Large analysis directories
+temp-fact-analysis/
+benches/
+benchmarks/
+
+# Development scripts (exclude most, keep health-check)
+scripts/
+!scripts/health-check.sh
+*.sh
+*.bat
+*.ps1
+mark-directory.sh
+memory-bank.md
+coordination.md
+test_fact
+test_results.txt
+
+# Config files we don't need in container
+docker-compose*.yml
+Dockerfile*
+k8s/
+helm/
+
+# Uploads and data
+uploads/
+data/
+logs/
+models/
+
+# Test files
+tests/
+standalone_test.rs
+test_*.rs
+**/test_*.rs
