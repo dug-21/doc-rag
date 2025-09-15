@@ -3,7 +3,7 @@
 //! This example demonstrates how to use the embedding generator for
 //! basic text embedding tasks.
 
-use embedder::{EmbeddingGenerator, EmbedderConfig, ModelType, Device, Chunk, ChunkMetadata};
+use embedder::{EmbeddingGenerator, EmbedderConfig, ModelType, Chunk, ChunkMetadata};
 use std::collections::HashMap;
 use uuid::Uuid;
 use tokio;
@@ -18,16 +18,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Create configuration
     let config = EmbedderConfig::new()
-        .with_model_type(ModelType::AllMiniLmL6V2)
+        .with_model_type(ModelType::default_fast())
         .with_batch_size(8)
-        .with_device(Device::Cpu)
+        // .with_device(Device::Cpu) // Removed Device enum for ruv-FANN compliance
         .with_normalize(true)
         .with_cache_size(1000);
     
     println!("📋 Configuration:");
     println!("  Model: {}", config.model_type);
     println!("  Batch size: {}", config.batch_size);
-    println!("  Device: {}", config.device);
+    // println!("  Device: {}", config.device); // Device field removed
     println!("  Normalize: {}", config.normalize);
     println!("  Cache size: {}\n", config.cache_size);
     

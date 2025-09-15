@@ -4,7 +4,7 @@
 //! including adaptive batching and performance monitoring.
 
 use embedder::{
-    EmbeddingGenerator, EmbedderConfig, ModelType, Device, Chunk, ChunkMetadata,
+    EmbeddingGenerator, EmbedderConfig, ModelType, Chunk, ChunkMetadata,
     BatchProcessor, AdaptiveBatchConfig,
 };
 use std::collections::HashMap;
@@ -21,17 +21,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Create high-performance configuration
     let config = EmbedderConfig::new()
-        .with_model_type(ModelType::AllMiniLmL6V2)
+        .with_model_type(ModelType::default_fast())
         .with_batch_size(32)
-        .high_performance()
-        .with_device(Device::Cpu);
+        .high_performance();
+        // Device removed for ruv-FANN compliance
     
     println!("⚙️ Configuration:");
     println!("   Model: {}", config.model_type);
     println!("   Batch size: {}", config.batch_size);
     println!("   High performance mode: enabled");
-    println!("   FP16: {}", config.optimization.use_fp16);
-    println!("   Memory optimization: {}", config.optimization.memory_optimization);
+    println!("   Parallel processing: {}", config.optimization.enable_parallel_processing);
+    println!("   Cache features: {}", config.optimization.cache_features);
     
     // Initialize generator
     println!("\n🚀 Initializing embedding generator...");
@@ -207,9 +207,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     for &batch_size in &batch_sizes {
         let opt_config = EmbedderConfig::new()
-            .with_model_type(ModelType::AllMiniLmL6V2)
-            .with_batch_size(batch_size)
-            .with_device(Device::Cpu);
+            .with_model_type(ModelType::default_fast())
+            .with_batch_size(batch_size);
+            // Device removed for ruv-FANN compliance
         
         // Create a new generator for each batch size test
         if let Ok(test_generator) = EmbeddingGenerator::new(opt_config).await {

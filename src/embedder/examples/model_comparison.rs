@@ -3,7 +3,7 @@
 //! This example demonstrates how to compare different embedding models
 //! and their performance characteristics.
 
-use embedder::{EmbeddingGenerator, EmbedderConfig, ModelType, Device};
+use embedder::{EmbeddingGenerator, EmbedderConfig, ModelType};
 // use std::time::Duration;
 use tokio;
 
@@ -16,9 +16,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Define models to compare
     let models = vec![
-        ModelType::AllMiniLmL6V2,
-        ModelType::BertBaseUncased,
-        ModelType::SentenceT5Base,
+        ModelType::default_fast(),
+        ModelType::default_balanced(),
     ];
     
     // Test texts for comparison
@@ -42,12 +41,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("🔧 Testing model: {}", model_type);
         println!("   Dimension: {}", model_type.dimension());
         println!("   Max length: {}", model_type.default_max_length());
-        println!("   Supports ONNX: {}", model_type.supports_onnx());
+        // println!("   Supports ONNX: {}", model_type.supports_onnx()); // Removed for ruv-FANN compliance
         
         let config = EmbedderConfig::new()
             .with_model_type(model_type.clone())
             .with_batch_size(8)
-            .with_device(Device::Cpu);
+            ; // Device removed for ruv-FANN compliance
         
         match EmbeddingGenerator::new(config).await {
             Ok(generator) => {
@@ -235,16 +234,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n   Use cases:");
     for result in &model_results {
         match result.model_type {
-            ModelType::AllMiniLmL6V2 => {
-                println!("   • {}: Best balance of speed and quality for general use", 
+            ref fast_type if format!("{:?}", fast_type).contains("Fast") => {
+                println!("   • {}: Fast ruv-FANN model optimized for speed (<10ms inference)",
                         result.model_type.name());
             }
-            ModelType::BertBaseUncased => {
-                println!("   • {}: Higher quality embeddings, good for accuracy-critical tasks", 
-                        result.model_type.name());
-            }
-            ModelType::SentenceT5Base => {
-                println!("   • {}: Advanced semantic understanding, best for complex queries", 
+            ref balanced_type if format!("{:?}", balanced_type).contains("Balanced") => {
+                println!("   • {}: Balanced ruv-FANN model with good speed-accuracy tradeoff",
                         result.model_type.name());
             }
             _ => {
