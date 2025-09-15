@@ -37,6 +37,9 @@ serde_json = { workspace = true }
 serde_yaml = { workspace = true }
 toml = { workspace = true }
 
+# Configuration management
+config = { version = "0.14" }
+
 # Error handling
 anyhow = { workspace = true }
 thiserror = { workspace = true }
@@ -44,7 +47,7 @@ eyre = { workspace = true }
 
 # Logging and tracing
 tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
+tracing-subscriber = { workspace = true, optional = true }
 tracing-opentelemetry = { workspace = true, optional = true }
 opentelemetry = { version = "0.21", optional = true }
 opentelemetry-jaeger = { version = "0.20", optional = true }
@@ -75,13 +78,14 @@ metrics-exporter-prometheus = { workspace = true }
 # Circuit breaker and resilience
 tokio-util = { workspace = true }
 
-# Component dependencies (temporarily disabled for compilation check)
-# mcp-adapter = { path = "../mcp-adapter", package = "mcp-adapter" }
-# chunker = { path = "../chunker" }
-# embedder = { path = "../embedder" }
-# storage = { path = "../storage" }
-# query-processor = { path = "../query-processor" }
-# response-generator = { path = "../response-generator" }
+# Component dependencies
+chunker = { path = "../chunker" }
+embedder = { path = "../embedder" }
+storage = { path = "../storage" }
+query-processor = { path = "../query-processor" }
+response-generator = { path = "../response-generator" }
+symbolic = { path = "../symbolic" }
+graph = { path = "../graph" }
 
 [dev-dependencies]
 tempfile = "3.8"
@@ -90,14 +94,15 @@ criterion = { workspace = true }
 mockall = { workspace = true }
 rand = { workspace = true }
 
-[[bin]]
-name = "integration-server"
-path = "src/main.rs"
+# Binary is defined at workspace level in root Cargo.toml
+# [[bin]]
+# name = "integration-server"
+# path = "src/main.rs"
 
 [features]
 default = ["health-checks", "metrics", "tracing"]
 health-checks = []
 metrics = []
-tracing = ["tracing-opentelemetry", "opentelemetry", "opentelemetry-jaeger"]
+tracing = ["tracing-opentelemetry", "opentelemetry", "opentelemetry-jaeger", "tracing-subscriber"]
 resiliency = []
 development = ["tokio/test-util"]

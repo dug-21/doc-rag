@@ -2,7 +2,7 @@
 members = [
     "src/api",
     "src/chunker",
-    "src/embedder", 
+    "src/embedder",
     "src/storage",
     "src/query-processor",
     "src/response-generator",
@@ -15,6 +15,27 @@ exclude = [
     "src/mcp-adapter",
 ]
 resolver = "2"
+
+# Root workspace package for Docker builds
+[package]
+name = "neurosymbolic-rag"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Neurosymbolic RAG System - Main Entry Point"
+
+# Binary target pointing to integration server
+[[bin]]
+name = "integration-server"
+path = "src/integration/src/main.rs"
+
+[dependencies]
+integration = { path = "src/integration" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 [workspace.package]
 version = "0.1.0"
@@ -172,49 +193,21 @@ opt-level = 3
 debug = false
 lto = true
 
-# Integration tests package
-[package]
-name = "doc-rag-integration"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-description = "Week 3 Integration Tests and Benchmarks for Doc-RAG System"
-
-[dependencies]
-# Core dependencies
-tokio = { workspace = true }
-futures = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
-uuid = { workspace = true }
-chrono = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-tracing = { workspace = true }
-
-# Neural networks - ruv-FANN v0.1.6 for tests
-ruv-fann = { workspace = true }
-
-# Development dependencies
-criterion = { workspace = true }
-tokio-test = { workspace = true }
-rand = { workspace = true }
-
-# Component dependencies
-chunker = { path = "src/chunker" }
-embedder = { path = "src/embedder" }
-storage = { path = "src/storage" }
-query-processor = { path = "src/query-processor" }
-response-generator = { path = "src/response-generator" }
-
+# Integration tests configuration
 [dev-dependencies]
 tokio-test = { workspace = true }
 criterion = { workspace = true }
 proptest = { workspace = true }
 mockall = { workspace = true }
 rand = { workspace = true }
+axum = { workspace = true }
+axum-test = "14.0"
+serde_json = { workspace = true }
+uuid = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+chrono = { workspace = true }
+api = { path = "src/api" }
 
 [[bench]]
 name = "week3_pipeline_benchmarks"

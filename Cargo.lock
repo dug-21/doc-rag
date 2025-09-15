@@ -1593,32 +1593,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "doc-rag-integration"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "chunker",
- "criterion",
- "embedder",
- "futures",
- "mockall",
- "proptest",
- "query-processor",
- "rand 0.8.5",
- "response-generator",
- "ruv-fann",
- "serde",
- "serde_json",
- "storage",
- "thiserror 1.0.69",
- "tokio",
- "tokio-test",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3016,12 +2990,16 @@ dependencies = [
  "axum",
  "bytes",
  "chrono",
+ "chunker",
+ "config 0.14.1",
  "criterion",
  "daa-orchestrator",
  "dashmap",
+ "embedder",
  "eyre",
  "fact",
  "futures",
+ "graph",
  "hyper 1.7.0",
  "lru",
  "metrics 0.22.4",
@@ -3032,12 +3010,16 @@ dependencies = [
  "opentelemetry-jaeger",
  "parking_lot",
  "prometheus",
+ "query-processor",
  "rand 0.8.5",
  "reqwest",
+ "response-generator",
  "ruv-fann",
  "serde",
  "serde_json",
  "serde_yaml",
+ "storage",
+ "symbolic",
  "sys-info",
  "tempfile",
  "thiserror 1.0.69",
@@ -3623,6 +3605,29 @@ checksum = "53a0d57c55d2d1dc62a2b1d16a0a1079eb78d67c36bdf468d582ab4482ec7002"
 dependencies = [
  "quote",
  "syn 2.0.106",
+]
+
+[[package]]
+name = "neurosymbolic-rag"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "api",
+ "axum",
+ "axum-test",
+ "chrono",
+ "criterion",
+ "integration",
+ "mockall",
+ "proptest",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -4911,6 +4916,7 @@ dependencies = [
  "pulldown-cmark",
  "quickcheck",
  "quickcheck_macros",
+ "rand 0.8.5",
  "regex",
  "reqwest",
  "serde",
@@ -6043,6 +6049,7 @@ dependencies = [
  "chrono",
  "crepe",
  "criterion",
+ "daa-orchestrator",
  "dashmap",
  "fact",
  "futures",

@@ -1,26 +1,28 @@
 [package]
 name = "query-processor"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 description = "High-accuracy query processing component for RAG system with semantic analysis and Byzantine consensus"
-license = "MIT OR Apache-2.0"
 
 [dependencies]
 # Core async runtime
-tokio = { version = "1.35", features = ["full"] }
+tokio = { workspace = true }
 
 # Serialization and data structures
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { workspace = true }
+serde_json = { workspace = true }
 bincode = "1.3"
 
 # Logging and tracing
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 # Error handling
-thiserror = "1.0"
-anyhow = "1.0"
+thiserror = { workspace = true }
+anyhow = { workspace = true }
 
 # HTTP client for external services
 reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
@@ -29,13 +31,13 @@ reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
 config = "0.13"
 
 # Time handling
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { workspace = true }
 
 # UUID generation
-uuid = { version = "1.6", features = ["v4", "serde"] }
+uuid = { workspace = true }
 
 # Regular expressions for entity extraction
-regex = "1.10"
+regex = { workspace = true }
 crepe = { workspace = true }  # Datalog engine integration
 # scryer-prolog = { workspace = true }  # Prolog engine integration (commented until available)
 
