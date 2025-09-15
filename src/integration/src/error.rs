@@ -41,7 +41,7 @@ pub enum IntegrationError {
     
     /// Network error
     #[error("Network error: {0}")]
-    NetworkError(#[from] reqwest::Error),
+    NetworkError(String),
     
     /// JSON serialization error
     #[error("JSON error: {0}")]
@@ -144,6 +144,14 @@ pub enum IntegrationError {
     /// Compatibility error
     #[error("Compatibility error: {0}")]
     CompatibilityError(String),
+
+    /// Service unavailable
+    #[error("Service unavailable: {0}")]
+    ServiceUnavailable(String),
+
+    /// Processing error
+    #[error("Processing error: {0}")]
+    ProcessingError(String),
 }
 
 /// Result type alias for integration operations

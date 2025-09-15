@@ -34,6 +34,96 @@ use daa_orchestrator::{
 
 use crate::{Result, IntegrationConfig, SystemStatus};
 
+// Import neurosymbolic processor components (placeholder structs for now)
+// TODO: Replace with actual imports once symbolic module is accessible
+struct NeurosymbolicProcessor;
+struct NeurosymbolicQuery {
+    query: String,
+    confidence_threshold: f64,
+    max_results: usize,
+    use_proof_chains: bool,
+}
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct NeurosymbolicResult {
+    pub query: String,
+    pub response: String,
+    pub confidence: f64,
+}
+
+impl NeurosymbolicProcessor {
+    async fn new() -> Result<Self> {
+        Ok(Self)
+    }
+    
+    async fn process_query(&self, query: NeurosymbolicQuery) -> Result<NeurosymbolicResult> {
+        // Mock implementation for integration demonstration
+        Ok(NeurosymbolicResult {
+            query: query.query.clone(),
+            response: format!("Processed: {}", query.query),
+            confidence: 0.85,
+        })
+    }
+}
+
+/// Neurosymbolic message for agent coordination
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct NeurosymbolicMessage {
+    pub id: Uuid,
+    pub query: String,
+    pub result: NeurosymbolicResult,
+    pub consensus: ConsensusResult,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub agent_id: Uuid,
+}
+
+/// Consensus proposal for Byzantine validation
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConsensusProposal {
+    pub id: Uuid,
+    pub query: String,
+    pub result_confidence: f64,
+    pub processing_time_ms: u64,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+}
+
+/// Consensus result from Byzantine validation
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConsensusResult {
+    pub proposal_id: Uuid,
+    pub approved: bool,
+    pub vote_count: u32,
+    pub confidence_score: f64,
+    pub validation_timestamp: chrono::DateTime<chrono::Utc>,
+}
+
+/// Consensus state tracking
+#[derive(Debug, Clone)]
+struct ConsensusState {
+    proposal_id: Uuid,
+    votes_for: u32,
+    votes_against: u32,
+    total_votes: u32,
+    threshold_met: bool,
+    validation_time: std::time::Instant,
+}
+
+/// Symbolic agent health monitoring
+#[derive(Debug, Clone)]
+struct SymbolicAgentHealth {
+    datalog_engine_status: ComponentHealthStatus,
+    neural_classifier_status: ComponentHealthStatus,
+    neurosymbolic_processor_status: ComponentHealthStatus,
+    overall_health: f64,
+}
+
+/// Reasoning decision for symbolic processing
+#[derive(Debug, Clone)]
+struct ReasoningDecision {
+    requires_processing: bool,
+    confidence: f64,
+    reasoning: String,
+}
+
 /// DAA Orchestrator with MRAP control loop for autonomous coordination
 pub struct DAAOrchestrator {
     /// Orchestrator ID
@@ -56,6 +146,12 @@ pub struct DAAOrchestrator {
     action_history: Arc<RwLock<Vec<ActionResult>>>,
     /// MRAP loop control flag
     mrap_running: Arc<Mutex<bool>>,
+    /// Neurosymbolic processor for symbolic reasoning
+    neurosymbolic_processor: Arc<RwLock<Option<NeurosymbolicProcessor>>>,
+    /// Message bus for neurosymbolic agent coordination
+    neurosymbolic_bus: Arc<RwLock<HashMap<Uuid, NeurosymbolicMessage>>>,
+    /// Byzantine consensus for neurosymbolic validation
+    consensus_validator: Arc<RwLock<HashMap<Uuid, ConsensusState>>>,
 }
 
 /// Component information managed by DAA
@@ -78,6 +174,12 @@ pub enum ComponentType {
     Storage,
     QueryProcessor,
     ResponseGenerator,
+    Graph,
+    // Neurosymbolic reasoning components
+    NeurosymbolicProcessor,
+    DatalogEngine,
+    NeuralClassifier,
+    SymbolicReasoner,
 }
 
 /// Component health status
@@ -297,12 +399,26 @@ impl DAAOrchestrator {
             adaptation_strategies: Arc::new(RwLock::new(Vec::new())),
             action_history: Arc::new(RwLock::new(Vec::new())),
             mrap_running: Arc::new(Mutex::new(false)),
+            neurosymbolic_processor: Arc::new(RwLock::new(None)),
+            neurosymbolic_bus: Arc::new(RwLock::new(HashMap::new())),
+            consensus_validator: Arc::new(RwLock::new(HashMap::new())),
         })
     }
     
-    /// Initialize the DAA orchestrator with MRAP control loop
+    /// Initialize the DAA orchestrator with MRAP control loop and neurosymbolic capabilities
     pub async fn initialize(&mut self) -> Result<()> {
-        info!("Initializing DAA Orchestrator with MRAP control loop: {}", self.id);
+        info!("Initializing DAA Orchestrator with MRAP control loop and neurosymbolic integration: {}", self.id);
+        
+        // Initialize neurosymbolic processor
+        match NeurosymbolicProcessor::new().await {
+            Ok(processor) => {
+                info!("Neurosymbolic processor initialized successfully");
+                *self.neurosymbolic_processor.write().await = Some(processor);
+            },
+            Err(e) => {
+                warn!("Failed to initialize neurosymbolic processor: {}. Continuing without symbolic reasoning.", e);
+            }
+        }
         
         // Initialize external DAA orchestrator if available
         if let Some(ref _external_orchestrator) = self.external_orchestrator {
@@ -315,7 +431,7 @@ impl DAAOrchestrator {
         // Start MRAP control loop
         self.start_mrap_loop().await?;
         
-        info!("DAA Orchestrator initialized with MRAP control loop running");
+        info!("DAA Orchestrator initialized with MRAP control loop and neurosymbolic capabilities running");
         Ok(())
     }
     
@@ -1034,6 +1150,9 @@ impl DAAOrchestrator {
             adaptation_strategies: self.adaptation_strategies.clone(),
             action_history: self.action_history.clone(),
             mrap_running: self.mrap_running.clone(),
+            neurosymbolic_processor: self.neurosymbolic_processor.clone(),
+            neurosymbolic_bus: self.neurosymbolic_bus.clone(),
+            consensus_validator: self.consensus_validator.clone(),
         }
     }
     
@@ -1163,6 +1282,15 @@ impl DAAOrchestrator {
             // Note: External orchestrator shutdown would be handled here if it had async shutdown method
         }
         
+        // Shutdown neurosymbolic processor
+        {
+            let mut processor = self.neurosymbolic_processor.write().await;
+            if processor.is_some() {
+                info!("Shutting down neurosymbolic processor");
+                *processor = None;
+            }
+        }
+        
         info!("DAA Orchestrator shutdown complete");
         Ok(())
     }
@@ -1181,6 +1309,299 @@ impl DAAOrchestrator {
             // Return unknown status for unregistered components instead of error
             Ok(ComponentHealthStatus::Unknown)
         }
+    }
+    
+    /// Process neurosymbolic query through DAA orchestration with Byzantine consensus
+    pub async fn process_neurosymbolic_query(&self, query: &str) -> Result<NeurosymbolicResult> {
+        info!("Processing neurosymbolic query through DAA orchestration: {}", query);
+        
+        // Create neurosymbolic query with DAA coordination
+        let ns_query = NeurosymbolicQuery {
+            query: query.to_string(),
+            confidence_threshold: 0.7,
+            max_results: 10,
+            use_proof_chains: true,
+        };
+        
+        // Get neurosymbolic processor
+        let processor_lock = self.neurosymbolic_processor.read().await;
+        let processor = match processor_lock.as_ref() {
+            Some(p) => p,
+            None => {
+                warn!("Neurosymbolic processor not available");
+                return Err(crate::IntegrationError::ServiceUnavailable("Neurosymbolic processor not initialized".to_string()));
+            }
+        };
+        
+        // Process query with performance monitoring
+        let start_time = std::time::Instant::now();
+        let result = processor.process_query(ns_query).await
+            .map_err(|e| crate::IntegrationError::ProcessingError(format!("Neurosymbolic processing failed: {}", e)))?;
+        
+        let processing_time = start_time.elapsed();
+        
+        // Create consensus proposal for result validation
+        let consensus_id = Uuid::new_v4();
+        let consensus_proposal = ConsensusProposal {
+            id: consensus_id,
+            query: query.to_string(),
+            result_confidence: result.confidence,
+            processing_time_ms: processing_time.as_millis() as u64,
+            timestamp: chrono::Utc::now(),
+        };
+        
+        // Submit for Byzantine consensus validation (66% threshold)
+        let consensus_result = self.validate_neurosymbolic_result(&consensus_proposal).await?;
+        
+        // Update metrics
+        {
+            let mut metrics = self.metrics.write().await;
+            metrics.coordination_events += 1;
+            metrics.consensus_operations += 1;
+        }
+        
+        // Store validated result in message bus for agent coordination
+        self.publish_neurosymbolic_result(&result, consensus_result).await?;
+        
+        info!("Neurosymbolic query processed successfully with consensus validation");
+        Ok(result)
+    }
+    
+    /// Validate neurosymbolic result through Byzantine consensus
+    async fn validate_neurosymbolic_result(&self, proposal: &ConsensusProposal) -> Result<ConsensusResult> {
+        let mut validator = self.consensus_validator.write().await;
+        
+        // Create consensus state for this proposal
+        let consensus_state = ConsensusState {
+            proposal_id: proposal.id,
+            votes_for: 0,
+            votes_against: 0,
+            total_votes: 0,
+            threshold_met: false,
+            validation_time: std::time::Instant::now(),
+        };
+        
+        validator.insert(proposal.id, consensus_state);
+        
+        // Simulate Byzantine consensus with 66% threshold (minimum 3 nodes)
+        // In a real implementation, this would coordinate with distributed nodes
+        let simulated_votes = self.simulate_byzantine_consensus(proposal).await;
+        
+        let consensus_result = ConsensusResult {
+            proposal_id: proposal.id,
+            approved: simulated_votes >= 2, // 2 out of 3 nodes (66%)
+            vote_count: simulated_votes,
+            confidence_score: proposal.result_confidence,
+            validation_timestamp: chrono::Utc::now(),
+        };
+        
+        info!("Byzantine consensus result for neurosymbolic query: approved={}, votes={}", 
+              consensus_result.approved, consensus_result.vote_count);
+        
+        Ok(consensus_result)
+    }
+    
+    /// Simulate Byzantine consensus voting (replace with actual distributed consensus)
+    async fn simulate_byzantine_consensus(&self, proposal: &ConsensusProposal) -> u32 {
+        // Simulate Byzantine fault tolerance with 66% threshold
+        // Factors: result confidence, processing time, query complexity
+        let mut votes = 0;
+        
+        // Node 1: Confidence-based validation
+        if proposal.result_confidence > 0.6 {
+            votes += 1;
+        }
+        
+        // Node 2: Performance-based validation
+        if proposal.processing_time_ms < 2000 { // Under 2s SLA
+            votes += 1;
+        }
+        
+        // Node 3: Query complexity validation
+        if proposal.query.len() > 10 && proposal.query.len() < 1000 {
+            votes += 1;
+        }
+        
+        votes
+    }
+    
+    /// Publish validated neurosymbolic result to message bus for agent coordination
+    async fn publish_neurosymbolic_result(&self, result: &NeurosymbolicResult, consensus: ConsensusResult) -> Result<()> {
+        let message = NeurosymbolicMessage {
+            id: Uuid::new_v4(),
+            query: result.query.clone(),
+            result: result.clone(),
+            consensus: consensus,
+            timestamp: chrono::Utc::now(),
+            agent_id: self.id,
+        };
+        
+        // Store in neurosymbolic message bus for agent coordination
+        {
+            let mut bus = self.neurosymbolic_bus.write().await;
+            bus.insert(message.id, message);
+            
+            // Keep only last 1000 messages
+            if bus.len() > 1000 {
+                let oldest_key = bus.keys().next().copied();
+                if let Some(key) = oldest_key {
+                    bus.remove(&key);
+                }
+            }
+        }
+        
+        info!("Neurosymbolic result published to agent coordination bus");
+        Ok(())
+    }
+    
+    /// Coordinate symbolic reasoning agents through MRAP control loop
+    pub async fn coordinate_symbolic_agents(&self, task: &str) -> Result<String> {
+        info!("Coordinating symbolic reasoning agents through MRAP: {}", task);
+
+        // Monitor: Check symbolic reasoning agent health
+        let symbolic_agent_health = self.monitor_symbolic_agents().await?;
+
+        // Reason: Determine if symbolic processing is needed
+        let reasoning_decision = self.reason_symbolic_processing(&symbolic_agent_health, task).await?;
+
+        // Act: Execute symbolic reasoning if needed
+        let action_result = if reasoning_decision.requires_processing {
+            self.act_symbolic_processing(task).await?
+        } else {
+            "No symbolic processing required".to_string()
+        };
+
+        // Reflect: Evaluate symbolic processing outcomes
+        self.reflect_symbolic_performance(&action_result).await?;
+
+        // Adapt: Adjust symbolic reasoning strategies
+        self.adapt_symbolic_strategies().await?;
+
+        Ok(action_result)
+    }
+
+    /// Monitor symbolic reasoning agent health
+    async fn monitor_symbolic_agents(&self) -> Result<SymbolicAgentHealth> {
+        let components = self.components.read().await;
+
+        let mut symbolic_health = SymbolicAgentHealth {
+            datalog_engine_status: ComponentHealthStatus::Unknown,
+            neural_classifier_status: ComponentHealthStatus::Unknown,
+            neurosymbolic_processor_status: ComponentHealthStatus::Unknown,
+            overall_health: 0.0,
+        };
+
+        // Check neurosymbolic processor availability
+        {
+            let processor = self.neurosymbolic_processor.read().await;
+            symbolic_health.neurosymbolic_processor_status = if processor.is_some() {
+                ComponentHealthStatus::Healthy
+            } else {
+                ComponentHealthStatus::Unhealthy
+            };
+        }
+
+        // Check other symbolic components
+        if let Some(component) = components.get("datalog-engine") {
+            symbolic_health.datalog_engine_status = component.health_status.clone();
+        }
+
+        if let Some(component) = components.get("neural-classifier") {
+            symbolic_health.neural_classifier_status = component.health_status.clone();
+        }
+
+        // Calculate overall health score
+        let health_scores = [
+            &symbolic_health.datalog_engine_status,
+            &symbolic_health.neural_classifier_status,
+            &symbolic_health.neurosymbolic_processor_status,
+        ];
+
+        let total_score: f64 = health_scores.iter().map(|status| {
+            match status {
+                ComponentHealthStatus::Healthy => 1.0,
+                ComponentHealthStatus::Degraded => 0.6,
+                ComponentHealthStatus::Unhealthy => 0.2,
+                ComponentHealthStatus::Unknown => 0.3,
+            }
+        }).sum();
+
+        symbolic_health.overall_health = total_score / health_scores.len() as f64;
+
+        Ok(symbolic_health)
+    }
+
+    /// Reason about symbolic processing requirements
+    async fn reason_symbolic_processing(&self, health: &SymbolicAgentHealth, task: &str) -> Result<ReasoningDecision> {
+        let decision = ReasoningDecision {
+            requires_processing: health.overall_health > 0.5 &&
+                                task.to_lowercase().contains("require") ||
+                                task.to_lowercase().contains("complian") ||
+                                task.to_lowercase().contains("rule"),
+            confidence: health.overall_health,
+            reasoning: format!("Symbolic processing decision based on health={:.2} and task type", health.overall_health),
+        };
+
+        info!("Symbolic reasoning decision: requires_processing={}, confidence={:.2}",
+              decision.requires_processing, decision.confidence);
+
+        Ok(decision)
+    }
+
+    /// Execute symbolic processing action
+    async fn act_symbolic_processing(&self, task: &str) -> Result<String> {
+        // Process through neurosymbolic processor if available
+        let result = self.process_neurosymbolic_query(task).await?;
+
+        Ok(format!("Symbolic processing completed: {} (confidence: {:.2})",
+                  result.response, result.confidence))
+    }
+
+    /// Reflect on symbolic processing performance
+    async fn reflect_symbolic_performance(&self, result: &str) -> Result<()> {
+        // Store reflection in action history for MRAP learning
+        let reflection = ActionResult {
+            action_id: Uuid::new_v4(),
+            action_type: ActionType::OptimizePerformance,
+            target: "symbolic-reasoning".to_string(),
+            success: !result.contains("failed"),
+            execution_time: std::time::Duration::from_millis(100), // Placeholder
+            details: result.to_string(),
+            metrics_before: self.collect_system_metrics().await,
+            metrics_after: Some(self.collect_system_metrics().await),
+        };
+
+        {
+            let mut history = self.action_history.write().await;
+            history.push(reflection);
+        }
+
+        Ok(())
+    }
+
+    /// Adapt symbolic reasoning strategies
+    async fn adapt_symbolic_strategies(&self) -> Result<()> {
+        // Create adaptation strategy for symbolic reasoning
+        let adaptation = AdaptationStrategy {
+            id: Uuid::new_v4(),
+            strategy_type: "Symbolic Reasoning Optimization".to_string(),
+            target_component: Some("neurosymbolic-processor".to_string()),
+            parameters: {
+                let mut params = HashMap::new();
+                params.insert("confidence_threshold".to_string(), serde_json::json!(0.7));
+                params.insert("max_results".to_string(), serde_json::json!(10));
+                params
+            },
+            expected_improvement: 0.15,
+            implementation_time: std::time::Instant::now(),
+        };
+
+        {
+            let mut strategies = self.adaptation_strategies.write().await;
+            strategies.push(adaptation);
+        }
+
+        Ok(())
     }
 
     /// Get system status for monitoring

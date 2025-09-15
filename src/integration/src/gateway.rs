@@ -27,7 +27,9 @@ use uuid::Uuid;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Result, IntegrationError, ProcessingPipeline, HealthMonitor,
+    Result, IntegrationError,
+    pipeline::ProcessingPipeline,
+    health::HealthMonitor,
     QueryRequest, QueryResponse, SystemHealth, ResponseFormat,
 };
 
@@ -721,7 +723,8 @@ mod tests {
         let pipeline = Arc::new(
             ProcessingPipeline::new(config.clone(), daa_orchestrator, message_bus).await.unwrap()
         );
-        let health_monitor = Arc::new(HealthMonitor::new(config.clone(), service_discovery).await.unwrap());
+        let health_service_discovery = Arc::new(crate::health::ServiceDiscovery);
+        let health_monitor = Arc::new(HealthMonitor::new(config.clone(), health_service_discovery).await.unwrap());
         
         ApiGateway::new(config, pipeline, health_monitor).await.unwrap()
     }

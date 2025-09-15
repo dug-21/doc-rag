@@ -11,7 +11,9 @@ use tracing::{info, error, warn, instrument};
 use uuid::Uuid;
 
 use crate::{
-    Result, IntegrationError, DAAOrchestrator, MessageBus,
+    Result, IntegrationError,
+    daa_orchestrator::DAAOrchestrator,
+    message_bus::MessageBus,
     QueryRequest, QueryResponse, ResponseFormat, Citation,
     IntegrationConfig,
 };

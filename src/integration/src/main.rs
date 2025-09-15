@@ -3,95 +3,99 @@
 //! Main server binary for the Doc-RAG Integration System.
 //! Provides unified API gateway and system orchestration.
 
-use std::sync::Arc;
-use tokio::signal;
-use tracing::{info, error};
+use tracing::{info, error, warn};
+
+#[cfg(feature = "tracing")]
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+#[cfg(unix)]
+use tokio::signal;
+
 use integration::{
-    SystemIntegration, IntegrationConfig,
-    Result,
+    IntegrationConfig, SYSTEM_VERSION as VERSION,
+    Result, service::ServiceManager,
 };
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
+    let rt = tokio::runtime::Runtime::new()
+        .map_err(|e| integration::IntegrationError::Internal(format!("Failed to create tokio runtime: {}", e)))?;
+
+    rt.block_on(async_main())
+}
+
+async fn async_main() -> Result<()> {
     // Initialize tracing
     initialize_tracing().await?;
     
-    info!("Starting Doc-RAG Integration System v{}", integration::VERSION);
+    info!("🚀 Starting Doc-RAG Neurosymbolic Integration System v{}", VERSION);
     
-    // Load configuration
+    // Load configuration with Docker detection
     let config = load_configuration().await?;
     info!("Configuration loaded for environment: {}", config.environment);
+    info!("Service will bind to: {}", config.gateway_bind_address
+        .map(|addr| addr.to_string())
+        .unwrap_or_else(|| "0.0.0.0:8080".to_string()));
     
-    // Create and start system
-    let system = SystemIntegration::new(config).await?;
-    info!("System initialized with ID: {}", system.id());
+    // Create service manager with robust lifecycle management
+    let mut service_manager = ServiceManager::new(config);
     
-    // Start system components
-    if let Err(e) = system.start().await {
-        error!("Failed to start system: {}", e);
+    // Start the service with comprehensive initialization
+    if let Err(e) = service_manager.start().await {
+        error!("❌ Failed to start service: {}", e);
         return Err(e);
     }
     
-    info!("🚀 Doc-RAG Integration System started successfully");
-    info!("   System ID: {}", system.id());
-    info!("   Health endpoint: http://{}:{}/health", 
-        system.id(), // Placeholder for actual endpoint
-        "8000" // Default port
-    );
+    info!("✅ Service started successfully");
+    info!("   Health endpoint: http://0.0.0.0:8080/health");
+    info!("   Metrics endpoint: http://0.0.0.0:9090/metrics");
+    info!("   API endpoint: http://0.0.0.0:8080/api/v1/query");
     
-    // Wait for shutdown signal
-    wait_for_shutdown().await;
-    
-    info!("📤 Shutdown signal received, stopping system...");
-    
-    // Graceful shutdown
-    if let Err(e) = system.stop().await {
-        error!("Error during shutdown: {}", e);
-    } else {
-        info!("✅ System stopped gracefully");
+    // Wait for service completion (handles shutdown signals)
+    if let Err(e) = service_manager.wait_for_completion().await {
+        error!("Service error: {}", e);
+        return Err(e);
     }
     
+    info!("🎉 Service completed successfully");
     Ok(())
 }
 
 /// Initialize tracing with appropriate configuration
 async fn initialize_tracing() -> Result<()> {
-    let subscriber = tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "integration=info,tower_http=debug,axum=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer().json());
-    
-    // Add OpenTelemetry layer if Jaeger endpoint is configured
     #[cfg(feature = "tracing")]
-    let subscriber = {
-        if let Ok(jaeger_endpoint) = std::env::var("JAEGER_ENDPOINT") {
-            // OpenTelemetry integration with Jaeger tracing
-            use tracing_opentelemetry::OpenTelemetryLayer;
-            use opentelemetry::trace::TracerProvider;
-            // Note: JaegerPipeline API may have changed, using alternative approach
-            use tracing::warn;
-            
-            // Simplified tracing without Jaeger for compatibility
-            warn!("Jaeger tracing configured but disabled for compatibility");
-            subscriber
-        } else {
-            subscriber
-        }
-    };
+    {
+        let subscriber = tracing_subscriber::registry()
+            .with(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| "integration=info,tower_http=debug,axum=debug".into()),
+            )
+            .with(tracing_subscriber::fmt::layer().json());
+
+        // Add OpenTelemetry layer if Jaeger endpoint is configured
+        let subscriber = {
+            if let Ok(_jaeger_endpoint) = std::env::var("JAEGER_ENDPOINT") {
+                // Simplified tracing without Jaeger for compatibility
+                warn!("Jaeger tracing configured but disabled for compatibility");
+                subscriber
+            } else {
+                subscriber
+            }
+        };
+
+        subscriber.try_init()
+            .map_err(|e| integration::IntegrationError::Internal(format!("Failed to initialize tracing: {}", e)))?;
+    }
+
     #[cfg(not(feature = "tracing"))]
-    let subscriber = subscriber;
-    
-    subscriber.try_init()
-        .map_err(|e| integration::IntegrationError::Internal(format!("Failed to initialize tracing: {}", e)))?;
-    
+    {
+        // Initialize basic tracing without subscriber features
+        tracing_subscriber::fmt::init();
+    }
+
     Ok(())
 }
 
-/// Load configuration from environment variables and config files
+/// Load configuration from environment variables and config files with Docker support
 async fn load_configuration() -> Result<IntegrationConfig> {
     // Try to load from config file first
     let config = if let Ok(config_path) = std::env::var("CONFIG_FILE") {
@@ -99,31 +103,46 @@ async fn load_configuration() -> Result<IntegrationConfig> {
         IntegrationConfig::from_file(&config_path)
             .map_err(|e| integration::IntegrationError::ConfigurationError(e.to_string()))?
     } else {
-        // Load from environment variables
-        info!("Loading configuration from environment variables");
-        IntegrationConfig::from_env()
+        // Load from environment variables with Docker detection
+        info!("Loading configuration from environment variables with Docker detection");
+        IntegrationConfig::from_env_with_docker_detection()
             .map_err(|e| integration::IntegrationError::ConfigurationError(e.to_string()))?
     };
+    
+    // Wait for database services to be ready in containerized environments
+    if config.environment == "docker" || std::env::var("DOCKER_ENV").is_ok() {
+        info!("Waiting for database services to be ready...");
+        config.wait_for_services().await
+            .map_err(|e| integration::IntegrationError::ConfigurationError(e.to_string()))?;
+    }
     
     // Validate configuration
     config.validate()
         .map_err(|e| integration::IntegrationError::ConfigurationError(e.to_string()))?;
     
-    info!("Configuration validated successfully");
+    info!("Configuration loaded and validated successfully");
     Ok(config)
 }
 
 /// Wait for shutdown signal (SIGINT, SIGTERM)
 async fn wait_for_shutdown() {
     let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
+        #[cfg(unix)]
+        {
+            tokio::signal::ctrl_c()
+                .await
+                .expect("failed to install Ctrl+C handler");
+        }
+        #[cfg(not(unix))]
+        {
+            // Windows signal handling fallback
+            std::future::pending::<()>().await;
+        }
     };
     
     #[cfg(unix)]
     let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
             .expect("failed to install signal handler")
             .recv()
             .await;
@@ -132,6 +151,7 @@ async fn wait_for_shutdown() {
     #[cfg(not(unix))]
     let terminate = std::future::pending::<()>();
     
+    #[cfg(unix)]
     tokio::select! {
         _ = ctrl_c => {
             info!("Received SIGINT (Ctrl+C)");
@@ -140,4 +160,7 @@ async fn wait_for_shutdown() {
             info!("Received SIGTERM");
         },
     }
+
+    #[cfg(not(unix))]
+    ctrl_c.await;
 }

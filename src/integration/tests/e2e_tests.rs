@@ -10,9 +10,10 @@ use tokio::time::timeout;
 use uuid::Uuid;
 
 use integration::{
-    SystemIntegration, IntegrationConfig, QueryRequest, ResponseFormat,
+    SystemIntegration, IntegrationConfig,
     HealthStatus, MessagePriority, DeliveryGuarantee, Message,
 };
+use integration::temp_types::{QueryRequest, QueryResponse, ResponseFormat};
 
 /// Test system initialization and startup
 #[tokio::test]
@@ -315,7 +316,7 @@ async fn test_concurrent_query_processing() {
     // Validate all tasks completed
     assert_eq!(results.len(), 5);
     
-    for (task_result, (i, request_id, query_result)) in results.into_iter().enumerate() {
+    for (i, task_result) in results.into_iter().enumerate() {
         let (task_i, task_request_id, task_query_result) = task_result
             .expect("Task should not panic");
         
@@ -494,7 +495,7 @@ async fn test_design_principles_compliance() {
     };
     
     // Should handle real data structures without panicking
-    let _result = system.process_query(query).await; // May fail in test, but won't panic
+    let _result = system.process_query(query_request).await; // May fail in test, but won't panic
     
     // Principle 6: Error Handling Excellence
     // ✅ All errors are handled explicitly (tested in error handling test)

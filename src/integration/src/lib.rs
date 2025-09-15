@@ -48,10 +48,28 @@ pub mod health;
 pub mod tracing;
 pub mod gateway;
 pub mod error;
+pub mod api;
+pub mod mrap;
 pub mod config;
+pub mod system;
+
+// Add test module for neurosymbolic integration
+#[cfg(test)]
+pub mod neurosymbolic_integration_tests;
 
 // Re-exports from error module
 pub use error::IntegrationError;
+pub use system::{SystemIntegration, VERSION as SYSTEM_VERSION};
+pub use config::IntegrationConfig;
+
+// Import required types from modules
+pub use daa_orchestrator::{DAAOrchestrator, ComponentType};
+pub use pipeline::ProcessingPipeline;
+pub use health::HealthMonitor;
+pub use gateway::ApiGateway;
+pub use message_bus::MessageBus;
+pub use mrap::MRAPController;
+pub use api::*; // API router and handlers
 
 // Define missing types
 /// Service discovery component for locating services
@@ -120,25 +138,32 @@ pub enum HealthStatus {
     Starting,
     /// System shutting down
     Stopping,
+    /// System is unhealthy
+    Unhealthy,
+    /// System status is unknown
+    Unknown,
 }
 
 
 pub mod metrics;
 pub mod message_bus;
 pub mod temp_types;
-pub mod mrap;
+pub mod service;
+pub mod graph_integration;
+pub mod system_types;
 
 // Re-export key types (avoid conflicts)
-pub use daa_orchestrator::*;
+// Note: Selective re-exports to avoid conflicts
 pub use byzantine_consensus::{ByzantineConsensusValidator, ConsensusProposal, ConsensusResult};
-pub use pipeline::*;
-pub use health::*;
-pub use gateway::*;
 pub use error::{EnhancedError, ErrorContext, RecoveryStrategy};
-pub use config::*;
-pub use message_bus::*;
-pub use temp_types::*;
-pub use mrap::*;
+pub use config::IntegrationConfig as Config;
+// Import specific types from temp_types to avoid conflicts
+pub use temp_types::{QueryRequest as TempQueryRequest, QueryResponse as TempQueryResponse,
+                     Citation as TempCitation, ResponseFormat as TempResponseFormat,
+                     McpAdapterClient, ChunkerClient, EmbedderClient,
+                     StorageClient, QueryProcessorClient, ResponseGeneratorClient,
+                     FactSystemStub};
+// Selective re-exports from other modules as needed
 
 // Additional type definitions for compatibility
 // OrchestrationMetrics imported via glob re-export from daa_orchestrator
@@ -148,63 +173,63 @@ pub use mrap::*;
 /// Integration system version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Main integration orchestrator that coordinates all system components using DAA
+/// Full integration orchestrator that coordinates all system components using DAA
 #[derive(Clone)]
-pub struct SystemIntegration {
+pub struct FullSystemIntegration {
     /// Unique system instance ID
     id: Uuid,
     /// System configuration
     config: Arc<IntegrationConfig>,
     /// DAA orchestrator (replaces custom coordinator and service discovery)
-    daa_orchestrator: Arc<RwLock<DAAOrchestrator>>,
+    daa_orchestrator: Arc<RwLock<daa_orchestrator::DAAOrchestrator>>,
     /// Byzantine consensus validator with 66% threshold
-    byzantine_consensus: Arc<ByzantineConsensusValidator>,
+    byzantine_consensus: Arc<byzantine_consensus::ByzantineConsensusValidator>,
     /// Processing pipeline
-    pipeline: Arc<ProcessingPipeline>,
+    pipeline: Arc<pipeline::ProcessingPipeline>,
     /// Health monitoring system
-    health_monitor: Arc<HealthMonitor>,
+    health_monitor: Arc<health::HealthMonitor>,
     /// API gateway
-    gateway: Arc<ApiGateway>,
+    gateway: Arc<gateway::ApiGateway>,
     /// Distributed tracing system
-    tracing_system: Arc<TracingSystem>,
+    tracing_system: Arc<tracing::TracingSystem>,
     /// Message bus for inter-component communication
-    message_bus: Arc<MessageBus>,
+    message_bus: Arc<message_bus::MessageBus>,
     /// System metrics
     metrics: Arc<RwLock<LocalSystemMetrics>>,
     /// MRAP control loop controller
-    mrap_controller: Arc<MRAPController>,
+    mrap_controller: Arc<mrap::MRAPController>,
 }
 
-impl SystemIntegration {
+impl FullSystemIntegration {
     /// Create a new system integration instance using DAA orchestration
     pub async fn new(config: IntegrationConfig) -> Result<Self> {
         // info!("Initializing System Integration v{} with DAA orchestration", VERSION);
         
         let config = Arc::new(config);
-        let message_bus = Arc::new(MessageBus::new(config.clone()).await?);
-        let tracing_system = Arc::new(TracingSystem::new(config.clone()).await?);
+        let message_bus = Arc::new(message_bus::MessageBus::new(config.clone()).await?);
+        let tracing_system = Arc::new(tracing::TracingSystem::new(config.clone()).await?);
         
         // Create DAA orchestrator (replaces coordinator and service discovery)
-        let mut daa_orchestrator = DAAOrchestrator::new(config.clone()).await?;
+        let mut daa_orchestrator = daa_orchestrator::DAAOrchestrator::new(config.clone()).await?;
         daa_orchestrator.initialize().await?;
         let daa_orchestrator = Arc::new(RwLock::new(daa_orchestrator));
         
         // Create Byzantine consensus validator with 66% threshold (minimum 3 nodes)
-        let byzantine_consensus = Arc::new(ByzantineConsensusValidator::new(3).await?);
+        let byzantine_consensus = Arc::new(byzantine_consensus::ByzantineConsensusValidator::new(3).await?);
         
         // Create FACT cache system stub for MRAP  
         let fact_cache = Arc::new(parking_lot::RwLock::new(mrap::FactSystemStub::new(1000))); // FACT replacement
         
         // Create MRAP controller
         let mrap_controller = Arc::new(
-            MRAPController::new(
+            mrap::MRAPController::new(
                 byzantine_consensus.clone(),
                 fact_cache,
             ).await?
         );
         
         let pipeline = Arc::new(
-            ProcessingPipeline::new(
+            pipeline::ProcessingPipeline::new(
                 config.clone(),
                 daa_orchestrator.clone(),
                 message_bus.clone(),
@@ -214,15 +239,18 @@ impl SystemIntegration {
         // Create a simple service discovery for health monitor
         let service_discovery = Arc::new(ServiceDiscovery::new(config.clone()).await?);
         
+        // Create health-specific service discovery
+        let health_service_discovery = Arc::new(health::ServiceDiscovery);
+
         let health_monitor = Arc::new(
-            HealthMonitor::new(
+            health::HealthMonitor::new(
                 config.clone(),
-                service_discovery,
+                health_service_discovery,
             ).await?
         );
         
         let gateway = Arc::new(
-            ApiGateway::new(
+            gateway::ApiGateway::new(
                 config.clone(),
                 pipeline.clone(),
                 health_monitor.clone(),
@@ -344,7 +372,7 @@ impl SystemIntegration {
     async fn register_system_components(&self) -> Result<()> {
         let orchestrator = self.daa_orchestrator.read().await;
         
-        // Register all 6 system components
+        // Register all 7 system components including graph database
         let components = [
             ("mcp-adapter", ComponentType::McpAdapter, &self.config.mcp_adapter_endpoint),
             ("chunker", ComponentType::Chunker, &self.config.chunker_endpoint),
@@ -352,6 +380,7 @@ impl SystemIntegration {
             ("storage", ComponentType::Storage, &self.config.storage_endpoint),
             ("query-processor", ComponentType::QueryProcessor, &self.config.query_processor_endpoint),
             ("response-generator", ComponentType::ResponseGenerator, &self.config.response_generator_endpoint),
+            ("graph", ComponentType::Graph, &self.config.neo4j_uri),
         ];
 
         for (name, component_type, endpoint) in components {

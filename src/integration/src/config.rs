@@ -5,7 +5,9 @@
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::time::Duration;
 use serde::{Deserialize, Serialize};
+use tracing::{info, warn};
 
 /// Main integration configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,7 +18,9 @@ pub struct IntegrationConfig {
     pub environment: String,
     /// Log level
     pub log_level: String,
-    
+    /// Server port
+    pub port: u16,
+
     // Service Discovery
     /// Service discovery enabled
     pub service_discovery_enabled: bool,
@@ -64,10 +68,28 @@ pub struct IntegrationConfig {
     pub response_generator_endpoint: String,
     
     // Database Configuration
+    /// Neo4j connection URI
+    pub neo4j_uri: String,
+    /// Neo4j username
+    pub neo4j_user: String,
+    /// Neo4j password
+    pub neo4j_password: String,
     /// MongoDB connection string
     pub mongodb_url: String,
     /// Redis connection string
     pub redis_url: Option<String>,
+    /// Qdrant vector database URL
+    pub qdrant_url: String,
+    
+    /// Database Connection Configuration
+    /// Database connection timeout in seconds
+    pub db_connection_timeout_secs: u64,
+    /// Database connection pool size
+    pub db_connection_pool_size: u32,
+    /// Database connection retry attempts
+    pub db_connection_retry_attempts: u32,
+    /// Database connection retry delay in milliseconds
+    pub db_connection_retry_delay_ms: u64,
     
     // Pipeline Configuration
     /// Pipeline timeout in seconds
@@ -136,6 +158,7 @@ impl Default for IntegrationConfig {
             system_name: "doc-rag-integration".to_string(),
             environment: "development".to_string(),
             log_level: "info".to_string(),
+            port: 8080,
             
             service_discovery_enabled: true,
             service_registry_url: None,
@@ -160,8 +183,17 @@ impl Default for IntegrationConfig {
             query_processor_endpoint: "http://localhost:8005".to_string(),
             response_generator_endpoint: "http://localhost:8006".to_string(),
             
+            neo4j_uri: "bolt://localhost:7687".to_string(),
+            neo4j_user: "neo4j".to_string(),
+            neo4j_password: "password".to_string(),
             mongodb_url: "mongodb://localhost:27017/doc_rag".to_string(),
             redis_url: Some("redis://localhost:6379".to_string()),
+            qdrant_url: "http://localhost:6333".to_string(),
+            
+            db_connection_timeout_secs: 30,
+            db_connection_pool_size: 10,
+            db_connection_retry_attempts: 3,
+            db_connection_retry_delay_ms: 1000,
             
             pipeline_timeout_secs: 30,
             max_concurrent_requests: 100,
@@ -212,6 +244,15 @@ impl IntegrationConfig {
         if let Ok(val) = std::env::var("LOG_LEVEL") {
             config.log_level = val;
         }
+
+        if let Ok(val) = std::env::var("PORT") {
+            config.port = val.parse()
+                .map_err(|e: std::num::ParseIntError| ConfigError::InvalidValue {
+                    key: "PORT".to_string(),
+                    value: val,
+                    error: e.to_string()
+                })?;
+        }
         
         if let Ok(val) = std::env::var("GATEWAY_BIND_ADDRESS") {
             config.gateway_bind_address = Some(val.parse()
@@ -230,12 +271,48 @@ impl IntegrationConfig {
             config.jaeger_endpoint = Some(val);
         }
         
-        if let Ok(val) = std::env::var("MONGODB_URL") {
+        // Database configuration
+        if let Ok(val) = std::env::var("NEO4J_URI") {
+            config.neo4j_uri = val;
+        }
+        
+        if let Ok(val) = std::env::var("NEO4J_USER") {
+            config.neo4j_user = val;
+        }
+        
+        if let Ok(val) = std::env::var("NEO4J_PASSWORD") {
+            config.neo4j_password = val;
+        }
+        
+        if let Ok(val) = std::env::var("MONGODB_URI") {
             config.mongodb_url = val;
         }
         
         if let Ok(val) = std::env::var("REDIS_URL") {
             config.redis_url = Some(val);
+        }
+        
+        if let Ok(val) = std::env::var("QDRANT_URL") {
+            config.qdrant_url = val;
+        }
+        
+        // Database connection configuration
+        if let Ok(val) = std::env::var("DB_CONNECTION_TIMEOUT_SECS") {
+            config.db_connection_timeout_secs = val.parse()
+                .map_err(|e: std::num::ParseIntError| ConfigError::InvalidValue { 
+                    key: "DB_CONNECTION_TIMEOUT_SECS".to_string(), 
+                    value: val, 
+                    error: e.to_string() 
+                })?;
+        }
+        
+        if let Ok(val) = std::env::var("DB_CONNECTION_POOL_SIZE") {
+            config.db_connection_pool_size = val.parse()
+                .map_err(|e: std::num::ParseIntError| ConfigError::InvalidValue { 
+                    key: "DB_CONNECTION_POOL_SIZE".to_string(), 
+                    value: val, 
+                    error: e.to_string() 
+                })?;
         }
         
         // Component endpoints
@@ -515,6 +592,128 @@ impl IntegrationConfig {
     /// Get custom setting
     pub fn get_custom_setting(&self, key: &str) -> Option<&String> {
         self.custom_settings.get(key)
+    }
+    
+    /// Create configuration with Docker defaults
+    pub fn docker_defaults() -> Self {
+        let mut config = Self::default();
+        
+        // Override defaults for containerized environment
+        config.gateway_bind_address = Some("0.0.0.0:8080".parse().unwrap());
+        config.mongodb_url = "mongodb://mongodb:27017/neurosymbolic-rag".to_string();
+        config.redis_url = Some("redis://redis:6379".to_string());
+        config.neo4j_uri = "bolt://neo4j:7687".to_string();
+        config.qdrant_url = "http://qdrant:6333".to_string();
+        
+        // Service endpoints for Docker compose
+        config.mcp_adapter_endpoint = "http://neurosymbolic-rag:8001".to_string();
+        config.chunker_endpoint = "http://neurosymbolic-rag:8002".to_string();
+        config.embedder_endpoint = "http://neurosymbolic-rag:8003".to_string();
+        config.storage_endpoint = "http://neurosymbolic-rag:8004".to_string();
+        config.query_processor_endpoint = "http://neurosymbolic-rag:8005".to_string();
+        config.response_generator_endpoint = "http://neurosymbolic-rag:8006".to_string();
+        
+        // Docker-optimized settings
+        config.db_connection_timeout_secs = 60;
+        config.db_connection_pool_size = 5;
+        config.health_check_interval_secs = Some(10);
+        config.pipeline_timeout_secs = 120;
+        
+        config
+    }
+    
+    /// Load configuration with Docker environment detection
+    pub fn from_env_with_docker_detection() -> Result<Self, ConfigError> {
+        let config = if std::env::var("APP_ENV").unwrap_or_default() == "docker" ||
+                        std::env::var("DOCKER_ENV").is_ok() ||
+                        std::path::Path::new("/.dockerenv").exists() {
+            info!("Docker environment detected, using Docker defaults");
+            let mut config = Self::docker_defaults();
+            // Apply any environment overrides
+            config.apply_env_overrides()?;
+            config
+        } else {
+            Self::from_env()?
+        };
+        
+        config.validate()?;
+        Ok(config)
+    }
+    
+    /// Apply environment variable overrides to existing config
+    fn apply_env_overrides(&mut self) -> Result<(), ConfigError> {
+        // This allows Docker defaults to be overridden by environment variables
+        if let Ok(val) = std::env::var("GATEWAY_BIND_ADDRESS") {
+            self.gateway_bind_address = Some(val.parse()
+                .map_err(|e: std::net::AddrParseError| ConfigError::InvalidValue { 
+                    key: "GATEWAY_BIND_ADDRESS".to_string(), 
+                    value: val, 
+                    error: e.to_string() 
+                })?);
+        }
+        
+        // Apply database overrides
+        if let Ok(val) = std::env::var("NEO4J_URI") {
+            self.neo4j_uri = val;
+        }
+        if let Ok(val) = std::env::var("MONGODB_URI") {
+            self.mongodb_url = val;
+        }
+        if let Ok(val) = std::env::var("REDIS_URL") {
+            self.redis_url = Some(val);
+        }
+        if let Ok(val) = std::env::var("QDRANT_URL") {
+            self.qdrant_url = val;
+        }
+        
+        Ok(())
+    }
+    
+    /// Wait for database services to be ready (Docker startup)
+    pub async fn wait_for_services(&self) -> Result<(), ConfigError> {
+        info!("Waiting for database services to be ready...");
+        
+        let client = reqwest::Client::new();
+        let timeout = Duration::from_secs(self.db_connection_timeout_secs);
+        let max_attempts = self.db_connection_retry_attempts;
+        let retry_delay = Duration::from_millis(self.db_connection_retry_delay_ms);
+        
+        // Check Qdrant health
+        for attempt in 1..=max_attempts {
+            match tokio::time::timeout(timeout, client.get(&format!("{}/health", self.qdrant_url)).send()).await {
+                Ok(Ok(response)) if response.status().is_success() => {
+                    info!("Qdrant is ready");
+                    break;
+                }
+                _ => {
+                    if attempt == max_attempts {
+                        return Err(ConfigError::EnvironmentError("Qdrant not ready after max attempts".to_string()));
+                    }
+                    warn!("Qdrant not ready, attempt {}/{}", attempt, max_attempts);
+                    tokio::time::sleep(retry_delay).await;
+                }
+            }
+        }
+        
+        // Check Neo4j health (simplified check)
+        for attempt in 1..=max_attempts {
+            match tokio::net::TcpStream::connect(&self.neo4j_uri.replace("bolt://", "")).await {
+                Ok(_) => {
+                    info!("Neo4j is ready");
+                    break;
+                }
+                Err(_) => {
+                    if attempt == max_attempts {
+                        return Err(ConfigError::EnvironmentError("Neo4j not ready after max attempts".to_string()));
+                    }
+                    warn!("Neo4j not ready, attempt {}/{}", attempt, max_attempts);
+                    tokio::time::sleep(retry_delay).await;
+                }
+            }
+        }
+        
+        info!("All database services are ready");
+        Ok(())
     }
     
     /// Export configuration as environment variables (for debugging)
