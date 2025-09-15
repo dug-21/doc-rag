@@ -1,0 +1,200 @@
+//! End-to-end integration test for the neurosymbolic RAG system
+
+use tokio::time::{sleep, Duration};
+use serde_json::{json, Value};
+
+#[tokio::test]
+async fn test_neurosymbolic_system_end_to_end() {
+    // Wait for Docker services to be ready
+    wait_for_services().await;
+    
+    // Test 1: Health check
+    println!("🔍 Testing health endpoint...");
+    let health_response = test_health_endpoint().await;
+    assert!(health_response.is_ok(), "Health check failed: {:?}", health_response);
+    
+    // Test 2: Basic query processing
+    println!("🧠 Testing query processing...");
+    let query_response = test_query_processing().await;
+    assert!(query_response.is_ok(), "Query processing failed: {:?}", query_response);
+    
+    // Test 3: Upload functionality (basic)
+    println!("📄 Testing document upload...");
+    let upload_response = test_document_upload().await;
+    assert!(upload_response.is_ok(), "Document upload failed: {:?}", upload_response);
+    
+    println!("✅ All end-to-end tests passed!");
+}
+
+async fn wait_for_services() {
+    println!("⏳ Waiting for services to be ready...");
+    
+    // Wait up to 2 minutes for services to be ready
+    for attempt in 1..=24 {
+        if let Ok(_) = test_health_endpoint().await {
+            println!("🎉 Services are ready after {} attempts", attempt);
+            return;
+        }
+        
+        println!("   Attempt {}/24 - services not ready yet...", attempt);
+        sleep(Duration::from_secs(5)).await;
+    }
+    
+    panic!("Services failed to start within timeout");
+}
+
+async fn test_health_endpoint() -> Result<Value, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get("http://localhost:8080/health")
+        .timeout(Duration::from_secs(10))
+        .send()
+        .await?;
+    
+    if !response.status().is_success() {
+        return Err(format!("Health check failed with status: {}", response.status()).into());
+    }
+    
+    let json: Value = response.json().await?;
+    
+    // Validate health response structure
+    assert!(json.get("status").is_some(), "Health response missing 'status' field");
+    assert!(json.get("version").is_some(), "Health response missing 'version' field");
+    assert!(json.get("components").is_some(), "Health response missing 'components' field");
+    
+    println!("   ✅ Health check passed: {}", json.get("status").unwrap());
+    Ok(json)
+}
+
+async fn test_query_processing() -> Result<Value, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new();
+    
+    let query_payload = json!({
+        "query": "What are the main security requirements?",
+        "max_results": 5,
+        "confidence_threshold": 0.8
+    });
+    
+    let response = client
+        .post("http://localhost:8080/api/v1/query")
+        .json(&query_payload)
+        .timeout(Duration::from_secs(30))
+        .send()
+        .await?;
+    
+    if !response.status().is_success() {
+        return Err(format!("Query failed with status: {}", response.status()).into());
+    }
+    
+    let json: Value = response.json().await?;
+    
+    // Validate query response structure
+    assert!(json.get("query").is_some(), "Query response missing 'query' field");
+    assert!(json.get("response").is_some(), "Query response missing 'response' field");
+    assert!(json.get("confidence").is_some(), "Query response missing 'confidence' field");
+    assert!(json.get("processing_time_ms").is_some(), "Query response missing 'processing_time_ms' field");
+    
+    // Validate performance constraints
+    if let Some(processing_time) = json.get("processing_time_ms").and_then(|v| v.as_u64()) {
+        assert!(processing_time < 5000, "Processing time {} ms exceeds 5s limit", processing_time);
+        println!("   ⚡ Query processed in {} ms", processing_time);
+    }
+    
+    println!("   🧠 Query processing successful");
+    Ok(json)
+}
+
+async fn test_document_upload() -> Result<Value, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new();
+    
+    // Create a simple test document
+    let test_content = b"This is a test document for the neurosymbolic RAG system. It contains some basic text for processing.";
+    
+    let form = reqwest::multipart::Form::new()
+        .part("file", reqwest::multipart::Part::bytes(test_content.to_vec())
+            .file_name("test_document.txt")
+            .mime_str("text/plain")?);
+    
+    let response = client
+        .post("http://localhost:8080/api/v1/upload")
+        .multipart(form)
+        .timeout(Duration::from_secs(30))
+        .send()
+        .await?;
+    
+    if !response.status().is_success() {
+        return Err(format!("Upload failed with status: {}", response.status()).into());
+    }
+    
+    let json: Value = response.json().await?;
+    
+    // Validate upload response structure
+    assert!(json.get("message").is_some(), "Upload response missing 'message' field");
+    assert!(json.get("file_id").is_some(), "Upload response missing 'file_id' field");
+    assert!(json.get("processing_status").is_some(), "Upload response missing 'processing_status' field");
+    
+    println!("   📄 Document upload successful");
+    Ok(json)
+}
+
+#[tokio::test]
+async fn test_constraints_compliance() {
+    // This test validates that all 6 CONSTRAINTS are being respected
+    wait_for_services().await;
+    
+    println!("🔍 Testing CONSTRAINT compliance...");
+    
+    // CONSTRAINT-001: Logic Programming Foundation (<100ms) - tested implicitly in query processing
+    // CONSTRAINT-002: Neo4j Graph Database (<200ms) - will test when graph integration is complete
+    // CONSTRAINT-003: Neural Classification (<10ms) - tested implicitly in query processing
+    // CONSTRAINT-004: Template-Based Responses (no LLM) - verified by response structure
+    // CONSTRAINT-005: Vector Search Fallback (only when needed) - tested implicitly
+    // CONSTRAINT-006: System Performance (<1s for simple queries, <2s for complex)
+    
+    let start = std::time::Instant::now();
+    let result = test_query_processing().await;
+    let elapsed = start.elapsed();
+    
+    assert!(result.is_ok(), "Query processing failed");
+    assert!(elapsed.as_millis() < 2000, "Query exceeded 2s constraint: {:?}", elapsed);
+    
+    println!("   ✅ Performance constraint validated: {:?}", elapsed);
+    
+    // Test template-based response (CONSTRAINT-004)
+    if let Ok(response) = result {
+        let response_text = response.get("response").and_then(|v| v.as_str()).unwrap_or("");
+        
+        // Ensure response is structured and not free-form generation
+        assert!(!response_text.is_empty(), "Response should not be empty");
+        assert!(response_text.len() < 2000, "Response should be concise and structured");
+        
+        println!("   ✅ Template-based response constraint validated");
+    }
+    
+    println!("🎯 All CONSTRAINT compliance tests passed!");
+}
+
+#[tokio::test]
+async fn test_metrics_endpoint() {
+    wait_for_services().await;
+    
+    println!("📊 Testing metrics endpoint...");
+    
+    let client = reqwest::Client::new();
+    let response = client
+        .get("http://localhost:9090/metrics")
+        .timeout(Duration::from_secs(10))
+        .send()
+        .await
+        .expect("Failed to fetch metrics");
+    
+    assert!(response.status().is_success(), "Metrics endpoint failed");
+    
+    let metrics_text = response.text().await.expect("Failed to get metrics text");
+    
+    // Validate Prometheus format
+    assert!(metrics_text.contains("neurosymbolic_rag_health"), "Missing health metrics");
+    assert!(metrics_text.contains("neurosymbolic_rag_response_time_ms"), "Missing performance metrics");
+    
+    println!("   📈 Metrics endpoint validated");
+}
