@@ -5,6 +5,8 @@
 
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "neural")]
+use ruv_fann::ActivationFunction;
 
 /// Configuration for the embedding generator
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,29 +35,48 @@ pub struct EmbedderConfig {
     /// Memory mapping for large models
     pub use_mmap: bool,
     
-    /// Model download settings
-    pub download_config: ModelDownloadConfig,
+    /// Model storage settings
+    pub storage_config: ModelStorageConfig,
     
     /// Performance optimization settings
     pub optimization: OptimizationConfig,
 }
 
-/// Available embedding model types
+/// Available embedding model types (ruv-FANN compliant)
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ModelType {
-    /// all-MiniLM-L6-v2: Fast, lightweight model (384 dimensions)
-    AllMiniLmL6V2,
-    
-    /// BERT base uncased (768 dimensions) 
-    BertBaseUncased,
-    
-    /// Sentence-T5 base (768 dimensions)
-    SentenceT5Base,
-    
-    /// Custom model with specified path and dimensions
+    /// Fast lightweight classification model (384 dimensions)
+    #[cfg(feature = "neural")]
+    RuvFannFast {
+        layers: Vec<usize>,
+        hidden_activation: ActivationFunction,
+        output_activation: ActivationFunction,
+        dimension: usize,
+    },
+
+    /// Balanced performance model (512 dimensions)
+    #[cfg(feature = "neural")]
+    RuvFannBalanced {
+        layers: Vec<usize>,
+        hidden_activation: ActivationFunction,
+        output_activation: ActivationFunction,
+        dimension: usize,
+    },
+
+    /// Custom ruv-FANN model with specified configuration
+    #[cfg(feature = "neural")]
     Custom {
         name: String,
         path: PathBuf,
+        layers: Vec<usize>,
+        hidden_activation: ActivationFunction,
+        output_activation: ActivationFunction,
+        dimension: usize,
+    },
+
+    /// Fallback model type for when neural features are disabled
+    #[cfg(not(feature = "neural"))]
+    Fallback {
         dimension: usize,
     },
 }
@@ -64,74 +85,114 @@ impl ModelType {
     /// Get the embedding dimension for this model type
     pub fn dimension(&self) -> usize {
         match self {
-            ModelType::AllMiniLmL6V2 => 384,
-            ModelType::BertBaseUncased => 768,
-            ModelType::SentenceT5Base => 768,
+            #[cfg(feature = "neural")]
+            ModelType::RuvFannFast { dimension, .. } => *dimension,
+            #[cfg(feature = "neural")]
+            ModelType::RuvFannBalanced { dimension, .. } => *dimension,
+            #[cfg(feature = "neural")]
             ModelType::Custom { dimension, .. } => *dimension,
+            #[cfg(not(feature = "neural"))]
+            ModelType::Fallback { dimension } => *dimension,
         }
     }
-    
+
     /// Get the model name/identifier
     pub fn name(&self) -> &str {
         match self {
-            ModelType::AllMiniLmL6V2 => "all-MiniLM-L6-v2",
-            ModelType::BertBaseUncased => "bert-base-uncased",
-            ModelType::SentenceT5Base => "sentence-t5-base",
+            #[cfg(feature = "neural")]
+            ModelType::RuvFannFast { .. } => "ruv-fann-fast",
+            #[cfg(feature = "neural")]
+            ModelType::RuvFannBalanced { .. } => "ruv-fann-balanced",
+            #[cfg(feature = "neural")]
             ModelType::Custom { name, .. } => name,
+            #[cfg(not(feature = "neural"))]
+            ModelType::Fallback { .. } => "fallback",
         }
     }
-    
-    /// Get the Hugging Face model identifier
-    pub fn hf_model_id(&self) -> Option<&str> {
+
+    /// Get the network layers configuration
+    #[cfg(feature = "neural")]
+    pub fn layers(&self) -> &[usize] {
         match self {
-            ModelType::AllMiniLmL6V2 => Some("sentence-transformers/all-MiniLM-L6-v2"),
-            ModelType::BertBaseUncased => Some("bert-base-uncased"),
-            ModelType::SentenceT5Base => Some("sentence-transformers/sentence-t5-base"),
-            ModelType::Custom { .. } => None,
+            ModelType::RuvFannFast { layers, .. } => layers,
+            ModelType::RuvFannBalanced { layers, .. } => layers,
+            ModelType::Custom { layers, .. } => layers,
         }
     }
-    
-    /// Get the default maximum sequence length
+
+    /// Get the network layers configuration (fallback)
+    #[cfg(not(feature = "neural"))]
+    pub fn layers(&self) -> &[usize] {
+        match self {
+            ModelType::Fallback { .. } => &[128, 64],
+        }
+    }
+
+    /// Get the hidden layer activation function
+    #[cfg(feature = "neural")]
+    pub fn hidden_activation(&self) -> ActivationFunction {
+        match self {
+            ModelType::RuvFannFast { hidden_activation, .. } => *hidden_activation,
+            ModelType::RuvFannBalanced { hidden_activation, .. } => *hidden_activation,
+            ModelType::Custom { hidden_activation, .. } => *hidden_activation,
+        }
+    }
+
+    /// Get the output layer activation function
+    #[cfg(feature = "neural")]
+    pub fn output_activation(&self) -> ActivationFunction {
+        match self {
+            ModelType::RuvFannFast { output_activation, .. } => *output_activation,
+            ModelType::RuvFannBalanced { output_activation, .. } => *output_activation,
+            ModelType::Custom { output_activation, .. } => *output_activation,
+        }
+    }
+
+    /// Get the default maximum sequence length for feature extraction
     pub fn default_max_length(&self) -> usize {
-        match self {
-            ModelType::AllMiniLmL6V2 => 512,
-            ModelType::BertBaseUncased => 512,
-            ModelType::SentenceT5Base => 512,
-            ModelType::Custom { .. } => 512,
-        }
+        512  // Standard feature extraction window
     }
-    
-    /// Check if this model supports ONNX format
-    pub fn supports_onnx(&self) -> bool {
-        match self {
-            ModelType::AllMiniLmL6V2 | ModelType::BertBaseUncased => true,
-            ModelType::SentenceT5Base => false, // T5 is more complex
-            ModelType::Custom { .. } => true,
-        }
-    }
-    
-    /// Get expected model files
+
+    /// Get expected model files for ruv-FANN models
     pub fn expected_files(&self) -> Vec<&'static str> {
-        match self {
-            ModelType::AllMiniLmL6V2 | ModelType::BertBaseUncased => {
-                vec![
-                    "config.json",
-                    "pytorch_model.bin",
-                    "tokenizer_config.json",
-                    "vocab.txt",
-                ]
-            }
-            ModelType::SentenceT5Base => {
-                vec![
-                    "config.json",
-                    "pytorch_model.bin",
-                    "tokenizer_config.json",
-                    "spiece.model",
-                ]
-            }
-            ModelType::Custom { .. } => {
-                vec!["config.json", "vocab.txt"]
-            }
+        vec!["network.ruv", "config.json"]
+    }
+
+    /// Create default fast model configuration
+    #[cfg(feature = "neural")]
+    pub fn default_fast() -> Self {
+        Self::RuvFannFast {
+            layers: vec![512, 256, 128, 384],  // text_features -> embedding
+            hidden_activation: ActivationFunction::SigmoidSymmetric,
+            output_activation: ActivationFunction::Linear,
+            dimension: 384,
+        }
+    }
+
+    /// Create default balanced model configuration
+    #[cfg(feature = "neural")]
+    pub fn default_balanced() -> Self {
+        Self::RuvFannBalanced {
+            layers: vec![512, 256, 128, 512],  // text_features -> embedding
+            hidden_activation: ActivationFunction::SigmoidSymmetric,
+            output_activation: ActivationFunction::Linear,
+            dimension: 512,
+        }
+    }
+
+    /// Create default fast model configuration (fallback)
+    #[cfg(not(feature = "neural"))]
+    pub fn default_fast() -> Self {
+        Self::Fallback {
+            dimension: 384,
+        }
+    }
+
+    /// Create default balanced model configuration (fallback)
+    #[cfg(not(feature = "neural"))]
+    pub fn default_balanced() -> Self {
+        Self::Fallback {
+            dimension: 512,
         }
     }
 }
@@ -160,91 +221,58 @@ impl std::fmt::Display for Device {
     }
 }
 
-/// Configuration for model downloading
+/// Configuration for ruv-FANN model storage
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ModelDownloadConfig {
-    /// Base URL for model downloads (defaults to Hugging Face)
-    pub base_url: String,
-    
-    /// Local cache directory for models
-    pub cache_dir: PathBuf,
-    
-    /// Whether to automatically download missing models
-    pub auto_download: bool,
-    
-    /// Connection timeout for downloads (seconds)
-    pub timeout_secs: u64,
-    
-    /// Maximum number of download retries
-    pub max_retries: u32,
-    
-    /// Use authentication token for private models
-    pub auth_token: Option<String>,
+pub struct ModelStorageConfig {
+    /// Local directory for ruv-FANN models
+    pub model_dir: PathBuf,
+
+    /// Whether to automatically initialize missing models
+    pub auto_initialize: bool,
+
+    /// Model persistence format
+    pub persistence_format: ModelPersistenceFormat,
 }
 
-impl Default for ModelDownloadConfig {
+/// Model persistence format options
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ModelPersistenceFormat {
+    /// Binary ruv-FANN format
+    Binary,
+    /// JSON format for debugging
+    Json,
+}
+
+impl Default for ModelStorageConfig {
     fn default() -> Self {
         Self {
-            base_url: "https://huggingface.co".to_string(),
-            cache_dir: PathBuf::from("./models"),
-            auto_download: true,
-            timeout_secs: 300, // 5 minutes
-            max_retries: 3,
-            auth_token: None,
+            model_dir: PathBuf::from("./models"),
+            auto_initialize: true,
+            persistence_format: ModelPersistenceFormat::Binary,
         }
     }
 }
 
-/// Performance optimization configuration
+/// Performance optimization configuration for ruv-FANN
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptimizationConfig {
-    /// Use mixed precision (FP16) inference
-    pub use_fp16: bool,
-    
-    /// Use quantization for model weights
-    pub quantization: QuantizationType,
-    
-    /// Enable ONNX Runtime optimizations
-    pub onnx_optimization: OnnxOptimizationLevel,
-    
-    /// Number of intra-op threads
-    pub intra_op_threads: Option<usize>,
-    
-    /// Number of inter-op threads  
-    pub inter_op_threads: Option<usize>,
-    
-    /// Enable memory optimization
-    pub memory_optimization: bool,
-    
-    /// Batch size optimization strategy
+    /// Target inference time (must be <10ms per CONSTRAINT-003)
+    pub target_inference_time_ms: u64,
+
+    /// Enable parallel processing for batch operations
+    pub enable_parallel_processing: bool,
+
+    /// Number of threads for parallel processing
+    pub num_threads: Option<usize>,
+
+    /// Batch processing strategy
     pub batch_strategy: BatchStrategy,
-    
-    /// Enable model compilation (where supported)
-    pub enable_compilation: bool,
-}
 
-/// Quantization options
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum QuantizationType {
-    /// No quantization
-    None,
-    /// 8-bit quantization
-    Int8,
-    /// 4-bit quantization (experimental)
-    Int4,
-}
+    /// Enable feature extraction caching
+    pub cache_features: bool,
 
-/// ONNX optimization levels
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum OnnxOptimizationLevel {
-    /// Disable optimizations
-    Disabled,
-    /// Basic optimizations
-    Basic,
-    /// Extended optimizations  
-    Extended,
-    /// All optimizations
-    All,
+    /// Learning rate for online training (if enabled)
+    pub learning_rate: f32,
 }
 
 /// Batch processing strategy
@@ -261,14 +289,12 @@ pub enum BatchStrategy {
 impl Default for OptimizationConfig {
     fn default() -> Self {
         Self {
-            use_fp16: false,
-            quantization: QuantizationType::None,
-            onnx_optimization: OnnxOptimizationLevel::Extended,
-            intra_op_threads: None,
-            inter_op_threads: None,
-            memory_optimization: true,
+            target_inference_time_ms: 10, // CONSTRAINT-003: <10ms
+            enable_parallel_processing: true,
+            num_threads: None,
             batch_strategy: BatchStrategy::Fixed,
-            enable_compilation: false,
+            cache_features: true,
+            learning_rate: 0.001,
         }
     }
 }
@@ -276,7 +302,7 @@ impl Default for OptimizationConfig {
 impl Default for EmbedderConfig {
     fn default() -> Self {
         Self {
-            model_type: ModelType::AllMiniLmL6V2,
+            model_type: ModelType::default_fast(),
             batch_size: 32,
             max_length: 512,
             device: Device::Cpu,
@@ -284,7 +310,7 @@ impl Default for EmbedderConfig {
             cache_size: 10000,
             num_threads: None,
             use_mmap: true,
-            download_config: ModelDownloadConfig::default(),
+            storage_config: ModelStorageConfig::default(),
             optimization: OptimizationConfig::default(),
         }
     }
@@ -341,20 +367,19 @@ impl EmbedderConfig {
     
     /// Configure for high performance
     pub fn high_performance(mut self) -> Self {
-        self.optimization.use_fp16 = true;
-        self.optimization.memory_optimization = true;
+        self.optimization.enable_parallel_processing = true;
         self.optimization.batch_strategy = BatchStrategy::Dynamic;
-        self.optimization.enable_compilation = true;
+        self.optimization.cache_features = true;
         self.batch_size = 64;
         self
     }
-    
+
     /// Configure for low memory usage
     pub fn low_memory(mut self) -> Self {
         self.batch_size = 8;
         self.cache_size = 1000;
-        self.optimization.memory_optimization = true;
-        self.optimization.quantization = QuantizationType::Int8;
+        self.optimization.cache_features = true;
+        self.optimization.target_inference_time_ms = 5; // Faster for low memory
         self.use_mmap = false;
         self
     }
@@ -386,8 +411,12 @@ impl EmbedderConfig {
             }
         }
         
-        if self.download_config.timeout_secs == 0 {
-            return Err("Download timeout must be greater than 0".to_string());
+        if self.optimization.target_inference_time_ms == 0 {
+            return Err("Target inference time must be greater than 0".to_string());
+        }
+
+        if self.optimization.target_inference_time_ms > 10 {
+            return Err("Target inference time must be ≤10ms per CONSTRAINT-003".to_string());
         }
         
         Ok(())
@@ -399,13 +428,11 @@ impl EmbedderConfig {
         let cache_size = self.cache_size * embedding_size;
         let batch_size = num_embeddings.min(self.batch_size) * embedding_size;
         
-        // Add some overhead for model weights and intermediate tensors
-        let model_overhead = match self.model_type {
-            ModelType::AllMiniLmL6V2 => 90_000_000, // ~90MB
-            ModelType::BertBaseUncased => 440_000_000, // ~440MB
-            ModelType::SentenceT5Base => 220_000_000, // ~220MB
-            ModelType::Custom { .. } => 100_000_000, // Estimate
-        };
+        // Add overhead for ruv-FANN model weights (much smaller)
+        let total_params: usize = self.model_type.layers().windows(2)
+            .map(|pair| pair[0] * pair[1])
+            .sum();
+        let model_overhead = total_params * std::mem::size_of::<f32>(); // Parameters in f32
         
         cache_size + batch_size + model_overhead
     }
@@ -442,8 +469,8 @@ impl EmbedderConfig {
             if max_latency < 100 {
                 // Optimize for low latency
                 self.batch_size = 1;
-                self.optimization.enable_compilation = true;
-                self.optimization.memory_optimization = true;
+                self.optimization.enable_parallel_processing = false; // Single threaded for low latency
+                self.optimization.cache_features = true;
             }
         }
         
@@ -458,7 +485,7 @@ mod tests {
     #[test]
     fn test_config_creation() {
         let config = EmbedderConfig::new();
-        assert_eq!(config.model_type, ModelType::AllMiniLmL6V2);
+        assert_eq!(config.model_type.name(), "ruv-fann-fast");
         assert_eq!(config.batch_size, 32);
         assert!(config.normalize);
     }
@@ -466,12 +493,12 @@ mod tests {
     #[test]
     fn test_config_builder_pattern() {
         let config = EmbedderConfig::new()
-            .with_model_type(ModelType::BertBaseUncased)
+            .with_model_type(ModelType::default_balanced())
             .with_batch_size(64)
             .with_device(Device::Cuda)
             .with_normalize(false);
         
-        assert_eq!(config.model_type, ModelType::BertBaseUncased);
+        assert_eq!(config.model_type.name(), "ruv-fann-balanced");
         assert_eq!(config.batch_size, 64);
         assert_eq!(config.device, Device::Cuda);
         assert!(!config.normalize);
@@ -491,11 +518,11 @@ mod tests {
     
     #[test]
     fn test_model_type_properties() {
-        let model = ModelType::AllMiniLmL6V2;
+        let model = ModelType::default_fast();
         assert_eq!(model.dimension(), 384);
-        assert_eq!(model.name(), "all-MiniLM-L6-v2");
-        assert!(model.supports_onnx());
-        assert!(model.hf_model_id().is_some());
+        assert_eq!(model.name(), "ruv-fann-fast");
+        assert_eq!(model.layers(), &[512, 256, 128, 384]);
+        assert_eq!(model.hidden_activation(), ActivationFunction::SigmoidSymmetric);
     }
     
     #[test]
@@ -508,12 +535,12 @@ mod tests {
     #[test]
     fn test_optimization_configs() {
         let high_perf = EmbedderConfig::new().high_performance();
-        assert!(high_perf.optimization.use_fp16);
+        assert!(high_perf.optimization.enable_parallel_processing);
         assert_eq!(high_perf.batch_size, 64);
         
         let low_mem = EmbedderConfig::new().low_memory();
         assert_eq!(low_mem.batch_size, 8);
-        assert_eq!(low_mem.optimization.quantization, QuantizationType::Int8);
+        assert!(low_mem.optimization.cache_features);
     }
     
     #[test]

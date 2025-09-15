@@ -82,22 +82,7 @@ pub enum EmbedderError {
 
 // Note: SessionError may not exist in ORT 2.0, using general Error type
 
-#[cfg(feature = "ort")]
-impl From<ort::Error> for EmbedderError {
-    fn from(err: ort::Error) -> Self {
-        EmbedderError::OnnxError {
-            message: err.to_string(),
-        }
-    }
-}
-
-impl From<candle_core::Error> for EmbedderError {
-    fn from(err: candle_core::Error) -> Self {
-        EmbedderError::CandleError {
-            message: err.to_string(),
-        }
-    }
-}
+// ONNX Runtime support removed for ruv-FANN compliance
 
 impl From<ndarray::ShapeError> for EmbedderError {
     fn from(err: ndarray::ShapeError) -> Self {
@@ -107,13 +92,8 @@ impl From<ndarray::ShapeError> for EmbedderError {
     }
 }
 
-impl From<reqwest::Error> for EmbedderError {
-    fn from(err: reqwest::Error) -> Self {
-        EmbedderError::DownloadError {
-            message: err.to_string(),
-        }
-    }
-}
+// Note: ruv-fann errors are typically handled through Result<T, ()>
+// or other mechanisms, so we don't need a specific error conversion
 
 /// Result type for embedding operations
 pub type EmbedderResult<T> = Result<T, EmbedderError>;
