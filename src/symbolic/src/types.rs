@@ -50,6 +50,34 @@ pub enum Priority {
     Low,        // Nice-to-have requirements
 }
 
+/// Exception handling for requirements
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Exception {
+    pub condition: String,
+    pub scope: String,
+}
+
+/// Temporal constraints for requirements
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TemporalConstraint {
+    pub constraint_type: String,
+    pub value: f64,
+    pub unit: String,
+}
+
+/// Parsed logic structure from requirements
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParsedLogic {
+    pub requirement_type: RequirementType,
+    pub subject: String,
+    pub predicate: String,
+    pub confidence: f64,
+    pub ambiguity_detected: bool,
+    pub alternative_interpretations: Vec<String>,
+    pub exceptions: Vec<Exception>,
+    pub temporal_constraints: Vec<TemporalConstraint>,
+}
+
 impl Priority {
     pub fn from_string(s: &str) -> Result<Self, crate::error::SymbolicError> {
         match s.to_lowercase().as_str() {
@@ -191,13 +219,6 @@ impl Default for ProofValidation {
     }
 }
 
-/// Temporal constraint in requirements
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TemporalConstraint {
-    pub constraint_type: String,
-    pub value: String,
-    pub unit: String,
-}
 
 /// Quantifier in logical expressions
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -227,13 +248,6 @@ impl Default for ConditionalStructure {
     }
 }
 
-/// Exception clause in requirements
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Exception {
-    pub condition: String,
-    pub exception_type: String,
-    pub scope: String,
-}
 
 /// Alternative interpretation for ambiguous requirements
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -316,5 +330,38 @@ pub struct RequirementRule {
     pub conditions: Vec<String>,
     pub section: String,
     pub confidence: f64,
+}
+
+/// Aggregated query result for pipeline processing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AggregatedQueryResult {
+    pub confidence: f64,
+    pub results: Vec<QueryResult>,
+    pub proof_chain: Vec<ProofStep>,
+    pub citations: Vec<Citation>,
+    pub processing_time_ms: u64,
+}
+
+impl AggregatedQueryResult {
+    /// Create from vector of query results
+    pub fn from_query_results(results: Vec<QueryResult>) -> Self {
+        let confidence = if results.is_empty() {
+            0.0
+        } else {
+            results.iter().map(|r| r.confidence).sum::<f64>() / results.len() as f64
+        };
+
+        let proof_chain = results.iter()
+            .flat_map(|r| r.proof_steps.clone())
+            .collect();
+
+        Self {
+            confidence,
+            results,
+            proof_chain,
+            citations: Vec::new(), // Citations would be populated by higher-level systems
+            processing_time_ms: 0, // Set by calling code
+        }
+    }
 }
 

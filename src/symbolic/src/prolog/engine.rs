@@ -25,6 +25,7 @@ pub struct ProofResult {
     pub success: bool,
     pub confidence: f64,
     pub processing_time_ms: u64,
+    pub validation: crate::types::ProofValidation,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -104,6 +105,7 @@ impl PrologEngine {
             success: true,
             confidence: 0.8,
             processing_time_ms,
+            validation: crate::types::ProofValidation::default(),
         };
 
         info!("Prolog query completed in {}ms", processing_time_ms);
@@ -118,6 +120,33 @@ impl PrologEngine {
     /// Add rule to knowledge base
     pub fn add_rule(&mut self, rule: PrologRule) {
         self.rules.push(rule);
+    }
+
+    /// Execute query with proof chain generation
+    #[instrument(skip(self))]
+    pub async fn query_with_proof(&self, query: &str) -> Result<ProofResult> {
+        let prolog_query = PrologQuery {
+            goal: query.to_string(),
+            variables: vec![], // Extract variables from query if needed
+            timeout_ms: 100,   // CONSTRAINT-001 compliance
+        };
+
+        self.query(prolog_query).await
+    }
+
+    /// Add compliance rule to knowledge base
+    #[instrument(skip(self))]
+    pub async fn add_compliance_rule(&mut self, rule_text: &str, source: &str) -> Result<()> {
+        // Parse rule text and add as fact
+        let fact = PrologFact {
+            predicate: "compliance_rule".to_string(),
+            terms: vec![rule_text.to_string()],
+            source: source.to_string(),
+        };
+
+        self.add_fact(fact);
+        info!("Added compliance rule from {}", source);
+        Ok(())
     }
 
     /// Get engine statistics

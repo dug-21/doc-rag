@@ -63,16 +63,30 @@ mod mock_components {
         pub async fn process(&self, query: &str) -> ProcessedQuery {
             tokio::time::sleep(self.processing_latency).await;
 
-            let intent = if query.contains("what") || query.contains("define") {
-                QueryIntent::Factual
-            } else if query.contains("compare") || query.contains("vs") {
-                QueryIntent::Comparison
-            } else if query.contains("summarize") || query.contains("summary") {
-                QueryIntent::Summary
-            } else if query.contains("how") {
-                QueryIntent::Procedural
-            } else {
-                QueryIntent::Factual
+            let intent = {
+                let query_lower = query.to_lowercase();
+
+                // Priority 1: Comparison (strongest signal)
+                if query_lower.contains("compare") || query_lower.contains(" vs ") || query_lower.contains("versus") {
+                    QueryIntent::Comparison
+                }
+                // Priority 2: Summary
+                else if query_lower.contains("summarize") || query_lower.contains("summary") {
+                    QueryIntent::Summary
+                }
+                // Priority 3: Factual (what questions take priority over how)
+                else if query_lower.contains("what") || query_lower.contains("define") || query_lower.contains("explain") {
+                    QueryIntent::Factual
+                }
+                // Priority 4: Procedural (specific patterns)
+                else if query_lower.contains("how to") || query_lower.contains("how do") ||
+                        query_lower.contains("how can") || query_lower.starts_with("how ") {
+                    QueryIntent::Procedural
+                }
+                // Priority 5: Factual (default for information requests)
+                else {
+                    QueryIntent::Factual
+                }
             };
 
             let entities = query

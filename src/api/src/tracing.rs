@@ -237,9 +237,14 @@ mod tests {
 
     #[test]
     fn test_span_creation() {
+        // Initialize test subscriber
+        let _ = tracing_subscriber::fmt()
+            .with_test_writer()
+            .try_init();
+
         let span = create_request_span("req-123", "GET", "/api/v1/health", Some("user-456"));
         assert!(!span.is_disabled());
-        
+
         let span = create_component_span("chunker", "process", Some("req-123"));
         assert!(!span.is_disabled());
     }

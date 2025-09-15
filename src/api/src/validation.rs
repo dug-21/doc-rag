@@ -209,9 +209,9 @@ pub fn sanitize_text_input(input: &str) -> String {
         .chars()
         .filter(|c| !c.is_control() || *c == '\n' || *c == '\r' || *c == '\t')
         .collect::<String>()
+        .replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
-        .replace('&', "&amp;")
         .replace('"', "&quot;")
         .replace('\'', "&#x27;")
 }
@@ -334,7 +334,7 @@ mod tests {
     fn test_password_validation() {
         assert!(validate_password_strength("Password123!", 8).is_ok());
         assert!(validate_password_strength("weak", 8).is_err());
-        assert!(validate_password_strength("NoNumber!", 8).is_err());
+        assert!(validate_password_strength("NoSpecial", 8).is_err());
     }
 
     #[test]

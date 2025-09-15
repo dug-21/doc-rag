@@ -32,7 +32,7 @@ pub use rule_parser::{RuleParser};
 pub use prolog::engine::{PrologEngine, PrologQuery, ProofResult};
 
 // Re-export types with module prefix to avoid conflicts
-pub use types::{RequirementType as TypesRequirementType, Priority as TypesPriority, QueryResult as TypesQueryResult, ProofStep as TypesProofStep, RequirementRule as TypesRequirementRule, SymbolicFact, ProofChain, SymbolicRule, ReasoningType};
+pub use types::{RequirementType as TypesRequirementType, Priority as TypesPriority, QueryResult as TypesQueryResult, ProofStep as TypesProofStep, RequirementRule as TypesRequirementRule, SymbolicFact, ProofChain, SymbolicRule, ReasoningType, AggregatedQueryResult};
 
 // Legacy compatibility - common types (renamed to avoid conflicts)
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
