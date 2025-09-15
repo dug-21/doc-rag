@@ -21,8 +21,10 @@ use tracing::info;
 /// Neo4j client with connection pooling and performance monitoring
 pub struct Neo4jClient {
     driver: Graph,
+    #[allow(dead_code)]
     config: Neo4jConfig,
     schema_manager: Arc<SchemaManager>,
+    #[allow(dead_code)]
     query_cache: DashMap<String, CachedQuery>,
     performance_metrics: Arc<RwLock<PerformanceMetrics>>,
     query_counter: AtomicU64,
@@ -30,9 +32,13 @@ pub struct Neo4jClient {
 
 #[derive(Debug, Clone)]
 struct CachedQuery {
+    #[allow(dead_code)]
     result: String,
+    #[allow(dead_code)]
     created_at: DateTime<Utc>,
+    #[allow(dead_code)]
     last_accessed: DateTime<Utc>,
+    #[allow(dead_code)]
     access_count: u64,
 }
 
@@ -93,45 +99,84 @@ impl Neo4jClient {
 impl GraphDatabase for Neo4jClient {
     async fn create_document_hierarchy(&self, document: &ProcessedDocument) -> Result<DocumentGraph> {
         info!("Creating document hierarchy for document: {}", document.id);
-        
-        // Create the document graph structure with production implementation
+
+        // Execute production Cypher query to create document hierarchy
+        let create_document_query = query(
+            "CREATE (d:Document {id: $doc_id, title: $title, document_type: $doc_type, created_at: $created_at})
+             RETURN ID(d) as neo4j_id"
+        )
+        .param("doc_id", document.id.to_string())
+        .param("title", document.title.clone())
+        .param("doc_type", document.doc_type.to_string())
+        .param("created_at", document.created_at.to_rfc3339());
+
+        let mut result = self.driver.execute(create_document_query).await
+            .map_err(|e| GraphError::Query { message: format!("Failed to create document: {}", e) })?;
+
+        let record = result.next().await
+            .map_err(|e| GraphError::Query { message: format!("Failed to get document record: {}", e) })?
+            .ok_or_else(|| GraphError::Query { message: "No record returned from document creation".to_string() })?;
+
+        let neo4j_doc_id: i64 = record.get("neo4j_id")
+            .map_err(|e| GraphError::Query { message: format!("Failed to extract neo4j_id: {}", e) })?;
+
         let mut nodes = Vec::new();
         let mut edges = Vec::new();
-        
+
         // Create document root node
         let document_node = DocumentNode {
             id: document.id.to_string(),
-            neo4j_id: self.query_counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst) as i64,
+            neo4j_id: neo4j_doc_id,
             title: document.metadata.get("title").unwrap_or_else(|| document.title.clone()),
             document_type: document.doc_type.to_string(),
             created_at: document.created_at,
             metadata: document.metadata.clone(),
         };
         nodes.push(GraphNode::Document(document_node.clone()));
-        
-        // Create section nodes and relationships
+
+        // Create section nodes with Cypher queries
         for (i, section) in document.hierarchy.sections.iter().enumerate() {
-            let section_node = SectionNode {
-                id: format!("{}_section_{}", document.id, i),
-                neo4j_id: self.query_counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst) as i64,
-                section_number: section.number.clone(),
-                title: section.title.clone(),
-                section_type: section.section_type.clone(),
-            };
-            nodes.push(GraphNode::Section(section_node.clone()));
-            
-            // Create parent-child relationship
-            let edge = RelationshipEdge {
-                id: self.query_counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst) as i64,
-                from_node: document_node.id.clone(),
-                to_node: section_node.id.clone(),
-                relationship_type: RelationshipType::Contains,
-                properties: std::collections::HashMap::new(),
-                created_at: Utc::now(),
-            };
-            edges.push(edge);
+            let section_query = query(
+                "MATCH (d:Document {id: $doc_id})
+                 CREATE (s:Section {id: $section_id, section_number: $section_number, title: $title, section_type: $section_type})
+                 CREATE (d)-[:CONTAINS]->(s)
+                 RETURN ID(s) as neo4j_id"
+            )
+            .param("doc_id", document.id.to_string())
+            .param("section_id", format!("{}_section_{}", document.id, i))
+            .param("section_number", section.number.clone())
+            .param("title", section.title.clone())
+            .param("section_type", section.section_type.to_string());
+
+            let mut section_result = self.driver.execute(section_query).await
+                .map_err(|e| GraphError::Query { message: format!("Failed to create section: {}", e) })?;
+
+            if let Ok(Some(section_record)) = section_result.next().await {
+                let neo4j_section_id: i64 = section_record.get("neo4j_id")
+                    .map_err(|e| GraphError::Query { message: format!("Failed to extract section neo4j_id: {}", e) })?;
+
+                let section_node = SectionNode {
+                    id: format!("{}_section_{}", document.id, i),
+                    neo4j_id: neo4j_section_id,
+                    section_number: section.number.clone(),
+                    title: section.title.clone(),
+                    section_type: section.section_type.clone(),
+                };
+                nodes.push(GraphNode::Section(section_node.clone()));
+
+                // Create parent-child relationship
+                let edge = RelationshipEdge {
+                    id: neo4j_section_id,
+                    from_node: document_node.id.clone(),
+                    to_node: section_node.id.clone(),
+                    relationship_type: RelationshipType::Contains,
+                    properties: std::collections::HashMap::new(),
+                    created_at: Utc::now(),
+                };
+                edges.push(edge);
+            }
         }
-        
+
         let graph = DocumentGraph {
             document_id: document.id.to_string(),
             nodes,
@@ -139,10 +184,10 @@ impl GraphDatabase for Neo4jClient {
             metadata: document.metadata.clone(),
             created_at: Utc::now(),
         };
-        
-        info!("Created document graph with {} nodes and {} edges", 
+
+        info!("Created document graph with {} nodes and {} edges",
               graph.nodes.len(), graph.edges.len());
-        
+
         Ok(graph)
     }
     async fn create_requirement_node(&self, requirement: &Requirement) -> Result<RequirementNode> {
