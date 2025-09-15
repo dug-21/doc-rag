@@ -4,10 +4,12 @@
 use std::time::Instant;
 use tokio;
 use symbolic::{
-    DatalogEngine, DatalogRule, RequirementRule,
+    DatalogEngine,
     NeuralClassifier, NeurosymbolicProcessor, NeurosymbolicQuery,
-    prolog::{PrologEngine, PrologQuery, PrologFact, PrologRule}
+    prolog::{PrologEngine, PrologQuery}
 };
+use symbolic::types::RequirementRule;
+use symbolic::prolog::engine::{PrologFact, PrologRule};
 
 #[tokio::test]
 async fn test_datalog_performance_constraint() {
@@ -71,7 +73,6 @@ async fn test_prolog_complex_reasoning() {
             "sensitive_data(Data)".to_string(),
         ],
         rule_id: "protection_rule".to_string(),
-        confidence: 1.0,
     });
 
     // Test complex reasoning query
@@ -82,7 +83,7 @@ async fn test_prolog_complex_reasoning() {
     };
 
     let start = Instant::now();
-    let result = prolog_engine.solve_query(query).await.unwrap();
+    let result = prolog_engine.query(query).await.unwrap();
     let elapsed = start.elapsed();
 
     assert!(elapsed.as_millis() < 100, "Prolog query exceeded 100ms constraint: {:?}", elapsed);
@@ -132,7 +133,7 @@ async fn test_symbolic_first_neurosymbolic_approach() {
     assert!(result.processing_time_ms < 1000, "CONSTRAINT-006: Processing should be under 1s");
 
     // Verify symbolic-first approach
-    assert_eq!(result.classification.classification, "RequirementLookup");
+    assert_eq!(result.classification, "RequirementLookup");
     assert!(result.confidence > 0.7, "Should have high confidence from symbolic reasoning");
     assert!(!result.symbolic_results.is_empty(), "Should find symbolic results first");
     assert!(result.proof_chain.is_some(), "Should generate proof chain for explainability");
@@ -209,7 +210,7 @@ async fn test_end_to_end_symbolic_reasoning() {
         let result = processor.process_query(query).await.unwrap();
 
         // Verify symbolic-first processing
-        assert_eq!(result.classification.classification, expected_classification);
+        assert_eq!(result.classification, expected_classification);
         assert!(result.proof_chain.is_some(), "Should generate proof chains");
         assert!(!result.sources.is_empty() || result.symbolic_results.is_empty(),
                 "Should extract sources when symbolic results exist");

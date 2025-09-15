@@ -2,7 +2,7 @@
 //! Validates CONSTRAINT-003: ruv-fann v0.1.6 with <10ms inference
 
 use std::time::Instant;
-use crate::neural_classifier::{NeuralClassifierSystem, ClassificationResult};
+use symbolic::neural_classifier::{NeuralClassifierSystem, ClassificationResult};
 
 #[tokio::test]
 async fn test_neural_classifier_performance_constraint() {
@@ -180,7 +180,7 @@ async fn test_neural_classification_accuracy() {
 
     let mut correct_classifications = 0;
 
-    for (query, expected_classification) in test_cases {
+    for (query, expected_classification) in &test_cases {
         let result = classifier.classify_query(query).await
             .expect("Query classification should succeed");
 
@@ -188,7 +188,7 @@ async fn test_neural_classification_accuracy() {
         println!("  Expected: {}, Got: {} (confidence: {:.3})",
                  expected_classification, result.classification, result.confidence);
 
-        if result.classification == expected_classification {
+        if result.classification == *expected_classification {
             correct_classifications += 1;
             println!("  ✓ Correct classification");
         } else {
