@@ -1598,6 +1598,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "api",
+ "async-trait",
  "axum",
  "axum-test",
  "chrono",
@@ -1609,6 +1610,7 @@ dependencies = [
  "mockall",
  "proptest",
  "rand 0.8.5",
+ "response-generator",
  "serde",
  "serde_json",
  "symbolic",

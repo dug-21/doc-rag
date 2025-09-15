@@ -211,7 +211,9 @@ anyhow = { workspace = true }
 serde = { workspace = true }
 chrono = { workspace = true }
 futures = { workspace = true }
+async-trait = { workspace = true }
 api = { path = "src/api" }
+response-generator = { path = "src/response-generator" }
 
 [[bench]]
 name = "week3_pipeline_benchmarks"
