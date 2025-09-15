@@ -3,6 +3,7 @@
 use embedder::{
     similarity::*, batch::*, cache::*, config::*, error::*, models::*,
 };
+use ruv_fann::ActivationFunction;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -357,31 +358,31 @@ async fn test_cache_utilization() {
 
 #[test]
 fn test_model_type_properties() {
-    let model = ModelType::AllMiniLmL6V2;
+    let model = ModelType::default_fast();
     assert_eq!(model.dimension(), 384);
-    assert_eq!(model.name(), "all-MiniLM-L6-v2");
+    assert_eq!(model.name(), "ruv-fann-fast");
     assert_eq!(model.default_max_length(), 512);
-    assert!(model.supports_onnx());
-    assert!(model.hf_model_id().is_some());
+    assert_eq!(model.layers(), &[512, 256, 128, 384]);
+    assert_eq!(model.hidden_activation(), ActivationFunction::SigmoidSymmetric);
     
     let expected_files = model.expected_files();
     assert!(expected_files.contains(&"config.json"));
-    assert!(expected_files.contains(&"vocab.txt"));
+    assert!(expected_files.contains(&"network.ruv")); // ruv-FANN neural network file
 }
 
 #[test]
 fn test_embedder_config_builder() {
     let config = EmbedderConfig::new()
-        .with_model_type(ModelType::BertBaseUncased)
+        .with_model_type(ModelType::default_balanced())
         .with_batch_size(64)
-        .with_device(Device::Cuda)
+        // .with_device(Device::Cuda) // Device removed for ruv-FANN compliance
         .with_normalize(false)
         .with_cache_size(5000)
         .with_threads(4);
     
-    assert_eq!(config.model_type, ModelType::BertBaseUncased);
+    assert_eq!(config.model_type.name(), "ruv-fann-balanced");
     assert_eq!(config.batch_size, 64);
-    assert_eq!(config.device, Device::Cuda);
+    // assert_eq!(config.device, Device::Cuda); // Device removed for ruv-FANN compliance
     assert!(!config.normalize);
     assert_eq!(config.cache_size, 5000);
     assert_eq!(config.num_threads, Some(4));
@@ -390,14 +391,14 @@ fn test_embedder_config_builder() {
 #[test]
 fn test_config_presets() {
     let high_perf = EmbedderConfig::new().high_performance();
-    assert!(high_perf.optimization.use_fp16);
-    assert!(high_perf.optimization.memory_optimization);
+    assert!(high_perf.optimization.enable_parallel_processing);
+    assert!(high_perf.optimization.cache_features);
     assert_eq!(high_perf.batch_size, 64);
     
     let low_mem = EmbedderConfig::new().low_memory();
     assert_eq!(low_mem.batch_size, 8);
     assert_eq!(low_mem.cache_size, 1000);
-    assert!(matches!(low_mem.optimization.quantization, QuantizationType::Int8));
+    assert!(low_mem.optimization.cache_features);
 }
 
 #[test]
@@ -458,29 +459,30 @@ fn test_error_types() {
     }
 }
 
-#[test]
-fn test_device_display() {
-    assert_eq!(format!("{}", Device::Cpu), "cpu");
-    assert_eq!(format!("{}", Device::Cuda), "cuda");
-}
+// #[test]
+// fn test_device_display() {
+//     // Device enum removed for ruv-FANN compliance
+//     assert_eq!(format!("{}", Device::Cpu), "cpu");
+//     assert_eq!(format!("{}", Device::Cuda), "cuda");
+// }
 
 #[test]
 fn test_model_type_display() {
-    assert_eq!(format!("{}", ModelType::AllMiniLmL6V2), "all-MiniLM-L6-v2");
-    assert_eq!(format!("{}", ModelType::BertBaseUncased), "bert-base-uncased");
+    assert_eq!(format!("{}", ModelType::default_fast()), "ruv-fann-fast");
+    assert_eq!(format!("{}", ModelType::default_balanced()), "ruv-fann-balanced");
 }
 
 #[tokio::test]
 async fn test_model_manager_basic() {
     let manager = ModelManager::new();
     
-    assert!(!manager.is_model_loaded(&ModelType::AllMiniLmL6V2));
+    assert!(!manager.is_model_loaded(&ModelType::default_fast()));
     assert!(manager.loaded_models().is_empty());
-    
+
     // Test path management
     let mut manager = ModelManager::new();
     let custom_path = std::path::PathBuf::from("/custom/path");
-    manager.set_model_path(ModelType::AllMiniLmL6V2, custom_path.clone());
+    manager.set_model_path(ModelType::default_fast(), custom_path.clone());
     
     // Would need actual model files to test loading
 }

@@ -15,7 +15,7 @@ use uuid::Uuid;
 #[tokio::test]
 async fn test_embedding_generator_basic_functionality() {
     let config = EmbedderConfig::new()
-        .with_model_type(ModelType::AllMiniLmL6V2)
+        .with_model_type(ModelType::default_fast())
         .with_batch_size(2)
         .with_cache_size(100);
     
@@ -184,7 +184,7 @@ async fn test_model_switching() {
     }
     
     let config = EmbedderConfig::new()
-        .with_model_type(ModelType::AllMiniLmL6V2);
+        .with_model_type(ModelType::default_fast());
     
     let generator_result = EmbeddingGenerator::new(config).await;
     if generator_result.is_err() {
@@ -196,10 +196,10 @@ async fn test_model_switching() {
     assert_eq!(generator.get_dimension(), 384); // all-MiniLM-L6-v2 dimension
     
     // Try to switch to a different model (may not be available)
-    let switch_result = generator.switch_model(ModelType::BertBaseUncased).await;
-    
+    let switch_result = generator.switch_model(ModelType::default_balanced()).await;
+
     if switch_result.is_ok() {
-        assert_eq!(generator.get_dimension(), 768); // BERT dimension
+        assert_eq!(generator.get_dimension(), 512); // Balanced model dimension
     }
 }
 
@@ -248,8 +248,9 @@ async fn test_processing_time_estimation() {
     let _ = generator.generate_embeddings(chunks).await;
     
     // Should now give a more accurate estimate
+    // For ruv-FANN, this should be very fast (<10ms per text)
     let updated_estimate = generator.estimate_processing_time(100).await;
-    assert!(updated_estimate > 0.0);
+    assert!(updated_estimate >= 0.0, "Processing time estimate should be non-negative, got: {}", updated_estimate);
 }
 
 #[tokio::test]
@@ -386,7 +387,7 @@ async fn test_memory_optimization() {
         .optimize_for_constraints(None, Some(1000), None); // 1000/sec throughput
     
     assert!(high_perf_config.batch_size >= 32);
-    assert!(high_perf_config.optimization.use_fp16);
+    assert!(high_perf_config.optimization.enable_parallel_processing);
 }
 
 // Helper function to create test chunks
@@ -447,7 +448,7 @@ async fn test_cache_persistence() {
     use tempfile::tempdir;
     
     let temp_dir = tempdir().unwrap();
-    let cache_path = temp_dir.path().join("test_cache.bin");
+    let _cache_path = temp_dir.path().join("test_cache.bin");
     
     let config = EmbedderConfig::new()
         .with_cache_size(100);
