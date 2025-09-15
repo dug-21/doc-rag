@@ -541,6 +541,7 @@ pub mod mock_components {
 use mock_components::*;
 
 /// Complete RAG System Integration
+#[derive(Clone)]
 pub struct RagSystemIntegration {
     query_processor: MockQueryProcessor,
     response_generator: MockResponseGenerator,

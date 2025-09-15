@@ -3,7 +3,7 @@
 
 use axum::http::StatusCode;
 use axum_test::TestServer;
-use doc_rag_api::{create_app, AppState};
+use api::{create_app, AppState};
 use serde_json::json;
 use std::time::Duration;
 use tokio::time::Instant;

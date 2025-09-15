@@ -21,9 +21,9 @@ fn test_ruv_fann_neural_network() -> anyhow::Result<()> {
     let output = network.run(&input);
     assert_eq!(output.len(), 1, "Should get one output value");
     assert!(output[0] >= 0.0 && output[0] <= 1.0, "Output should be normalized");
-    Ok(())
-    
+
     println!("✅ ruv-FANN neural network test passed: input {:?} -> output {:?}", input, output);
+    Ok(())
 }
 
 /// Test Byzantine consensus threshold calculation

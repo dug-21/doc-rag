@@ -27,6 +27,12 @@ mod mock_components {
         Procedural,
     }
 
+    impl std::fmt::Display for QueryIntent {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{:?}", self)
+        }
+    }
+
     #[derive(Debug, Clone)]
     pub struct ProcessedQuery {
         pub id: Uuid,
@@ -225,18 +231,19 @@ async fn test_pipeline_error_handling() {
     let response_generator = MockResponseGenerator::new();
     
     // Test with edge cases
+    let long_query = "a".repeat(1000);
     let edge_cases = vec![
         "",           // Empty query
         "?",          // Single character
-        "a".repeat(1000), // Very long query
+        long_query.as_str(), // Very long query
     ];
     
     for query in edge_cases.iter() {
-        let processed = query_processor.process(&query).await;
+        let processed = query_processor.process(query).await;
         let response = response_generator.generate(&processed).await;
-        
+
         // Should handle gracefully without panicking
-        assert_eq!(processed.original_query, query);
+        assert_eq!(processed.original_query, *query);
         assert!(!response.content.is_empty()); // Should generate some response
     }
 }
