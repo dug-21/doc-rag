@@ -217,6 +217,12 @@ futures = { workspace = true }
 async-trait = { workspace = true }
 api = { path = "src/api" }
 response-generator = { path = "src/response-generator" }
+storage = { path = "src/storage" }
+embedder = { path = "src/embedder" }
+symbolic = { path = "src/symbolic" }
+graph = { path = "src/graph" }
+tempfile = { workspace = true }
+pdf-extract = { workspace = true }
 
 [[bench]]
 name = "week3_pipeline_benchmarks"
