@@ -1,33 +1,46 @@
 //! High-performance embedding generator for RAG system
-//! 
+//!
 //! This crate provides a complete embedding generation system with:
-//! - Multiple model backends (ONNX via ORT, Candle native)
+//! - ruv-FANN neural networks for <10ms inference (CONSTRAINT-003 compliant)
 //! - Batch processing with configurable batch sizes
-//! - Memory-efficient tensor operations
+//! - Text feature extraction for neural network input
 //! - Cosine similarity calculations
 //! - Model caching and management
 //! - Performance benchmarking
 //!
 //! # Example
 //! ```no_run
-//! use embedder::{EmbeddingGenerator, EmbedderConfig, ModelType};
+//! use embedder::{EmbeddingGenerator, EmbedderConfig, ModelType, Chunk, ChunkMetadata};
+//! use std::collections::HashMap;
+//! use uuid::Uuid;
 //! use tokio;
 //!
 //! #[tokio::main]
 //! async fn main() -> anyhow::Result<()> {
-//!     let config = EmbedderConfig {
-//!         model_type: ModelType::AllMiniLmL6V2,
-//!         batch_size: 32,
-//!         max_length: 512,
-//!         device: embedder::Device::Cpu,
-//!         normalize: true,
-//!     };
-//!     
+//!     let config = EmbedderConfig::new()
+//!         .with_model_type(ModelType::default_fast())
+//!         .with_batch_size(32)
+//!         .with_normalize(true);
+//!
 //!     let generator = EmbeddingGenerator::new(config).await?;
-//!     
-//!     let texts = vec!["Hello world", "How are you?"];
-//!     let embeddings = generator.generate_embeddings(&texts).await?;
-//!     
+//!
+//!     let chunks = vec![
+//!         Chunk {
+//!             id: Uuid::new_v4(),
+//!             content: "Hello world".to_string(),
+//!             metadata: ChunkMetadata {
+//!                 source: "example".to_string(),
+//!                 page: Some(1),
+//!                 section: None,
+//!                 created_at: chrono::Utc::now(),
+//!                 properties: HashMap::new(),
+//!             },
+//!             embeddings: None,
+//!             references: Vec::new(),
+//!         }
+//!     ];
+//!     let embeddings = generator.generate_embeddings(chunks).await?;
+//!
 //!     println!("Generated {} embeddings", embeddings.len());
 //!     Ok(())
 //! }
@@ -166,7 +179,7 @@ impl EmbeddingGenerator {
                 results.push(Some(EmbeddedChunk {
                     chunk: chunk.clone(),
                     embeddings,
-                    model_version: self.config.model_type.to_string(),
+                    model_version: self.config.model_type.name().to_string(),
                     generated_at: chrono::Utc::now(),
                 }));
             } else {
@@ -194,7 +207,7 @@ impl EmbeddingGenerator {
                 results[result_idx] = Some(EmbeddedChunk {
                     chunk: chunk.clone(),
                     embeddings: embedding.clone(),
-                    model_version: self.config.model_type.to_string(),
+                    model_version: self.config.model_type.name().to_string(),
                     generated_at: chrono::Utc::now(),
                 });
             }
