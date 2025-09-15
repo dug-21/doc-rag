@@ -1,8 +1,10 @@
 pub mod models;
 pub mod neo4j;
+pub mod daa_agent;
 
 pub use models::*;
 pub use neo4j::{Neo4jClient, Neo4jConfig};
+pub use daa_agent::{Neo4jDaaAgent, Neo4jDaaConfig, GraphMessage, GraphResponse, GraphMessageHandler};
 
 use anyhow::Result;
 use async_trait::async_trait;
