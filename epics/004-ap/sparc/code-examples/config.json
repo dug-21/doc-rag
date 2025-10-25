@@ -1,0 +1,106 @@
+{
+  "mcpServers": {
+    "doc-rag": {
+      "command": "node",
+      "args": ["dist/mcp-server.js"],
+      "env": {
+        "AGENTDB_HOST": "localhost",
+        "AGENTDB_PORT": "6333",
+        "AGENTDB_COLLECTION": "technical_standards",
+        "AGENTIC_FLOW_ENABLED": "true",
+        "AGENTIC_FLOW_TOPOLOGY": "mesh",
+        "NEURAL_ENABLED": "true",
+        "NEURAL_MODEL_PATH": "./models/query-classifier.fann",
+        "LOG_LEVEL": "info"
+      }
+    }
+  },
+  "server": {
+    "name": "doc-rag-mcp",
+    "version": "1.0.0",
+    "description": "MCP server for TypeScript RAG system with AgentDB and agentic-flow"
+  },
+  "agentdb": {
+    "host": "localhost",
+    "port": 6333,
+    "collection": "technical_standards",
+    "vector_config": {
+      "size": 1536,
+      "distance": "cosine",
+      "hnsw": {
+        "m": 16,
+        "ef_construction": 200,
+        "ef_search": 100
+      },
+      "quantization": {
+        "enabled": true,
+        "method": "scalar",
+        "compression_ratio": 4
+      }
+    },
+    "metadata_schema": {
+      "doc_id": "uuid",
+      "chunk_index": "integer",
+      "doc_type": "keyword",
+      "section": "text",
+      "page": "integer",
+      "text": "text",
+      "chunk_type": "keyword",
+      "confidence": "float",
+      "timestamp": "datetime"
+    }
+  },
+  "agentic_flow": {
+    "enabled": true,
+    "default_topology": "mesh",
+    "max_agents": 8,
+    "strategy": "adaptive",
+    "quic": {
+      "enabled": true,
+      "port": 4433
+    }
+  },
+  "neural": {
+    "enabled": true,
+    "model_path": "./models/query-classifier.fann",
+    "wasm": {
+      "simd": true,
+      "memory": {
+        "initial": 10,
+        "maximum": 100
+      }
+    }
+  },
+  "performance": {
+    "targets": {
+      "accuracy": 0.97,
+      "latency_p95_ms": 600,
+      "throughput_qps": 150
+    },
+    "cache": {
+      "query_cache_size": 1000,
+      "query_cache_ttl_sec": 300,
+      "document_cache_size": 10000,
+      "document_cache_ttl_sec": 3600
+    }
+  },
+  "learning": {
+    "enabled": true,
+    "algorithms": [
+      "decision_transformer",
+      "actor_critic",
+      "q_learning"
+    ],
+    "training": {
+      "trigger_every_n_trajectories": 100,
+      "batch_size": 32,
+      "epochs": 10,
+      "learning_rate": 0.001
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": ["stdout", "./logs/mcp-server.log"]
+  }
+}

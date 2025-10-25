@@ -27,25 +27,35 @@ Build a TypeScript-based Retrieval-Augmented Generation (RAG) system achieving *
 - <500ms P95 latency
 - <$0.001 per query cost
 
-### 1.2 Budget & Timeline
+### 1.2 Budget & Timeline (MCP-Optimized)
 
-| Category | Estimate |
-|----------|----------|
-| **Implementation** | $216K-$288K |
-| **Infrastructure Setup** | $20K |
-| **Training Data** | $3K |
-| **Total Budget** | **$239K-$311K** |
-| **Timeline** | **12 weeks** (18-22 weeks w/ buffer) |
-| **Annual Operating Cost** | $15K/year |
+| Category | Estimate | MCP Impact |
+|----------|----------|------------|
+| **Implementation** | $216K-$288K | No change |
+| **Infrastructure Setup** | $20K | -$5K (no API gateway needed) |
+| **Training Data** | $3K | No change |
+| **MCP Server Development** | +$10K | New component |
+| **Total Budget** | **$244K-$316K** | +$5K (minimal increase) |
+| **Timeline** | **12 weeks** (18-22 weeks w/ buffer) | No change |
+| **Annual Operating Cost** | **$12K/year** | -$3K/year (no API infrastructure) |
 
-### 1.3 Success Metrics
+**Cost Savings from MCP:**
+- **API Gateway eliminated**: -$2K setup, -$1.5K/year operating
+- **No API management tools**: -$1K setup, -$0.5K/year
+- **Reduced networking overhead**: -$1K setup, -$1K/year bandwidth
+- **Simplified authentication**: -$1K setup (JWT only, no OAuth server)
+- **Total 3-year savings**: ~$15K (infrastructure) + operational efficiency
 
-| Metric | Baseline (No RL) | Target (With RL) |
-|--------|------------------|------------------|
-| Accuracy | >85% | >97% |
-| P95 Latency | <1000ms | <500ms |
-| Cost per Query | <$0.01 | <$0.001 |
-| Learning Convergence | N/A | <1,500 queries |
+### 1.3 Success Metrics (MCP-Enhanced)
+
+| Metric | Baseline (No RL) | Target (With RL) | MCP Advantage |
+|--------|------------------|------------------|---------------|
+| Accuracy | >85% | >97% | No change |
+| P95 MCP Tool Latency | <1000ms | <500ms | -100ms vs REST API |
+| Cost per Query | <$0.01 | <$0.0005 | 50% reduction (zero API overhead) |
+| Learning Convergence | N/A | <1,500 queries | No change |
+| MCP Tool Success Rate | >99% | >99.5% | Built-in error handling |
+| Session State Accuracy | N/A | >99% | MCP session management |
 
 ---
 
@@ -82,17 +92,17 @@ Then system shall:
 
 ---
 
-### FR2: Query Processing
+### FR2: Query Processing via MCP Tools
 **Priority:** Critical
 
-**Description:** Multi-agent query processing with adaptive routing and strategy selection.
+**Description:** Multi-agent query processing with adaptive routing and strategy selection, exposed via Model Context Protocol (MCP) server for direct Claude integration.
 
 **Capabilities:**
-- FR2.1: Query analysis (classification via ruv-FANN)
-- FR2.2: Multi-strategy retrieval (HNSW, hybrid, rerank, graph-walk)
-- FR2.3: Parallel agent coordination (agentic-flow)
-- FR2.4: Context-aware search (session memory)
-- FR2.5: Real-time performance monitoring
+- FR2.1: Query analysis (classification via ruv-FANN) - Exposed as MCP tool
+- FR2.2: Multi-strategy retrieval (HNSW, hybrid, rerank, graph-walk) - MCP resource access
+- FR2.3: Parallel agent coordination (agentic-flow) - MCP-orchestrated
+- FR2.4: Context-aware search (session memory) - MCP session state
+- FR2.5: Real-time performance monitoring - MCP streaming responses
 
 **Query Types Supported:**
 | Type | Example | Strategy |
@@ -103,31 +113,46 @@ Then system shall:
 
 **Acceptance Criteria:**
 ```gherkin
-Scenario: Simple query processing
-  Given query "What is PCI-DSS requirement 3.2?"
-  When query processing swarm executes
+Scenario: Simple query via MCP tool call
+  Given Claude calls MCP tool "query_pci_dss"
+  And parameters: {"query": "What is PCI-DSS requirement 3.2?"}
+  When MCP server processes tool request
   Then system shall:
     - Classify query type within 50ms
     - Retrieve top 20 chunks within 200ms
-    - Generate response within 500ms (P95)
+    - Return MCP tool response within 500ms (P95)
     - Achieve >97% accuracy
+    - Include full citation chain in response
 
-Scenario: Complex cross-standard query
-  Given query "Compare encryption requirements: PCI-DSS vs HIPAA"
-  When multi-agent swarm processes query
+Scenario: Complex cross-standard query via MCP
+  Given Claude calls MCP tool "compare_standards"
+  And parameters: {"standards": ["PCI-DSS", "HIPAA"], "topic": "encryption"}
+  When multi-agent swarm processes MCP request
   Then system shall:
     - Use adaptive topology (hierarchical)
     - Spawn 4-6 specialized agents
     - Execute graph-walk retrieval
     - Complete within 800ms (P95)
+    - Stream progress updates via MCP
     - Provide citations from both standards
+
+Scenario: MCP resource access for document retrieval
+  Given Claude requests MCP resource "pci-dss://requirement/3.2"
+  When MCP server resolves resource URI
+  Then system shall:
+    - Return document chunk with metadata
+    - Include MIME type and encoding
+    - Complete within 100ms
 ```
 
 **Performance Targets:**
-- P50 latency: <300ms
-- P95 latency: <500ms
-- P99 latency: <1000ms
-- Concurrent queries: 100+
+- MCP tool call latency P50: <300ms (includes network overhead eliminated for local MCP)
+- MCP tool call latency P95: <500ms
+- MCP tool call latency P99: <1000ms
+- MCP resource access: <100ms
+- MCP streaming: <50ms first chunk
+- Concurrent MCP sessions: 100+
+- Zero API overhead for local queries (vs REST API ~50-100ms)
 
 ---
 
@@ -334,23 +359,221 @@ Scenario: Verification fail
 
 ---
 
+### FR8: MCP Server Implementation
+**Priority:** Critical
+
+**Description:** Model Context Protocol (MCP) server providing Claude-native integration with tools, resources, and prompts for RAG system access.
+
+**Capabilities:**
+- FR8.1: MCP tool exposure (query, search, analyze, compare)
+- FR8.2: MCP resource providers (document access via URI schemes)
+- FR8.3: MCP prompt templates (pre-configured query patterns)
+- FR8.4: Streaming responses for long-running operations
+- FR8.5: Session state management across tool calls
+- FR8.6: Authentication and authorization (JWT-based)
+- FR8.7: Rate limiting and quota enforcement
+- FR8.8: MCP protocol compliance (stdio and HTTP transports)
+
+**MCP Tools Specification:**
+
+| Tool Name | Purpose | Input Schema | Output | Latency Target |
+|-----------|---------|--------------|--------|----------------|
+| `query_pci_dss` | Simple requirement lookup | `{query: string}` | Citation + answer | <500ms |
+| `compare_standards` | Cross-standard analysis | `{standards: string[], topic: string}` | Comparative table | <800ms |
+| `search_requirements` | Semantic search | `{query: string, filters: object}` | Ranked results | <300ms |
+| `explain_requirement` | Detailed explanation | `{requirement_id: string}` | Rich explanation | <400ms |
+| `validate_compliance` | Compliance checking | `{scenario: string, standard: string}` | Validation report | <1000ms |
+
+**MCP Resources Specification:**
+
+| Resource URI Scheme | Purpose | Example | Response Type |
+|---------------------|---------|---------|---------------|
+| `pci-dss://requirement/{id}` | Direct requirement access | `pci-dss://requirement/3.2` | text/markdown |
+| `hipaa://section/{id}` | HIPAA section access | `hipaa://section/164.312` | text/markdown |
+| `compliance://graph/{node}` | Knowledge graph access | `compliance://graph/encryption` | application/json |
+| `document://{standard}/{page}` | Page-level access | `document://pci-dss/45` | application/pdf |
+
+**MCP Prompts Specification:**
+
+| Prompt Name | Purpose | Variables | Use Case |
+|-------------|---------|-----------|----------|
+| `requirement-lookup` | Standard requirement query | `{standard, requirement}` | Quick reference |
+| `compliance-check` | Validation workflow | `{scenario, standards}` | Audit preparation |
+| `gap-analysis` | Identify missing controls | `{current_state, target_standard}` | Risk assessment |
+| `implementation-guide` | Step-by-step implementation | `{requirement_id}` | Developer guidance |
+
+**Acceptance Criteria:**
+```gherkin
+Scenario: MCP server initialization
+  Given TypeScript MCP server package installed
+  When server starts with config
+  Then server shall:
+    - Register all 5 tools with schemas
+    - Expose 4 resource URI schemes
+    - Load 4 prompt templates
+    - Listen on stdio transport (default)
+    - Support HTTP transport (optional)
+    - Initialize AgentDB connection pool
+    - Complete startup within 2 seconds
+
+Scenario: Tool call execution
+  Given Claude Code invokes MCP tool "query_pci_dss"
+  And valid authentication token provided
+  When MCP server receives tool call
+  Then server shall:
+    - Validate input schema
+    - Check rate limits (100 calls/minute)
+    - Execute query processing pipeline
+    - Return structured response with citations
+    - Log tool call metrics
+    - Complete within latency target
+
+Scenario: Resource access
+  Given Claude requests resource "pci-dss://requirement/3.2"
+  When MCP server resolves URI
+  Then server shall:
+    - Parse URI scheme and identifier
+    - Query AgentDB for document chunk
+    - Format response with proper MIME type
+    - Include metadata (version, last_updated)
+    - Cache response for 5 minutes
+    - Return within 100ms
+
+Scenario: Streaming response for long query
+  Given complex query requiring >500ms processing
+  When MCP tool called with streaming enabled
+  Then server shall:
+    - Send initial acknowledgment within 50ms
+    - Stream progress updates every 100ms
+    - Include partial results as available
+    - Send final response with complete data
+    - Close stream properly
+
+Scenario: Session state management
+  Given Claude makes follow-up query
+  And session context from previous call exists
+  When MCP server processes request
+  Then server shall:
+    - Retrieve session state from memory
+    - Apply contextual filters
+    - Maintain conversation history
+    - Update session with new interaction
+    - Expire session after 30 minutes idle
+```
+
+**Performance Requirements:**
+- Tool registration: <100ms
+- Tool call overhead: <10ms (MCP protocol processing)
+- Resource lookup: <100ms
+- Streaming first chunk: <50ms
+- Session state access: <5ms
+- Concurrent sessions: 100+
+- Memory per session: <1MB
+
+**Security Requirements:**
+- JWT token validation on every call
+- Role-based access control (RBAC) for tools
+- Rate limiting per user/session (100 calls/min)
+- Input sanitization for all parameters
+- No sensitive data in logs
+- Audit trail for all tool calls
+- TLS 1.3 for HTTP transport
+
+**Integration Points:**
+```typescript
+// MCP Server → AgentDB
+interface MCPAgentDBIntegration {
+  // Tool calls trigger AgentDB operations
+  queryPciDss(query: string): Promise<AgentDBSearchResult>
+
+  // Resources access AgentDB storage
+  getResource(uri: string): Promise<AgentDBDocument>
+
+  // Session state stored in AgentDB memory
+  sessionStore: AgentDBMemoryPlugin
+}
+
+// MCP Server → agentic-flow
+interface MCPSwarmIntegration {
+  // Complex queries spawn agent swarms
+  orchestrateQuery(params: QueryParams): Promise<SwarmResult>
+
+  // Stream progress from swarm execution
+  streamSwarmProgress(): AsyncGenerator<ProgressUpdate>
+}
+
+// MCP Server → ruv-FANN
+interface MCPNeuralIntegration {
+  // Classification exposed as tool
+  classifyQuery(text: string): Promise<QueryClassification>
+
+  // Intent detection for routing
+  detectIntent(query: string): Promise<IntentVector>
+}
+```
+
+**Error Handling:**
+```typescript
+// MCP-specific error codes
+enum MCPErrorCode {
+  TOOL_NOT_FOUND = 'tool_not_found',
+  INVALID_PARAMS = 'invalid_parameters',
+  RATE_LIMITED = 'rate_limit_exceeded',
+  UNAUTHORIZED = 'unauthorized',
+  RESOURCE_NOT_FOUND = 'resource_not_found',
+  TIMEOUT = 'execution_timeout',
+  INTERNAL_ERROR = 'internal_server_error'
+}
+
+// Error response format (MCP standard)
+interface MCPError {
+  code: MCPErrorCode
+  message: string
+  data?: {
+    retryAfter?: number  // For rate limits
+    suggestion?: string   // User-friendly help
+    traceId?: string     // For debugging
+  }
+}
+```
+
+**Observability:**
+- Prometheus metrics for tool calls, latency, errors
+- OpenTelemetry traces for request flow
+- Structured JSON logs with trace correlation
+- Real-time dashboard (Grafana)
+- Alert on error rate >1% or latency >2x target
+
+---
+
 ## 3. Non-Functional Requirements
 
-### NFR1: Performance
+### NFR1: Performance (MCP-Enhanced)
 
-| Metric | Requirement | Measurement |
-|--------|-------------|-------------|
-| **Latency P50** | <300ms | Query start → response delivery |
-| **Latency P95** | <500ms | 95th percentile queries |
-| **Latency P99** | <1000ms | 99th percentile queries |
-| **Throughput** | 100+ concurrent | Concurrent query handling |
-| **Cost** | <$0.001/query | Infrastructure + API costs |
-| **Memory** | <4GB/million vectors | With scalar quantization |
+| Metric | Requirement | Measurement | MCP Advantage |
+|--------|-------------|-------------|---------------|
+| **MCP Tool Call Latency P50** | <300ms | Tool invocation → response | -50ms vs REST API |
+| **MCP Tool Call Latency P95** | <500ms | 95th percentile | -100ms vs REST API |
+| **MCP Tool Call Latency P99** | <1000ms | 99th percentile | -150ms vs REST API |
+| **MCP Resource Access** | <100ms | URI resolution → data | -50ms vs HTTP |
+| **MCP Streaming First Chunk** | <50ms | Initial response | Real-time progress |
+| **MCP Session State Access** | <5ms | Context retrieval | Built-in caching |
+| **Throughput** | 100+ concurrent sessions | Concurrent MCP connections | stdio multiplexing |
+| **Cost per Query** | <$0.0005 | Infrastructure only | Zero API overhead |
+| **Memory** | <4GB/million vectors | With scalar quantization | AgentDB optimization |
+
+**MCP Performance Breakdown:**
+- Protocol overhead: ~10ms (JSON-RPC parsing)
+- Authentication: ~5ms (JWT validation, cached)
+- Tool dispatch: ~5ms (route to handler)
+- Session lookup: ~5ms (AgentDB memory plugin)
+- **Total MCP overhead: ~25ms** (vs 50-100ms for REST API)
 
 **Load Testing:**
-- Baseline: 10 concurrent queries @ <300ms
-- Stress: 100 concurrent queries @ <500ms
-- Peak: 200 concurrent queries @ <1000ms
+- Baseline: 10 concurrent MCP sessions @ <300ms per tool call
+- Stress: 100 concurrent MCP sessions @ <500ms per tool call
+- Peak: 200 concurrent MCP sessions @ <1000ms per tool call
+- Streaming: 50 concurrent long-running queries with progress updates
 
 ---
 
@@ -394,107 +617,195 @@ Scenario: Verification fail
 
 ---
 
-### NFR4: Security
+### NFR4: Security (MCP-Specific)
+
+**MCP Authentication & Authorization:**
+- JWT tokens for MCP tool calls (issued per session)
+- Role-based access control (RBAC) at tool level
+- Session-based authorization (30-minute TTL)
+- Rate limiting per user/session (100 calls/minute)
+- Tool-level permissions (read/write/admin)
 
 **Data Protection:**
-- Encryption at rest: AES-256
-- Encryption in transit: TLS 1.3
-- API authentication: JWT tokens
-- Role-based access control (RBAC)
+- Encryption at rest: AES-256 (AgentDB storage)
+- Encryption in transit: TLS 1.3 (HTTP transport only, stdio is local)
+- MCP message signing: HMAC-SHA256 for integrity
+- Input sanitization: All tool parameters validated via JSON Schema
+
+**MCP-Specific Security:**
+- Tool discovery: Only expose authorized tools per user role
+- Resource access: URI-based permissions (e.g., `pci-dss://` requires compliance role)
+- Prompt templates: Sanitized variable substitution
+- Streaming: Secure channel with early termination on auth failure
+- Audit trail: All MCP tool calls logged with trace IDs
 
 **Compliance:**
 - No PII storage (document content only)
-- Audit logging (all queries recorded)
+- Audit logging (all MCP tool calls recorded with parameters)
 - Data retention: 90 days (configurable)
+- MCP session logs: Encrypted and anonymized
 
 ---
 
-### NFR5: Observability
+### NFR5: Observability (MCP-Enhanced)
 
-**Metrics Collection:**
-- Query latency (P50/P95/P99)
+**MCP-Specific Metrics:**
+- MCP tool call latency (P50/P95/P99) - per tool
+- MCP resource access latency - per URI scheme
+- MCP session duration and tool call count
+- MCP streaming performance (time to first chunk)
+- MCP error rates (by error code)
+- Tool usage distribution (which tools used most)
+- Session state cache hit rate
+
+**Core Metrics Collection:**
+- Query latency (P50/P95/P99) - end-to-end including MCP overhead
 - Accuracy scores (per query type)
-- Agent performance (by agent type)
+- Agent performance (by agent type in swarm)
 - Learning convergence (RL plugin metrics)
-- Cost per query (infrastructure)
+- Cost per MCP tool call (infrastructure only, no API costs)
 
 **Logging:**
-- Structured JSON logs
-- Query traces (OpenTelemetry)
-- Error tracking (Sentry)
-- Performance profiling
+- Structured JSON logs with MCP trace IDs
+- Query traces (OpenTelemetry) - includes MCP request flow
+- MCP tool call audit trail (parameters, results, errors)
+- Error tracking (Sentry) - MCP error categorization
+- Performance profiling - MCP overhead breakdown
 
 **Dashboards:**
-- Real-time query metrics
+- Real-time MCP tool metrics (calls/sec, latency, errors)
+- MCP session analytics (duration, tool usage patterns)
 - Learning progress visualization
-- Cost breakdown
-- System health overview
+- Cost breakdown (MCP vs traditional API savings)
+- System health overview (including MCP server status)
 
 ---
 
 ## 4. System Context
 
-### 4.1 External Systems
+### 4.1 Primary Client: Claude via MCP
+
+**Claude Code / Claude Desktop**
+- **Integration**: Model Context Protocol (MCP) server
+- **Transport**: stdio (default) or HTTP
+- **Authentication**: JWT tokens via MCP auth flow
+- **Capabilities**:
+  - Direct tool calls (no REST API needed)
+  - Resource access via custom URI schemes
+  - Streaming responses for long operations
+  - Session state preservation
+  - Zero network overhead for local queries
+- **Use Cases**:
+  - Compliance officers querying requirements
+  - Developers validating implementation
+  - Auditors cross-referencing standards
+  - AI assistants providing guided compliance
+
+**Advantages of MCP over REST API:**
+- ✅ **Zero API overhead**: Local tool calls vs HTTP requests (~50-100ms saved)
+- ✅ **Native Claude integration**: First-class tool support
+- ✅ **Streaming built-in**: Progressive results for long queries
+- ✅ **Session management**: Automatic context preservation
+- ✅ **Type safety**: JSON Schema validation at protocol level
+- ✅ **Discovery**: Tools/resources self-describing
+
+### 4.2 External Systems
 
 **AgentDB** (Vector Database)
 - **Purpose**: Unified storage for vectors, memory, learning
-- **Interface**: Rust/TypeScript client library
+- **Interface**: TypeScript client library
 - **Data Flow**: Embeddings → HNSW index → Search results
+- **MCP Integration**: Accessed via MCP tools and resources
 
 **agentic-flow** (Orchestration)
 - **Purpose**: Multi-agent swarm coordination
 - **Interface**: TypeScript SDK
 - **Data Flow**: Query → Agent tasks → Aggregated results
+- **MCP Integration**: Swarm execution triggered by MCP tool calls
 
 **ruv-FANN** (Neural Networks)
 - **Purpose**: Fast classification and inference
 - **Interface**: WASM module
 - **Data Flow**: Input features → Neural net → Predictions
+- **MCP Integration**: Classification exposed as MCP tools
 
 **OpenAI API** (Embeddings)
 - **Purpose**: Generate 1536-dim embeddings
 - **Interface**: REST API
 - **Data Flow**: Text → Embedding vector
+- **MCP Integration**: Transparent to MCP clients
 
-### 4.2 User Personas
+### 4.3 User Personas & MCP Workflows
 
-**Compliance Officer**
+**Compliance Officer** (via Claude Code)
 - **Goal**: Quickly find PCI-DSS requirements
-- **Frequency**: 10-20 queries/day
+- **Frequency**: 10-20 queries/day via MCP tools
 - **Expertise**: Domain expert, technical
+- **MCP Usage**:
+  - Calls `query_pci_dss` tool directly
+  - Accesses resources via `pci-dss://` URIs
+  - Uses `requirement-lookup` prompt template
 
-**Security Auditor**
+**Security Auditor** (via Claude Desktop)
 - **Goal**: Cross-reference requirements across standards
-- **Frequency**: 5-10 queries/day
+- **Frequency**: 5-10 queries/day via MCP
 - **Expertise**: High technical, multi-standard
+- **MCP Usage**:
+  - Calls `compare_standards` tool for analysis
+  - Uses `gap-analysis` prompt template
+  - Accesses multiple standard resources in single session
 
-**Developer**
+**Developer** (via Claude API with MCP)
 - **Goal**: Understand implementation requirements
-- **Frequency**: 3-5 queries/day
+- **Frequency**: 3-5 queries/day via MCP
 - **Expertise**: Technical, needs examples
+- **MCP Usage**:
+  - Calls `explain_requirement` tool
+  - Uses `implementation-guide` prompt template
+  - Accesses code examples via resources
 
-### 4.3 Use Cases
+### 4.4 MCP Use Cases
 
-**UC1: Simple Requirement Lookup**
+**UC1: Simple Requirement Lookup via MCP**
 ```
-User: "What is PCI-DSS requirement 3.2?"
-System: Direct HNSW search → Template response
-Time: <300ms
-```
-
-**UC2: Comparative Analysis**
-```
-User: "Compare encryption requirements in PCI-DSS vs HIPAA"
-System: Multi-agent coordination → Graph-walk → Synthesis
-Time: <800ms
+Claude Code: calls tool "query_pci_dss"
+Parameters: {"query": "What is PCI-DSS requirement 3.2?"}
+MCP Server: Direct HNSW search → Template response
+Response: Citation + answer in <300ms
+Network overhead: 0ms (local stdio transport)
 ```
 
-**UC3: Contextual Follow-up**
+**UC2: Comparative Analysis via MCP**
 ```
-User: "What are the encryption algorithms?"
-Context: Previous query about PCI-DSS 3.2
-System: Session memory → Context-aware search → Response
-Time: <400ms
+Claude Desktop: calls tool "compare_standards"
+Parameters: {"standards": ["PCI-DSS", "HIPAA"], "topic": "encryption"}
+MCP Server: Multi-agent coordination → Graph-walk → Synthesis
+Response: Streaming updates every 100ms → Final result <800ms
+```
+
+**UC3: Contextual Follow-up with MCP Session**
+```
+Claude: "What are the encryption algorithms?"
+Context: MCP session retains previous "PCI-DSS 3.2" query
+MCP Server: Session memory → Context-aware search → Response
+Response: <400ms with automatic context application
+Session TTL: 30 minutes idle timeout
+```
+
+**UC4: Resource Access via MCP URI**
+```
+Claude: requests resource "pci-dss://requirement/3.2"
+MCP Server: Parse URI → AgentDB lookup → Format markdown
+Response: Direct requirement text with metadata <100ms
+Cache: 5-minute TTL for frequently accessed resources
+```
+
+**UC5: Batch Query via MCP Prompt Template**
+```
+Claude: uses prompt "gap-analysis"
+Variables: {current_state: "basic-encryption", target_standard: "PCI-DSS"}
+MCP Server: Execute multi-step workflow → Gap report
+Response: Structured analysis with actionable recommendations <2000ms
 ```
 
 ---
@@ -543,16 +854,18 @@ Time: <400ms
 
 ---
 
-### 6.2 Final Metrics (With RL)
+### 6.2 Final Metrics (With RL & MCP)
 
 **Phase 6 Target** (Week 12)
-| Metric | Target | Validation |
-|--------|--------|------------|
-| **Accuracy** | **>97%** | 980-1,490 test questions |
-| **P95 Latency** | **<500ms** | 1,000 query load test |
-| **Cost** | **<$0.001/query** | 1 month production data |
-| **Learning** | **+2-5% improvement** | Before/after RL comparison |
-| **Uptime** | **99.9%** | 1 month monitoring |
+| Metric | Target | Validation | MCP Impact |
+|--------|--------|------------|------------|
+| **Accuracy** | **>97%** | 980-1,490 test questions | No change |
+| **P95 MCP Tool Call Latency** | **<500ms** | 1,000 MCP tool call load test | -100ms vs REST |
+| **Cost** | **<$0.0005/query** | 1 month MCP usage data | 50% reduction (no API overhead) |
+| **Learning** | **+2-5% improvement** | Before/after RL comparison | No change |
+| **Uptime** | **99.9%** | 1 month monitoring | Improved (local stdio resilient) |
+| **MCP Tool Call Success Rate** | **>99.5%** | MCP audit logs | N/A |
+| **MCP Session State Accuracy** | **>99%** | Context preservation tests | N/A |
 
 **Success Criteria:**
 - ✅ All metrics met → Production deployment
@@ -598,27 +911,42 @@ Time: <400ms
 
 ---
 
-### 7.2 Testing Phases
+### 7.2 Testing Phases (MCP-Integrated)
 
 **Phase 1: Unit Tests** (Week 6)
 - Component-level validation
 - 100+ unit tests per module
+- **MCP-specific:** Tool handler unit tests, resource resolver tests
 - Coverage: >80%
 
-**Phase 2: Integration Tests** (Week 8)
-- End-to-end query flow
-- 50+ integration scenarios
-- All agent types tested
+**Phase 2: MCP Integration Tests** (Week 8)
+- End-to-end MCP tool call flow
+- 50+ integration scenarios including:
+  - All 5 MCP tools with various parameters
+  - All 4 resource URI schemes
+  - All 4 prompt templates
+  - Session state preservation across calls
+  - Streaming response handling
+- All agent types tested via MCP orchestration
 
-**Phase 3: Accuracy Validation** (Week 10)
-- Baseline test (200 questions)
+**Phase 3: MCP Protocol Compliance** (Week 9)
+- MCP protocol validator (stdio and HTTP transports)
+- JSON Schema validation for all tool inputs/outputs
+- Error handling per MCP specification
+- Authentication/authorization flows
+- Rate limiting enforcement
+
+**Phase 4: Accuracy Validation** (Week 10)
+- Baseline test (200 questions via MCP tools)
 - Target: >85% without RL
+- **MCP-specific:** Tool call success rate >99%
 - Go/No-Go decision point
 
-**Phase 4: Production Validation** (Week 12)
-- Full test bank (980-1,490 questions)
+**Phase 5: Production Validation** (Week 12)
+- Full test bank (980-1,490 questions via MCP)
 - Target: >97% with RL
-- Load testing (100 concurrent)
+- Load testing (100 concurrent MCP sessions)
+- **MCP-specific:** Session state accuracy >99%
 
 **Go/No-Go Gates:**
 | Gate | Criteria | Action if Failed |
@@ -631,25 +959,38 @@ Time: <400ms
 ### 7.3 Production Readiness Checklist
 
 **Technical:**
-- [ ] All tests passing (>97% accuracy)
-- [ ] Performance validated (<500ms P95)
-- [ ] Load testing complete (100 concurrent)
-- [ ] Security audit passed
-- [ ] Monitoring and alerting configured
+- [ ] All tests passing (>97% accuracy via MCP tools)
+- [ ] Performance validated (<500ms P95 MCP tool call latency)
+- [ ] Load testing complete (100 concurrent MCP sessions)
+- [ ] Security audit passed (including MCP authentication)
+- [ ] Monitoring and alerting configured (MCP metrics)
 - [ ] Backup and recovery tested
 
+**MCP-Specific:**
+- [ ] All 5 MCP tools registered and functional
+- [ ] All 4 resource URI schemes working
+- [ ] All 4 prompt templates tested
+- [ ] stdio transport validated (default)
+- [ ] HTTP transport tested (optional)
+- [ ] Session state persistence verified
+- [ ] Streaming responses working correctly
+- [ ] MCP protocol compliance validated
+- [ ] Tool discovery working for all user roles
+- [ ] Rate limiting enforced and tested
+- [ ] MCP error handling complete
+
 **Operational:**
-- [ ] Documentation complete
-- [ ] Runbooks created
-- [ ] Training provided to users
-- [ ] Support process defined
+- [ ] Documentation complete (including MCP tool reference)
+- [ ] Runbooks created (MCP server operations)
+- [ ] Training provided to users (Claude integration)
+- [ ] Support process defined (MCP troubleshooting)
 - [ ] Rollback plan documented
 
 **Business:**
 - [ ] Stakeholder approval
 - [ ] Budget approved
-- [ ] SLA defined
-- [ ] Success metrics tracked
+- [ ] SLA defined (including MCP uptime)
+- [ ] Success metrics tracked (MCP vs REST comparison)
 
 ---
 
@@ -695,9 +1036,16 @@ Time: <400ms
 - **HNSW**: Hierarchical Navigable Small World (graph-based ANN)
 - **RL**: Reinforcement Learning
 - **MRAP**: Multi-Round Agentic Protocol
-- **P95 Latency**: 95th percentile response time
+- **MCP**: Model Context Protocol - Standard for AI-native tool integration
+- **MCP Server**: TypeScript server exposing tools, resources, and prompts via MCP
+- **MCP Tool**: Callable function exposed via MCP (e.g., `query_pci_dss`)
+- **MCP Resource**: URI-accessible content (e.g., `pci-dss://requirement/3.2`)
+- **MCP Prompt**: Pre-configured prompt template with variables
+- **stdio Transport**: MCP communication over standard input/output (local, zero network overhead)
+- **HTTP Transport**: MCP communication over HTTP (remote access)
+- **P95 Latency**: 95th percentile response time (includes MCP overhead)
 - **Quantization**: Compression technique (4x memory reduction)
-- **Session Memory**: Context from previous queries in session
+- **Session Memory**: Context from previous queries in MCP session
 - **Trajectory**: RL tuple (state, action, reward, next_state)
 
 ### 9.2 References
