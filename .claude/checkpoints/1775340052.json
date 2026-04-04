@@ -1,0 +1,1 @@
+{"tag": "checkpoint-20260404-180052", "file": "/Users/dmf/repos/doc-rag/.gitignore", "timestamp": "2026-04-04T22:00:52Z", "type": "post-edit", "branch": "redesign/fixes", "diff_summary": " .claude/checkpoints/task-1775340043.json | 1 +  .gitignore                               | 3 +++  temp-fact-analysis                       | 0  3 files changed, 4 insertions(+) "}
