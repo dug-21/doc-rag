@@ -48,3 +48,6 @@ hive-mind-prompt-*.txt
 
 # MongoDB data files
 data/mongo/
+
+# Claude checkpoints
+.claude/checkpoints/
